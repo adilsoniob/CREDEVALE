@@ -1,0 +1,26 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Administrativo – Vale Saúde</title>
+    <link rel="stylesheet" href="../cartao-farmacia-landing/styles.css">
+    <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+    <div class="admin-layout">
+        <aside class="admin-sidebar" id="adminSidebar" role="navigation" aria-label="Menu principal"></aside>
+        <main class="admin-main" id="adminMain" role="main">
+            <!-- Header injected by JS -->
+        </main>
+    </div>
+    <!-- Mobile menu button (hidden on desktop) -->
+    <button id="menuToggle" class="btn btn--primary btn--sm" style="position:fixed; bottom:var(--space-lg); right:var(--space-lg); z-index:1100; display:none;" aria-label="Abrir menu">
+        ☰
+    </button>
+    <script src="admin.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => AdminApp.initApp());
+    </script>
+</body>
+</html>

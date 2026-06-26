@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Parabéns - Vale Saúde</title>
+  <link rel="stylesheet" href="styles.css?v=3.0">
+  <script src="frontend/js/api.js?v=3.1"></script>
+  <style>
+    .success-page { text-align:center; padding:40px 16px; max-width:500px; margin:0 auto; }
+    .success-icon--big { width:100px;height:100px;margin:0 auto 24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:48px;background:linear-gradient(135deg,#19D3A6,#34E27A);box-shadow:0 0 60px rgba(25,211,166,0.4); }
+    .success-page h1 { font-size:1.75rem;font-weight:900;color:var(--color-white);margin-bottom:6px; }
+    .success-page .sub { font-size:1rem;color:var(--color-text);margin-bottom:24px;line-height:1.5; }
+    .apk-card { background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:24px;padding:28px 24px;margin-bottom:20px; }
+    .apk-card h3 { font-size:1.1rem;font-weight:700;color:var(--color-white);margin-bottom:8px; }
+    .apk-card p { font-size:0.875rem;color:var(--color-text);margin-bottom:20px;line-height:1.5; }
+    .btn-apk { display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:16px 32px;border:none;border-radius:14px;background:var(--gradient-primary);color:white;font-size:1rem;font-weight:700;cursor:pointer;text-decoration:none;transition:transform .25s,box-shadow .25s; }
+    .btn-apk:hover { transform:translateY(-2px);box-shadow:0 8px 24px rgba(59,130,246,0.3); }
+    .whatsapp-card { background:rgba(25,211,166,0.06);border:1px solid rgba(25,211,166,0.15);border-radius:24px;padding:24px; }
+    .whatsapp-card h3 { font-size:1rem;font-weight:700;color:var(--color-white);margin-bottom:6px; }
+    .whatsapp-card p { font-size:0.875rem;color:var(--color-text);margin-bottom:16px; }
+    .btn-whatsapp { display:inline-flex;align-items:center;gap:8px;padding:14px 28px;border:none;border-radius:14px;background:#25D366;color:white;font-size:1rem;font-weight:700;cursor:pointer;text-decoration:none;transition:transform .25s; }
+    .btn-whatsapp:hover { transform:translateY(-2px); }
+    .erro-msg { color:#EF4444;font-size:0.875rem;margin-top:20px; }
+  </style>
+</head>
+<body class="page-frontend">
+  <header class="header">
+    <img src="assets/cabecario-topo.png" alt="Vale Sa\u00fade" class="header__logo">
+    <nav class="header__nav">
+      <a href="index.html" class="header__nav-link header__nav-link--cta">Voltar ao In\u00edcio</a>
+    </nav>
+  </header>
+  <main>
+    <div class="success-page" id="successPage">
+      <div class="success-icon--big">&#10003;</div>
+      <h1>Parab\u00e9ns!</h1>
+      <p class="sub" id="successMsg">Seu cadastro foi aprovado com sucesso.</p>
+      <div id="apkSection" class="apk-card" hidden>
+        <h3>Baixe o Aplicativo</h3>
+        <p>Seu Cart\u00e3o Vale Sa\u00fade est\u00e1 pronto para uso. Clique abaixo para baixar o aplicativo e come\u00e7ar a usar seus benef\u00edcios.</p>
+        <a id="btnBaixarApk" class="btn-apk" href="#" target="_blank" rel="noopener">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 1v12M6 9l4 4 4-4M4 17h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Baixar Aplicativo
+        </a>
+      </div>
+      <div class="whatsapp-card">
+        <h3>Precisa de Ajuda?</h3>
+        <p>Fale conosco no WhatsApp para ativar seu cart\u00e3o ou tirar d\u00favidas.</p>
+        <a id="btnFalarWhatsapp" class="btn-whatsapp" href="#" target="_blank">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="currentColor"><path d="M9 0C4 0 0 4 0 9c0 1.6.4 3.1 1.2 4.4L0 18l4.7-1.2C6 17.6 7.5 18 9 18c5 0 9-4 9-9s-4-9-9-9zm4.5 12.7c-.2.5-.8.9-1.3 1-.5.2-1.2.2-2-.4-.6-.4-2.3-1.5-2.7-1.9-.4-.4-.8-.9-1.1-1.4-.3-.5-.5-1-.5-1.5s.2-1 .5-1.3c.1-.2.3-.3.5-.3h.4c.2 0 .4 0 .6.4.1.3.5 1.1.5 1.2.1.1.1.3 0 .4-.1.1-.2.2-.3.3-.1.2-.2.3-.1.4.1.1.5.8 1.1 1.3.7.6 1.3.8 1.5.9.2.1.4.1.5 0 .1-.1.4-.5.5-.7.1-.2.3-.2.5-.1.2.1 1.1.5 1.3.6.2.1.4.2.4.3 0 .2 0 .6-.2 1z"/></svg>
+          Falar no WhatsApp
+        </a>
+      </div>
+      <div id="erroMsg" class="erro-msg" hidden></div>
+    </div>
+  </main>
+  <footer class="footer">
+    <div class="footer__inner">
+      <div class="footer__brand">Vale Sa\u00fade</div>
+      <div class="footer__tagline">Cart\u00e3o Benef\u00edcio Farm\u00e1cia</div>
+      <div class="footer__divider"></div>
+      <div id="footerInfo" class="footer__info"></div>
+      <div class="footer__links"><a href="#">Pol\u00edtica de Privacidade</a><a href="#">Termos de Uso</a></div>
+      <div class="footer__copy">&copy; 2026 Vale Sa\u00fade. Todos os direitos reservados.</div>
+    </div>
+  </footer>
+  <script>(function(){var e=document.getElementById('footerInfo');var b=window.__API_BASE||'/api';fetch(b+'/payments/config').then(function(r){return r.json()}).then(function(d){var p=[];if(d.footer_phone)p.push('📞 '+d.footer_phone);if(d.footer_email)p.push('✉️ '+d.footer_email);if(d.footer_cnpj)p.push('CNPJ: '+d.footer_cnpj);if(p.length)e.innerHTML=p.join(' · ')}).catch(function(){})})();</script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async function() {
+      var params = new URLSearchParams(window.location.search);
+      var clientId = params.get('clientId') || sessionStorage.getItem('vs_clientId');
+      var nome = params.get('nome') || sessionStorage.getItem('vs_nome') || '';
+      var msgEl = document.getElementById('successMsg');
+      var apkSection = document.getElementById('apkSection');
+      var btnApk = document.getElementById('btnBaixarApk');
+      var btnWa = document.getElementById('btnFalarWhatsapp');
+      var erroMsg = document.getElementById('erroMsg');
+
+      if (nome) msgEl.textContent = nome + ', seu cadastro foi aprovado com sucesso!';
+
+      try {
+        var b=window.__API_BASE||'/api';
+        var configRes = await fetch(b+'/payments/config');
+        var config = await configRes.json();
+        var apkUrl = config.apk_url || '';
+
+        var waRes = await fetch(b+'/admin/settings');
+        var waData = await waRes.json();
+        var waNumber = (waData.settings && waData.settings.whatsapp) || '5511999999999';
+        btnWa.href = 'https://wa.me/' + waNumber + '?text=' + encodeURIComponent('Ol\u00e1! Recebi meu cart\u00e3o Vale Sa\u00fade e gostaria de ativar. Pode me ajudar?');
+
+        if (apkUrl) {
+          btnApk.href = apkUrl;
+          apkSection.hidden = false;
+        }
+
+        if (clientId) {
+          sessionStorage.setItem('vs_clientId', clientId);
+        }
+      } catch(e) {
+        erroMsg.textContent = 'N\u00e3o foi poss\u00edvel carregar todas as informa\u00e7\u00f5es. Tente novamente mais tarde.';
+        erroMsg.hidden = false;
+      }
+    });
+  </script>
+
+  <a href="https://wa.me/5511999999999" target="_blank" rel="noopener" class="whatsapp-float__icon" style="position:fixed;bottom:20px;right:20px;z-index:99;" aria-label="Fale conosco pelo WhatsApp">
+    <img src="assets/WHATS.png" alt="WhatsApp">
+  </a>
+</body>
+</html>

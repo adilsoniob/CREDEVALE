@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Administrativo – Cartão Farmácia</title>
+    <link rel="stylesheet" href="styles.css?v=3.2">
+    <link rel="stylesheet" href="admin-panel/admin.css?v=3.2">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💊</text></svg>">
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen" style="position:fixed;inset:0;z-index:10000;background:linear-gradient(135deg,#0B1A2E,#1A3A5C);display:none;align-items:center;justify-content:center">
+      <div style="background:#203A57;border-radius:24px;padding:40px 32px;max-width:380px;width:90%;text-align:center;border:1px solid rgba(255,255,255,0.08);box-shadow:0 30px 80px rgba(0,0,0,0.45);">
+        <div style="font-size:2.5rem;margin-bottom:8px;">💊</div>
+        <h2 style="font-size:1.25rem;font-weight:700;color:#fff;margin-bottom:4px;">Cartão Farmácia</h2>
+        <p style="font-size:0.8rem;color:#B7C5D8;margin-bottom:24px;">Painel Administrativo</p>
+        <div style="margin-bottom:16px;text-align:left;">
+          <label style="font-size:0.78rem;color:#B7C5D8;display:block;margin-bottom:4px;">E-mail</label>
+          <input id="loginEmail" type="email" value="admin@valesaude.com.br" style="width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.08);color:#fff;font-size:0.9rem;">
+        </div>
+        <div style="margin-bottom:24px;text-align:left;">
+          <label style="font-size:0.78rem;color:#B7C5D8;display:block;margin-bottom:4px;">Senha</label>
+          <input id="loginPassword" type="password" value="admin123" style="width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.08);color:#fff;font-size:0.9rem;">
+        </div>
+        <p id="loginError" style="font-size:0.78rem;color:#DC2626;margin-bottom:12px;display:none;"></p>
+        <button id="btnLogin" style="width:100%;padding:14px;border-radius:12px;border:none;background:linear-gradient(90deg,#3B82F6,#4CC8A4);color:#fff;font-size:1rem;font-weight:700;cursor:pointer;">ENTRAR</button>
+        <div id="apiConfigArea" style="margin-top:14px;border-top:1px solid rgba(255,255,255,0.08);padding-top:12px;display:none;">
+          <label style="font-size:0.72rem;color:#B7C5D8;display:block;margin-bottom:4px;text-align:left;">URL do Backend (Railway)</label>
+          <div style="display:flex;gap:6px;">
+            <input id="apiUrlInput" type="url" placeholder="https://seu-projeto.up.railway.app" style="flex:1;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.06);color:#fff;font-size:0.78rem;">
+            <button id="btnSaveApiUrl" style="padding:8px 14px;border-radius:8px;border:none;background:#4CC8A4;color:#fff;font-size:0.72rem;font-weight:700;cursor:pointer;">Salvar</button>
+          </div>
+          <p style="font-size:0.68rem;color:#8899aa;margin-top:6px;">⚠️ Configure o servidor backend no Railway e cole a URL aqui.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Admin dashboard -->
+    <div id="adminScreen" class="admin-layout" style="display:none;">
+        <aside class="admin-sidebar" id="adminSidebar">
+            <div class="admin-sidebar__brand">
+                <span>💊 Cartão Farmácia</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;padding:8px 16px;margin-bottom:8px;">
+              <span id="sidebarUserName" style="font-size:0.78rem;color:#B7C5D8;flex:1;"></span>
+              <button id="btnLogout" class="btn btn--danger btn--sm" style="padding:4px 10px;font-size:0.7rem;">Sair</button>
+            </div>
+            <nav class="admin-nav" id="adminNav"></nav>
+        </aside>
+
+        <main class="admin-main" id="adminMain">
+            <!-- Content injected by JS -->
+        </main>
+    </div>
+
+    <!-- Mobile menu button -->
+    <button id="menuToggle" class="btn btn--primary btn--sm" style="position:fixed; bottom:24px; right:24px; z-index:1100; display:none; border-radius:50%; width:56px; height:56px; font-size:1.5rem;" aria-label="Menu">☰</button>
+
+    <script src="frontend/js/api.js?v=3.1"></script>
+    <script src="admin-panel/admin.js?v=3.2"></script>
+</body>
+</html>
