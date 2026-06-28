@@ -264,7 +264,7 @@
         <article class="admin-card"><div class="admin-card__label">📋 Pendentes</div><div class="admin-card__value" style="color:var(--color-blue-dark);">${k.pendingClients}</div></article>
         <article class="admin-card"><div class="admin-card__label">✅ Aprovados</div><div class="admin-card__value" style="color:var(--color-green);">${k.approvedClients}</div></article>
         <article class="admin-card"><div class="admin-card__label">✅ Ativados</div><div class="admin-card__value">${k.activatedClients}</div></article>
-        <article class="admin-card" style="background:linear-gradient(135deg,rgba(25,211,166,0.12),rgba(25,211,166,0.05));border:1px solid rgba(25,211,166,0.2);"><div class="admin-card__label">🟢 Online Agora</div><div class="admin-card__value" style="color:var(--color-green);font-size:1.5rem;">${k.onlineAgora}</div></article>
+        <article class="admin-card" style="background:linear-gradient(135deg,rgba(25,211,166,0.12),rgba(25,211,166,0.05));border:1px solid rgba(25,211,166,0.2);"><div class="admin-card__label">🟢 Online Agora</div><div class="admin-card__value" style="color:var(--color-green);font-size:1.5rem;">${k.onlineAgora ?? 0}</div></article>
         <article class="admin-card"><div class="admin-card__label">💳 Pagos PIX</div><div class="admin-card__value">${k.pixPayments}</div></article>
         <article class="admin-card"><div class="admin-card__label">💳 Pagos Cartão</div><div class="admin-card__value">${k.cardPayments}</div></article>
       </div>
@@ -319,10 +319,18 @@
       const reqs = data.requests || [];
       const pays = data.payments || [];
       const main = $('#adminMain');
+      var devIcon = '💻';
+      if (c.dispositivo === 'Android') devIcon = '📱';
+      else if (c.dispositivo === 'iPhone') devIcon = '📱';
+      var waLink = c.whatsapp ? 'https://wa.me/55' + c.whatsapp.replace(/\D/g, '') : null;
+
       main.innerHTML = `
         <header class="admin-header" style="margin-bottom:16px;">
           <h1 class="admin-header__title">👤 ${c.nome}</h1>
-          <button class="btn btn--primary btn--sm" onclick="navigateTo('clients')">← Voltar</button>
+          <div style="display:flex;gap:8px;">
+            ${waLink ? '<a href="' + waLink + '" target="_blank" class="btn btn--success btn--sm" style="text-decoration:none;">💬 WhatsApp</a>' : ''}
+            <button class="btn btn--primary btn--sm" onclick="navigateTo('clients')">← Voltar</button>
+          </div>
         </header>
         <div class="admin-grid" style="grid-template-columns:1fr 1fr;">
           <section class="admin-card">
@@ -334,6 +342,7 @@
               <div><strong>Status:</strong> <span class="badge badge--${statusColor(c.status)}">${c.status}</span></div>
               <div><strong>Limite:</strong> ${c.limite_aprovado ? fmtMoney(c.limite_aprovado) : '—'}</div>
               <div><strong>Produto:</strong> ${c.produto_escolhido || '—'}</div>
+              <div><strong>Dispositivo:</strong> ${devIcon} ${c.dispositivo || '—'}${c.modelo && c.dispositivo !== 'iPhone' ? ' · ' + c.modelo : ''}</div>
               <div><strong>Cadastro:</strong> ${fmtDateTime(c.created_at)}</div>
             </div>
           </section>
@@ -859,9 +868,12 @@
   function renderClientRows(clients, paymentMap) {
     if (!clients.length) return '<tr><td colspan="7" style="text-align:center;color:var(--color-text-muted);">Nenhum cliente encontrado</td></tr>';
     return clients.map(c => {
-      const disp = c.dispositivo || '';
-      const modelo = c.modelo ? c.modelo.slice(0, 60) : '';
-      const dispLabel = modelo || disp || '—';
+      var disp = c.dispositivo || '';
+      var modelo = c.modelo ? c.modelo.slice(0, 60) : '';
+      var dispIcon = disp === 'Android' ? '📱' : disp === 'iPhone' ? '📱' : disp === 'Windows' ? '💻' : disp === 'Mac' ? '💻' : '';
+      var dispLabel = dispIcon + ' ' + disp;
+      if (disp === 'Android' && modelo) dispLabel += ' · ' + modelo;
+      if (disp === 'iPhone') dispLabel = '📱 iPhone';
       const waNum = c.whatsapp ? c.whatsapp.replace(/\D/g, '') : '';
       const waLink = waNum ? 'https://wa.me/55' + waNum + '?text=' + encodeURIComponent('Ol\u00e1, estou falando com voc\u00ea referente ao seu cart\u00e3o Vale Sa\u00fade.') : '';
       return `<tr>
@@ -872,6 +884,7 @@
         <td><span class="badge badge--${statusColor(c.status)}">${c.status}</span></td>
         <td style="font-size:0.78rem;color:var(--color-text-muted);">${fmtDate(c.created_at || '')}</td>
         <td class="admin-table__actions">
+          <button class="admin-btn-icon" onclick="viewClient('${c.id}')" title="Ver detalhes">👁️</button>
           <button class="admin-btn-icon" data-action="view-payments" data-id="${c.id}" data-nome="${c.nome}" data-cpf="${c.cpf}" title="Ver pagamentos">💳</button>
           ${c.status === 'pendente' ? `
             <button class="admin-btn-icon" data-action="approve" data-id="${c.id}" title="Aprovar">✅</button>

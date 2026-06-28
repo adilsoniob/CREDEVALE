@@ -1,6 +1,0 @@
-backend/
-edge-functions/
-node_modules/
-data/
-.git/
-*.db

@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pagamento - Vale Saúde</title>
   <link rel="stylesheet" href="styles.css?v=3.2">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -21,13 +21,12 @@
   </header>
 
   <main style="padding: 16px 0;">
-    <nav class="progress">
-      <ol class="progress__list">
-        <li class="progress__item progress__item--done"><span class="progress__icon">✓</span><span class="progress__label">Cadastro</span></li>
-        <li class="progress__item progress__item--done"><span class="progress__icon">✓</span><span class="progress__label">Escolha</span></li>
-        <li class="progress__item progress__item--current"><span class="progress__icon">●</span><span class="progress__label">Pagamento</span></li>
-      </ol>
-    </nav>
+    <div class="progress-bar">
+      <div class="progress-bar__track">
+        <div class="progress-bar__fill" style="width: 100%"></div>
+      </div>
+      <span class="progress-bar__pct">100%</span>
+    </div>
 
     <section class="section" id="pagamento-section">
       <span class="section__badge">ATIVAÇÃO</span>
@@ -37,7 +36,7 @@
       <!-- RESUMO DO PEDIDO -->
       <div class="checkout-resumo">
         <div class="checkout-resumo__row">
-          <span class="checkout-resumo__label">Produto</span>
+          <span class="checkout-resumo__label">Cartão</span>
           <span class="checkout-resumo__value" id="resumoProduto">—</span>
         </div>
         <div class="checkout-resumo__row">

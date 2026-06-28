@@ -21,11 +21,21 @@ router.get('/dashboard', (req, res) => {
     const cardPayments = get('SELECT COUNT(*) as count FROM payments WHERE metodo = ? AND status = ?', ['cartao', 'pago']).count;
     const conversionRate = totalClients > 0 ? ((activatedClients / totalClients) * 100).toFixed(1) : 0;
 
+    const onlineAgora = get(`SELECT COUNT(*) as count FROM clients WHERE last_active_at >= datetime('now', '-5 minutes')`).count;
+    const totalPixCopies = get(`SELECT COALESCE(SUM(pix_copied_count), 0) as total FROM clients`).total;
+    const totalPushinpayClicks = get(`SELECT COALESCE(SUM(pushinpay_click_count), 0) as total FROM clients`).total;
+
+    const supportClickRow = get(`SELECT value FROM settings WHERE key = 'support_click_count'`);
+    const pageViewRow = get(`SELECT value FROM settings WHERE key = 'page_view_count'`);
+    const supportClickCount = parseInt(supportClickRow?.value || '0', 10);
+    const pageViewCount = parseInt(pageViewRow?.value || '0', 10);
+    const expectativaReceita = (totalPixCopies + totalPushinpayClicks) * 4.99;
+
     const recentClients = all('SELECT id, cpf, nome, whatsapp, status, created_at FROM clients ORDER BY created_at DESC LIMIT 10');
     const recentPayments = all(`SELECT p.*, c.nome as client_nome FROM payments p JOIN clients c ON p.client_id = c.id ORDER BY p.created_at DESC LIMIT 10`);
 
     res.json({
-      kpis: { totalClients, pendingClients, approvedClients, activatedClients, totalRequests, pendingRequests, totalPayments, paidPayments, totalRevenue, pixPayments, cardPayments, conversionRate },
+      kpis: { totalClients, pendingClients, approvedClients, activatedClients, totalRequests, pendingRequests, totalPayments, paidPayments, totalRevenue, pixPayments, cardPayments, conversionRate, onlineAgora, totalPixCopies, totalPushinpayClicks, supportClickCount, pageViewCount, expectativaReceita },
       recentClients, recentPayments
     });
   } catch (err) {

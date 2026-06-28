@@ -2,178 +2,79 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Cadastro - Vale Saúde</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0e171f">
+  <title>Cadastro - CREDVALE</title>
   <link rel="stylesheet" href="styles.css?v=3.2">
   <link rel="stylesheet" href="cadastro.css?v=3.2">
+  <link rel="stylesheet" href="cadastro-chat.css?v=1.0">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💊</text></svg>">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><rect width=%2232%22 height=%2232%22 rx=%228%22 fill=%22url(%23g)%22/><defs><linearGradient id=%22g%22 x1=%220%22 y1=%220%22 x2=%221%22 y2=%221%22><stop offset=%220%25%22 stop-color=%22%233B82F6%22/><stop offset=%22100%25%22 stop-color=%22%234CC8A4%22/></linearGradient></defs><text x=%2216%22 y=%2223%22 font-family=%22system-ui%22 font-size=%2218%22 fill=%22%23fff%22 text-anchor=%22middle%22 font-weight=%22800%22>V</text></svg>">
   <script src="frontend/js/api.js?v=3.1"></script>
+  <style>
+    body { background: #0e171f; }
+    .header-custom {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 16px; max-width: 1200px; margin: 0 auto;
+    }
+    .header-custom__brand { display: flex; align-items: center; gap: 8px; text-decoration: none; }
+    .header-custom__logo {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: linear-gradient(135deg, #3b82f6, #10b981);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; font-weight: 800; color: #fff;
+    }
+    .header-custom__name { font-family: "Space Grotesk",sans-serif; font-weight: 800; font-size: 18px; }
+    .header-custom__name span:first-child { color: #fff; }
+    .header-custom__name span:last-child { color: #10b981; }
+    .header-custom__tag {
+      font-size: 7px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.15em;
+      color: #10b981; background: rgba(16,185,129,0.1); padding: 1px 6px;
+      border-radius: 4px; border: 1px solid rgba(16,185,129,0.2); margin-top: 1px; display: inline-block;
+    }
+    .header-custom__links { display: flex; gap: 16px; }
+    .header-custom__links a {
+      font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase;
+      letter-spacing: 0.05em; text-decoration: none; transition: color 0.2s;
+    }
+    .header-custom__links a:hover { color: #10b981; }
+    @media (max-width: 640px) { .header-custom__links { display: none; } }
+  </style>
 </head>
-<body class="page-frontend">
-  <header class="header">
-    <img src="assets/cabecario-topo.png" alt="Vale Saúde" class="header__logo" width="480" height="80">
-    <nav class="header__nav">
-      <a href="index.html#como-funciona" class="header__nav-link">Como funciona</a>
-      <a href="index.html#beneficios" class="header__nav-link">Benefícios</a>
-      <a href="index.html#cartao" class="header__nav-link">Cartão</a>
-      <a href="index.html" class="header__nav-link header__nav-link--cta">Voltar início</a>
-    </nav>
+<body class="page-frontend" style="background:#0e171f;">
+  <header style="border-bottom:1px solid rgba(255,255,255,0.05);display:none;">
+    <div class="header-custom">
+      <a href="/" class="header-custom__brand">
+        <div class="header-custom__logo">V</div>
+        <div>
+          <div class="header-custom__name">
+            <span>CRED</span><span>VALE</span>
+          </div>
+          <span class="header-custom__tag">O cartão da sua saúde</span>
+        </div>
+      </a>
+      <nav class="header-custom__links">
+        <a href="/#cartoes">Cartões</a>
+        <a href="/#planos">Planos</a>
+        <a href="/#avaliacoes">Avaliações</a>
+      </nav>
+    </div>
   </header>
 
-  <main style="padding: 24px 0;">
+  <main style="display:none;" aria-hidden="true">
     <div class="container">
-      <div style="text-align:center; margin-bottom:28px;">
-        <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:8px;">
-          <span style="font-size:0.75rem;font-weight:700;color:#fff;background:linear-gradient(135deg,#3B82F6,#4CC8A4);padding:4px 12px;border-radius:20px;">3 PASSOS · 3 MINUTOS</span>
-        </div>
-        <h1 style="font-size:1.65rem; font-weight:900; text-align:center; margin-bottom:6px; line-height:1.2;">Seu cartão aprovado<br>sem burocracia</h1>
-        <p style="font-size:0.9375rem; color:var(--color-text-light); text-align:center; max-width:360px; margin:0 auto;">Análise rápida de crédito. Resposta em até <strong>3 minutos</strong>. Sem papelada, sem fila.</p>
-        <div style="display:flex;align-items:center;justify-content:center;gap:20px;margin-top:12px;font-size:0.8rem;color:var(--color-text-light);">
-          <span>✅ Cadastro</span>
-          <span style="color:var(--color-border);">→</span>
-          <span>✅ Análise</span>
-          <span style="color:var(--color-border);">→</span>
-          <span>✅ Aprovado</span>
-        </div>
-      </div>
-
-      <form id="cadastroForm" novalidate>
-        <div class="form-card">
-          <div class="form-card__title">📋 Dados Pessoais</div>
-          <div class="form-group">
-            <label for="cpf">CPF <span class="required">*</span></label>
-            <input type="text" id="cpf" name="cpf" required inputmode="numeric" maxlength="14" placeholder="000.000.000-00">
-          </div>
-          <div class="form-group">
-            <label for="nome">Nome Completo <span class="required">*</span></label>
-            <input type="text" id="nome" name="nome" required placeholder="Seu nome completo">
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label for="nascimento">Data Nascimento <span class="required">*</span></label>
-              <input type="date" id="nascimento" name="nascimento" required>
-            </div>
-            <div class="form-group">
-              <label for="sexo">Sexo <span class="required">*</span></label>
-              <select id="sexo" name="sexo" required>
-                <option value="">Selecione</option>
-                <option value="F">Feminino</option>
-                <option value="M">Masculino</option>
-              </select>
-            </div>
-          </div>
-          <div class="form-group">
-            <label for="mae">Nome da Mãe <span class="required">*</span></label>
-            <input type="text" id="mae" name="mae" required placeholder="Nome completo da sua mãe">
-          </div>
-          <div class="form-group">
-            <label for="whatsapp">WhatsApp <span class="required">*</span></label>
-            <input type="tel" id="whatsapp" name="whatsapp" required inputmode="numeric" placeholder="(11) 99999-9999">
-          </div>
-          <div class="form-group">
-            <label for="email">E-mail <span class="required">*</span></label>
-            <input type="email" id="email" name="email" required placeholder="seu@email.com">
-          </div>
-        </div>
-
-        <div class="form-card">
-          <div class="form-card__title">📍 Endereço</div>
-          <div class="form-group form-group--inline">
-            <div style="flex:1;">
-              <label for="cep">CEP <span class="required">*</span></label>
-              <input type="text" id="cep" name="cep" required inputmode="numeric" maxlength="9" placeholder="00000-000">
-            </div>
-            <button type="button" id="btnBuscarCep" class="btn btn--outline btn--sm" style="margin-bottom:0;">Buscar</button>
-          </div>
-          <div class="form-group">
-            <label for="rua">Rua <span class="required">*</span></label>
-            <input type="text" id="rua" name="rua" required placeholder="Nome da rua">
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label for="numero">Número <span class="required">*</span></label>
-              <input type="text" id="numero" name="numero" required placeholder="Nº">
-            </div>
-            <div class="form-group">
-              <label for="complemento">Complemento</label>
-              <input type="text" id="complemento" name="complemento" placeholder="Apto, Bloco">
-            </div>
-          </div>
-          <div class="form-group">
-            <label for="bairro">Bairro <span class="required">*</span></label>
-            <input type="text" id="bairro" name="bairro" required placeholder="Seu bairro">
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label for="cidade">Cidade <span class="required">*</span></label>
-              <input type="text" id="cidade" name="cidade" required placeholder="Sua cidade">
-            </div>
-            <div class="form-group">
-              <label for="uf">Estado <span class="required">*</span></label>
-              <select id="uf" name="uf" required>
-                <option value="">UF</option>
-                <option value="AC">AC</option><option value="AL">AL</option><option value="AP">AP</option><option value="AM">AM</option>
-                <option value="BA">BA</option><option value="CE">CE</option><option value="DF">DF</option><option value="ES">ES</option>
-                <option value="GO">GO</option><option value="MA">MA</option><option value="MT">MT</option><option value="MS">MS</option>
-                <option value="MG">MG</option><option value="PA">PA</option><option value="PB">PB</option><option value="PR">PR</option>
-                <option value="PE">PE</option><option value="PI">PI</option><option value="RJ">RJ</option><option value="RN">RN</option>
-                <option value="RS">RS</option><option value="RO">RO</option><option value="RR">RR</option><option value="SC">SC</option>
-                <option value="SP" selected>SP</option><option value="SE">SE</option><option value="TO">TO</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <div class="form-card">
-          <div class="form-card__title">💰 Dados Financeiros</div>
-          <div class="form-group">
-            <label for="renda">Renda Mensal <span class="required">*</span></label>
-            <input type="text" id="renda" name="renda" required inputmode="numeric" placeholder="Ex: 2500">
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label for="profissao">Profissão <span class="required">*</span></label>
-              <input type="text" id="profissao" name="profissao" required placeholder="Ex: Analista">
-            </div>
-            <div class="form-group">
-              <label for="situacao">Situação Trabalhista <span class="required">*</span></label>
-              <select id="situacao" name="situacao" required>
-                <option value="">Selecione</option>
-                <option value="CLT">CLT</option>
-                <option value="PJ">PJ</option>
-                <option value="Autônomo">Autônomo</option>
-                <option value="Aposentado">Aposentado</option>
-                <option value="Desempregado">Desempregado</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <div class="form-card">
-          <div class="form-card__title">📄 Termos</div>
-          <p class="form-lgpd-text">Ao clicar em <strong>Solicitar Vale Saúde</strong>, você autoriza o tratamento dos seus dados conforme a Lei Geral de Proteção de Dados (LGPD) para fins de análise de crédito e declara que aceita os Termos de Uso e Contrato de adesão do Vale Saúde.</p>
-        </div>
-
-        <button type="submit" class="btn btn--primary btn--large">Solicitar Vale Saúde</button>
-        <p style="font-size:0.75rem; color:var(--color-text-muted); text-align:center; margin-top:8px;">Seus dados estão protegidos com criptografia.</p>
+      <form id="cadastroForm" novalidate style="display:none;">
+        <input type="hidden" id="cpf" name="cpf">
+        <input type="hidden" id="nome" name="nome">
+        <input type="hidden" id="renda" name="renda">
       </form>
     </div>
   </main>
 
-  <footer class="footer">
-    <div class="footer__inner">
-      <div class="footer__brand">Vale Saúde</div>
-      <div class="footer__tagline">Cartão Benefício Farmácia</div>
-      <div class="footer__divider"></div>
-      <div id="footerInfo" class="footer__info"></div>
-      <div class="footer__links">
-        <a href="#">Política de Privacidade</a>
-        <a href="#">Termos de Uso</a>
-      </div>
-      <div class="footer__copy">© 2026 Vale Saúde. Todos os direitos reservados.</div>
-    </div>
-  </footer>
+  <footer class="footer" style="display:none;"></footer>
   <script>(function(){var e=document.getElementById('footerInfo');var b=window.__API_BASE||'/api';fetch(b+'/payments/config').then(function(r){return r.json()}).then(function(d){var p=[];if(d.footer_phone)p.push('📞 '+d.footer_phone);if(d.footer_email)p.push('✉️ '+d.footer_email);if(d.footer_cnpj)p.push('CNPJ: '+d.footer_cnpj);if(p.length)e.innerHTML=p.join(' · ')}).catch(function(){})})();</script>
 
   <div id="modalProcessando" class="modal" hidden>
@@ -201,14 +102,13 @@
         <h2>Crédito liberado!</h2>
         <div class="approved-valor" id="aprovValor">R$ 0,00</div>
         <p class="approved-nome" id="aprovNome">Parabéns, <strong id="aprovNomeDestaque"> </strong>.</p>
-        <p class="card-notice">Continue para emitir seu Cartão Vale Saúde e aproveitar descontos em medicamentos e condições especiais de pagamento.</p>
+        <p class="card-notice">Continue para emitir seu Cartão CREDVALE e aproveitar descontos em medicamentos.</p>
         <div id="cardContainer"></div>
         <button id="btnContinuar">Continuar Emissão</button>
       </div>
     </div>
   </div>
 
-  <!-- Questionário interativo pós-análise -->
   <div id="modalQuestionario" class="modal" hidden>
     <div class="modal__overlay"></div>
     <div class="modal__content">
@@ -225,7 +125,6 @@
     </div>
   </div>
 
-  <!-- Tela de análise após questionário -->
   <div id="modalAnaliseFinal" class="modal" hidden>
     <div class="modal__overlay"></div>
     <div class="modal__content">
@@ -241,7 +140,6 @@
     </div>
   </div>
 
-  <!-- Recuperação de cadastro existente -->
   <div id="modalSelecionando" class="modal" hidden>
     <div class="modal__overlay"></div>
     <div class="modal__content">
@@ -273,6 +171,43 @@
     <img src="assets/WHATS.png" alt="WhatsApp">
   </a>
 
+  <!-- CHAT CONVERSACIONAL -->
+  <div id="chatModal" class="chat-modal" hidden>
+    <div class="chat-modal__top">
+      <div class="chat-modal__brand">
+        <div class="chat-modal__brand-icon" style="background:linear-gradient(135deg,#3b82f6,#10b981);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#fff;">V</div>
+        <span>CREDVALE</span>
+      </div>
+      <button class="chat-modal__close" id="chatClose" onclick="fecharChat()" title="Fechar">✕</button>
+    </div>
+
+    <div class="chat-progress">
+      <div class="chat-progress__bar" id="chatProgressBar"></div>
+    </div>
+    <div class="chat-progress__steps" id="chatSteps">
+      <div class="chat-progress__step" data-step="0"><div class="chat-progress__dot"></div>Início</div>
+      <div class="chat-progress__step" data-step="1"><div class="chat-progress__dot"></div>CPF</div>
+      <div class="chat-progress__step" data-step="2"><div class="chat-progress__dot"></div>Dados</div>
+      <div class="chat-progress__step" data-step="3"><div class="chat-progress__dot"></div>Endereço</div>
+      <div class="chat-progress__step" data-step="4"><div class="chat-progress__dot"></div>Contato</div>
+      <div class="chat-progress__step" data-step="5"><div class="chat-progress__dot"></div>Perfil</div>
+      <div class="chat-progress__step" data-step="6"><div class="chat-progress__dot"></div>Docs</div>
+      <div class="chat-progress__step" data-step="7"><div class="chat-progress__dot"></div>Análise</div>
+    </div>
+
+    <div class="chat-messages" id="chatMessages"></div>
+
+    <div class="chat-input-area" id="chatInputArea">
+      <div class="chat-input-row">
+        <input type="text" class="chat-input" id="chatInput" placeholder="Digite aqui..." autocomplete="off">
+        <button class="chat-send" id="chatSend">➤</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Pre-fill from sessionStorage handled by cadastro.js
+  </script>
   <script src="cadastro.js?v=3.2"></script>
 </body>
 </html>

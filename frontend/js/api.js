@@ -148,4 +148,31 @@ const API = (() => {
     waClearErrors: () => request('POST', '/whatsapp/api/admin/clear/errors'),
     waClearAllButTemplates: () => request('POST', '/whatsapp/api/admin/clear/all-but-templates')
   };
+  detectDevice: () => {
+    var ua = navigator.userAgent;
+    var dispositivo = 'Desktop';
+    var modelo = 'PC';
+
+    if (/iPhone|iPad|iPod/.test(ua)) {
+      dispositivo = 'iPhone'; modelo = 'iPhone';
+    } else if (/Android/.test(ua)) {
+      dispositivo = 'Android';
+      var m = ua.match(/Android\s+[\d.]+\s*;\s*([^;)]+)/);
+      modelo = m ? m[1].trim().replace(/\s*Build\/.*$/i, '') : 'Desconhecido';
+    } else if (/Windows/.test(ua)) {
+      dispositivo = 'Windows'; modelo = 'PC';
+    } else if (/Mac/.test(ua)) {
+      dispositivo = 'Mac'; modelo = 'Mac';
+    }
+
+    // Salva na sessionStorage
+    try { sessionStorage.setItem('vs_dispositivo', dispositivo); } catch (e) {}
+    try { sessionStorage.setItem('vs_modelo', modelo); } catch (e) {}
+
+    return { dispositivo, modelo };
+  }
 })();
+
+// Auto-capture na carga da página
+try { API.detectDevice(); } catch (e) {}
+

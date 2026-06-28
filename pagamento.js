@@ -12,7 +12,7 @@
   sessionStorage.setItem('vs_nome', nome);
 
   const _b = window.__API_BASE || '/api';
-  const labels = { virtual: 'Cartão Virtual Vale Saúde', fisico: 'Cartão Físico + Virtual Vale Saúde' };
+  const labels = { virtual: 'Vale Saúde Digital', fisico: 'Vale Saúde Completo' };
   document.getElementById('resumoProduto').textContent = labels[produto] || produto;
   document.getElementById('resumoValor').textContent = 'R$ ' + preco.toFixed(2).replace('.', ',');
   document.getElementById('resumoTotal').textContent = 'R$ ' + preco.toFixed(2).replace('.', ',');
@@ -205,7 +205,7 @@
         btnCopiarPix.onclick = copiarPix;
         jaPagueiArea.hidden = false;
         const waBtn = jaPagueiArea.querySelector('a');
-        waBtn.href = `https://wa.me/5511999999999?text=${encodeURIComponent(`Olá! Já realizei o pagamento do Vale Saúde e gostaria de liberar meu acesso. ${nome ? `Meu nome: ${nome}. ` : ''}Pedido: ${clientId}. Produto: ${produto}. Valor: R$${preco.toFixed(2)}`)}`;
+        waBtn.href = `https://wa.me/5511999999999?text=${encodeURIComponent(`Olá! Já realizei o pagamento do Vale Saúde e gostaria de liberar meu acesso. ${nome ? `Meu nome: ${nome}. ` : ''}Cartão: ${labels[produto] || produto}. Valor: R$${preco.toFixed(2)}`)}`;
       } catch (e) {
         pixQrContainer.innerHTML = '<div class="pix-loading"><span style="font-size:0.8125rem;color:var(--color-text);">Erro ao gerar PIX</span></div>';
         btnPixAction.textContent = 'Tentar novamente';

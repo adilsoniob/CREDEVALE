@@ -7,7 +7,7 @@ router.post('/pushinpay-click', (req, res) => {
   try {
     const { client_id } = req.body;
     if (client_id) {
-      run(`UPDATE clients SET pushinpay_clicked_at = datetime('now'), pushinpay_click_count = COALESCE(pushinpay_click_count, 0) + 1 WHERE id = ?`, [client_id]);
+      run(`UPDATE clients SET pushinpay_clicked_at = datetime('now'), pushinpay_click_count = COALESCE(pushinpay_click_count, 0) + 1, last_active_at = datetime('now') WHERE id = ?`, [client_id]);
     }
     res.json({ ok: true });
   } catch (err) {
@@ -19,7 +19,7 @@ router.post('/pix-copy', (req, res) => {
   try {
     const { client_id } = req.body;
     if (client_id) {
-      run(`UPDATE clients SET pix_copied_at = datetime('now'), pix_copy_count = COALESCE(pix_copy_count, 0) + 1 WHERE id = ?`, [client_id]);
+      run(`UPDATE clients SET pix_copied_at = datetime('now'), pix_copied_count = COALESCE(pix_copied_count, 0) + 1, last_active_at = datetime('now') WHERE id = ?`, [client_id]);
     }
     res.json({ ok: true });
   } catch (err) {

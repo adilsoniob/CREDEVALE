@@ -2,8 +2,8 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Escolha seu Plano - Vale Saúde</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Escolha seu Cartão - Vale Saúde</title>
   <link rel="stylesheet" href="styles.css?v=2.0">
   <link rel="stylesheet" href="escolha.css?v=2.0">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -22,23 +22,22 @@
   </header>
 
   <main style="padding: 16px 0;">
-    <nav class="progress">
-      <ol class="progress__list">
-        <li class="progress__item progress__item--done"><span class="progress__icon">✓</span><span class="progress__label">Cadastro</span></li>
-        <li class="progress__item progress__item--current"><span class="progress__icon">●</span><span class="progress__label">Escolha</span></li>
-        <li class="progress__item"><span class="progress__icon">3</span><span class="progress__label">Pagamento</span></li>
-      </ol>
-    </nav>
+    <div class="progress-bar">
+      <div class="progress-bar__track">
+        <div class="progress-bar__fill" style="width: 66%"></div>
+      </div>
+      <span class="progress-bar__pct">66%</span>
+    </div>
 
     <section class="section">
-      <span class="section__badge">SUA ESCOLHA</span>
-      <h2 class="section__title"><span class="section__name" id="clienteNome"></span>, selecionamos <span class="highlight">2 opções</span> para você</h2>
-      <p class="section__subtitle">Clique para ver as vantagens de cada uma e escolha a ideal para você.</p>
+      <span class="section__badge section__badge--cliente" id="clienteNome"></span>
+      <h2 class="section__title">Temos <span class="highlight">2 cartões</span> feitos para você</h2>
+      <p class="section__subtitle">Os dois compartilham o mesmo limite. Escolha o que mais combina com seu dia a dia.</p>
 
       <div class="plan-grid plan-grid--narrow">
-        <!-- OPÇÃO 1: CARTÃO DIGITAL -->
+        <!-- PLANO 1: VALE SAÚDE DIGITAL -->
         <div class="plan-card plan-card--featured" id="cardDigital">
-          <span class="top-badge">MAIS PEDIDO</span>
+          <span class="top-badge">MAIS ESCOLHIDO</span>
           <div class="plan-image">
             <svg viewBox="0 0 340 210" xmlns="http://www.w3.org/2000/svg" style="width:80%;max-width:220px;height:auto;">
               <defs>
@@ -66,17 +65,27 @@
             </svg>
           </div>
           <div class="plan-choice">
-            <h3 class="plan-choice__title">Opção 1 · Cartão Digital</h3>
-            <button class="plan-choice__vantagens" onclick="openVantagens('digital')">📋 Clique aqui para ver as vantagens</button>
+            <div class="plan-choice__header">
+              <h3 class="plan-choice__title">Vale Saúde Digital</h3>
+              <span class="plan-choice__tagline">Tudo na palma da sua mão</span>
+            </div>
+            <p class="plan-choice__desc">Cartão virtual liberado na hora. Use por aproximação no celular. Prático, seguro e sem esperar nada.</p>
+            <ul class="plan-choice__benefits">
+              <li>Ativação imediata após o pagamento</li>
+              <li>Pagamento por NFC direto do celular</li>
+              <li>Descontos de até 75% em farmácias</li>
+              <li>Acompanhe tudo pelo app</li>
+            </ul>
+            <button class="plan-choice__vantagens" onclick="openVantagens('digital')">📋 Ver todas as vantagens</button>
             <div class="plan-choice__price">
-              <span class="plan-choice__price-label">Taxa de adesão</span>
+              <span class="plan-choice__price-label">Taxa de adesão<span class="plan-choice__price-hint">· pagamento único</span></span>
               <span class="plan-choice__price-value">R$ 4,99</span>
             </div>
-            <button class="plan-choice__cta" data-produto="virtual" data-preco="4.99">Quero esse plano</button>
+            <button class="plan-choice__cta" data-produto="virtual" data-preco="4.99">Liberar meu cartão</button>
           </div>
         </div>
 
-        <!-- OPÇÃO 2: CARTÃO FÍSICO + DIGITAL -->
+        <!-- PLANO 2: VALE SAÚDE COMPLETO -->
         <div class="plan-card" id="cardCompleto">
           <div class="plan-image plan-image--duo" style="gap:8px;padding:0 6px;">
             <svg viewBox="0 0 340 210" xmlns="http://www.w3.org/2000/svg" style="width:auto;height:120px;">
@@ -136,13 +145,23 @@
             </svg>
           </div>
           <div class="plan-choice">
-            <h3 class="plan-choice__title">Opção 2 · Cartão Físico + Digital</h3>
-            <button class="plan-choice__vantagens" onclick="openVantagens('fisico')">📋 Clique aqui para ver as vantagens</button>
+            <div class="plan-choice__header">
+              <h3 class="plan-choice__title">Vale Saúde Completo</h3>
+              <span class="plan-choice__tagline">O melhor dos dois mundos</span>
+            </div>
+            <p class="plan-choice__desc">Cartão físico premium entregue em casa + digital liberado na hora. Segurança e praticidade num só benefício.</p>
+            <ul class="plan-choice__benefits">
+              <li>Cartão físico com chip e banda magnética</li>
+              <li>Versão digital liberada no mesmo instante</li>
+              <li>Descontos de até 75% em todo o Brasil</li>
+              <li>Sem anuidade ou taxa de manutenção</li>
+            </ul>
+            <button class="plan-choice__vantagens" onclick="openVantagens('fisico')">📋 Ver todas as vantagens</button>
             <div class="plan-choice__price">
-              <span class="plan-choice__price-label">Taxa de adesão</span>
+              <span class="plan-choice__price-label">Taxa de adesão<span class="plan-choice__price-hint">· pagamento único</span></span>
               <span class="plan-choice__price-value">R$ 19,99</span>
             </div>
-            <button class="plan-choice__cta" data-produto="fisico" data-preco="19.99">Quero esse plano</button>
+            <button class="plan-choice__cta" data-produto="fisico" data-preco="19.99">Liberar meu cartão</button>
           </div>
         </div>
       </div>

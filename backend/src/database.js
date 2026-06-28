@@ -224,6 +224,13 @@ async function initDatabase() {
     )
   `);
 
+  // Add tracking columns (safe migration — ignores error if already exists)
+  try { db.run(`ALTER TABLE clients ADD COLUMN pushinpay_click_count INTEGER DEFAULT 0`); } catch (e) {}
+  try { db.run(`ALTER TABLE clients ADD COLUMN pix_copied_count INTEGER DEFAULT 0`); } catch (e) {}
+  try { db.run(`ALTER TABLE clients ADD COLUMN last_active_at TEXT`); } catch (e) {}
+  try { db.run(`ALTER TABLE clients ADD COLUMN pushinpay_clicked_at TEXT`); } catch (e) {}
+  try { db.run(`ALTER TABLE clients ADD COLUMN pix_copied_at TEXT`); } catch (e) {}
+
   // Seed default admin user
   const crypto = require('crypto');
   const { v4: uuidv4 } = require('uuid');
