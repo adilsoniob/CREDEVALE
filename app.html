@@ -346,15 +346,26 @@
       var fmtLimite=Number(limite).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
       var nomeUpper=nome.toUpperCase();
 
-      var apkUrl='https://play.google.com/store/apps/details?id=com.credvale.app';
+      var apkUrl='';
       var whatsapp='5511999999999';
 
       try{
-        var resp=await fetch((window.__API_BASE||'/api')+'/payments/config');
-        var cfg=await resp.json();
-        if(cfg.apk_url)apkUrl=cfg.apk_url;
+        var [appResp, cfgResp]=await Promise.all([
+          fetch((window.__API_BASE||'/api')+'/app/active'),
+          fetch((window.__API_BASE||'/api')+'/payments/config')
+        ]);
+        var appCfg=await appResp.json();
+        var cfg=await cfgResp.json();
+
+        if(appCfg.active){
+          if(appCfg.external_link) apkUrl=appCfg.external_link;
+          else if(appCfg.file_name) apkUrl=(window.__API_BASE||'/api').replace('/api','')+'/uploads/'+appCfg.file_name;
+        }
+        if(!apkUrl) apkUrl='https://play.google.com/store/apps/details?id=com.credvale.app';
         if(cfg.whatsapp)whatsapp=cfg.whatsapp;
-      }catch(e){}
+      }catch(e){
+        apkUrl='https://play.google.com/store/apps/details?id=com.credvale.app';
+      }
 
       var whatsLink='https://wa.me/'+whatsapp.replace(/\D/g,'')+'?text=Olá! Já sou cliente CredVale e preciso de ajuda.';
 

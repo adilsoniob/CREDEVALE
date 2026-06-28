@@ -147,6 +147,7 @@
       { key: 'dashboard', icon: '📊', label: 'Dashboard' },
       { key: 'separator-geral', separator: true, label: 'GERENCIAR' },
       { key: 'configuracoes', icon: '⚙️', label: 'Configurações' },
+      { key: 'aplicativo', icon: '📱', label: 'Aplicativo' },
       { key: 'pagamento-config', icon: '🟢', label: 'PIX' },
       { key: 'popup-config', icon: '🪟', label: 'Pop-up' },
       { key: 'pagamentos', icon: '💳', label: 'Pagamentos' },
@@ -212,6 +213,7 @@
       switch (route) {
         case 'dashboard': await renderDashboard(main); break;
         case 'configuracoes': await renderConfiguracoes(main); break;
+        case 'aplicativo': await renderAplicativo(main); break;
         case 'pagamento-config': await renderPagamentoConfig(main); break;
         case 'popup-config': await renderPopupConfig(main); break;
         case 'pagamentos': await renderPagamentos(main); break;
@@ -374,6 +376,233 @@
     }
   }
 
+  async function renderAplicativo(container) {
+    const data = await API.request('GET', '/app/versions');
+    const active = await API.request('GET', '/app/active');
+
+    const activeId = active.active ? active.id : null;
+    const activeVersion = data.find(v => v.id === activeId) || null;
+
+    function fmtSize(bytes) {
+      if (!bytes || bytes === 0) return '—';
+      const sizes = ['B', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(1024));
+      return (bytes / Math.pow(1024, i)).toFixed(i > 0 ? 1 : 0) + ' ' + sizes[i];
+    }
+
+    container.innerHTML = `
+      <header class="admin-header">
+        <h1 class="admin-header__title">📱 Gerenciamento do Aplicativo</h1>
+      </header>
+
+      <p style="font-size:0.85rem;color:var(--color-text-muted);margin-bottom:20px;line-height:1.5;">Faça o upload de uma nova versão do aplicativo ou informe um link externo para download.</p>
+
+      <!-- Active Version Card -->
+      <section class="admin-card" style="margin-bottom:var(--space-md);">
+        <h2 class="admin-form__section-title" style="margin-bottom:12px;">✅ Versão Ativa</h2>
+        ${activeVersion ? `
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:0.85rem;">
+          <div><span style="color:var(--color-text-muted);">Arquivo:</span> <strong>${activeVersion.original_name || '—'}</strong></div>
+          <div><span style="color:var(--color-text-muted);">Versão:</span> <strong>${activeVersion.version || '—'}</strong></div>
+          <div><span style="color:var(--color-text-muted);">Tamanho:</span> <strong>${fmtSize(activeVersion.file_size)}</strong></div>
+          <div><span style="color:var(--color-text-muted);">Enviado em:</span> <strong>${fmtDateTime(activeVersion.created_at)}</strong></div>
+          <div style="grid-column:1/-1;"><span style="color:var(--color-text-muted);">Origem:</span> <strong>${activeVersion.external_link ? '🔗 Link Externo' : (activeVersion.file_path ? '📦 Upload' : '—')}</strong></div>
+          ${activeVersion.external_link ? `<div style="grid-column:1/-1;"><span style="color:var(--color-text-muted);">Link:</span> <a href="${activeVersion.external_link}" target="_blank" style="color:var(--color-primary);">${activeVersion.external_link}</a></div>` : ''}
+        </div>
+        <div style="margin-top:10px;"><span class="badge badge--success" style="font-size:0.78rem;">🟢 Ativo</span></div>
+        ` : '<p style="color:var(--color-text-muted);font-size:0.85rem;">Nenhuma versão ativa no momento.</p>'}
+      </section>
+
+      <!-- Upload Section -->
+      <section class="admin-card admin-form" style="margin-bottom:var(--space-md);">
+        <h2 class="admin-form__section-title">📤 Upload do Aplicativo</h2>
+        <p style="font-size:0.8rem;color:var(--color-text-muted);margin-bottom:12px;">Arraste o arquivo ou clique para selecionar. Formatos aceitos: .apk, .aab, .ipa (máx. 300MB)</p>
+        <div id="appDropZone" style="border:2px dashed rgba(255,255,255,0.12);border-radius:16px;padding:32px;text-align:center;background:rgba(255,255,255,0.02);cursor:pointer;transition:all 0.2s;">
+          <div style="font-size:2rem;margin-bottom:8px;">📦</div>
+          <div id="appDropText" style="font-size:0.85rem;color:var(--color-text-muted);">Clique ou arraste o arquivo aqui</div>
+          <div id="appFileInfo" style="display:none;font-size:0.85rem;color:var(--color-text-light);margin-top:8px;"></div>
+          <input type="file" id="appFileInput" accept=".apk,.aab,.ipa" style="display:none;">
+        </div>
+        <div class="form-grid" style="margin-top:16px;">
+          <div class="form-group form-group--full">
+            <label>Versão (opcional)</label>
+            <input type="text" id="appVersionInput" placeholder="Ex: 2.1.0" style="max-width:200px;">
+          </div>
+        </div>
+        <button id="btnUploadApp" class="btn btn--primary" style="margin-top:var(--space-lg);" disabled>📤 Enviar Aplicativo</button>
+        <div id="appUploadProgress" style="display:none;margin-top:12px;">
+          <div style="height:6px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden;">
+            <div id="appProgressBar" style="height:100%;width:0%;background:linear-gradient(90deg,#3B82F6,#4CC8A4);border-radius:3px;transition:width 0.3s;"></div>
+          </div>
+          <div id="appProgressText" style="font-size:0.75rem;color:var(--color-text-muted);margin-top:4px;">Enviando...</div>
+        </div>
+      </section>
+
+      <!-- External Link Section -->
+      <section class="admin-card admin-form" style="margin-bottom:var(--space-md);">
+        <h2 class="admin-form__section-title">🔗 Link Externo (opcional)</h2>
+        <p style="font-size:0.8rem;color:var(--color-text-muted);margin-bottom:12px;">Caso seja informado um link externo (Google Play, App Store, CDN etc.), este terá prioridade sobre o arquivo hospedado.</p>
+        <div class="form-group form-group--full">
+          <input type="url" id="appExternalLink" value="${activeVersion?.external_link || ''}" placeholder="https://play.google.com/store/apps/details?id=com.credvale.app">
+        </div>
+        <button id="btnSaveAppLink" class="btn btn--primary" style="margin-top:var(--space-lg);">💾 Salvar Link</button>
+      </section>
+
+      <!-- Version History -->
+      <section class="admin-card">
+        <h2 class="admin-form__section-title" style="margin-bottom:12px;">📋 Histórico de Versões</h2>
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Versão</th>
+                <th>Arquivo</th>
+                <th>Data</th>
+                <th>Tamanho</th>
+                <th>Tipo</th>
+                <th>Status</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${data.length === 0 ? '<tr><td colspan="7" style="text-align:center;color:var(--color-text-muted);font-size:0.85rem;">Nenhuma versão encontrada</td></tr>' : ''}
+              ${data.map(v => `
+                <tr>
+                  <td><strong>${v.version || '—'}</strong></td>
+                  <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${v.original_name || (v.external_link ? '🔗 Link' : '—')}</td>
+                  <td>${fmtDateTime(v.created_at)}</td>
+                  <td>${fmtSize(v.file_size)}</td>
+                  <td><span class="badge badge--${v.file_type === 'apk' ? 'primary' : 'secondary'}">${v.file_type.toUpperCase()}</span></td>
+                  <td>${v.status === 'active' ? '<span class="badge badge--success">Ativo</span>' : '<span class="badge badge--ghost">Arquivado</span>'}</td>
+                  <td>
+                    <div style="display:flex;gap:4px;flex-wrap:wrap;">
+                      ${v.status !== 'active' ? `<button class="btn btn--sm btn--primary btnActivate" data-id="${v.id}" title="Ativar">✅</button>` : ''}
+                      ${v.file_path ? `<button class="btn btn--sm btn--ghost btnDownload" data-id="${v.id}" title="Baixar">⬇️</button>` : ''}
+                      <button class="btn btn--sm btn--danger btnDelete" data-id="${v.id}" title="Excluir">🗑️</button>
+                    </div>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    `;
+
+    // Upload drag & drop
+    const dropZone = $('#appDropZone');
+    const fileInput = $('#appFileInput');
+    const dropText = $('#appDropText');
+    const fileInfo = $('#appFileInfo');
+    const uploadBtn = $('#btnUploadApp');
+    const verInput = $('#appVersionInput');
+
+    dropZone.addEventListener('click', () => fileInput.click());
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.style.borderColor = '#4CC8A4'; dropZone.style.background = 'rgba(76,200,164,0.05)'; });
+    dropZone.addEventListener('dragleave', () => { dropZone.style.borderColor = 'rgba(255,255,255,0.12)'; dropZone.style.background = 'rgba(255,255,255,0.02)'; });
+    dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.style.borderColor = 'rgba(255,255,255,0.12)'; dropZone.style.background = 'rgba(255,255,255,0.02)'; if (e.dataTransfer.files.length) fileInput.files = e.dataTransfer.files; handleFile(); });
+
+    fileInput.addEventListener('change', handleFile);
+    function handleFile() {
+      const file = fileInput.files[0];
+      if (!file) return;
+      const ext = file.name.split('.').pop().toLowerCase();
+      if (!['apk', 'aab', 'ipa'].includes(ext)) { showToast('Tipo de arquivo não permitido', 'error'); fileInput.value = ''; return; }
+      dropText.style.display = 'none';
+      fileInfo.style.display = '';
+      fileInfo.innerHTML = '📄 <strong>' + file.name + '</strong> (' + fmtSize(file.size) + ')';
+      uploadBtn.disabled = false;
+    }
+
+    uploadBtn.addEventListener('click', async () => {
+      const file = fileInput.files[0];
+      if (!file) return;
+      uploadBtn.disabled = true;
+      uploadBtn.textContent = '⏳ Enviando...';
+
+      const prog = $('#appUploadProgress');
+      const bar = $('#appProgressBar');
+      const progText = $('#appProgressText');
+      prog.style.display = '';
+
+      try {
+        const formData = new FormData();
+        formData.append('app_file', file);
+        if (verInput.value) formData.append('version', verInput.value);
+
+        const token = getToken();
+        const base = API.getApiUrl ? API.getApiUrl().replace(/\/api$/,'') + '/api' : window.__API_BASE || '/api';
+        const resp = await fetch(base + '/app/upload', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token },
+          body: formData
+        });
+        if (!resp.ok) { const err = await resp.json(); throw new Error(err.error || 'Erro no upload'); }
+        await resp.json();
+        showToast('Aplicativo enviado com sucesso!');
+        navigateTo('aplicativo');
+      } catch (e) {
+        showToast('Erro: ' + e.message, 'error');
+        prog.style.display = 'none';
+        uploadBtn.disabled = false;
+        uploadBtn.textContent = '📤 Enviar Aplicativo';
+      }
+    });
+
+    // Save external link
+    $('#btnSaveAppLink').addEventListener('click', async () => {
+      const url = $('#appExternalLink').value.trim();
+      if (!url) { showToast('Informe uma URL', 'error'); return; }
+      try {
+        await API.request('PUT', '/app/external-link', { url });
+        showToast('Link externo salvo!');
+        navigateTo('aplicativo');
+      } catch (e) {
+        showToast('Erro: ' + e.message, 'error');
+      }
+    });
+
+    // Activate version
+    $$('.btnActivate').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.dataset.id;
+        if (!await showConfirmModal('Ativar versão', 'Tem certeza que deseja ativar esta versão?', 'Ativar', 'Cancelar')) return;
+        try {
+          await API.request('PUT', '/app/versions/' + id + '/activate');
+          showToast('Versão ativada!');
+          navigateTo('aplicativo');
+        } catch (e) {
+          showToast('Erro: ' + e.message, 'error');
+        }
+      });
+    });
+
+    // Download version
+    $$('.btnDownload').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.dataset.id;
+        const token = getToken();
+        const base = API.getApiUrl ? API.getApiUrl().replace(/\/api$/,'') + '/api' : window.__API_BASE || '/api';
+        window.open(base + '/app/download/' + id + '?token=' + token, '_blank');
+      });
+    });
+
+    // Delete version
+    $$('.btnDelete').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.dataset.id;
+        if (!await showConfirmModal('Excluir versão', 'Tem certeza que deseja excluir esta versão? Esta ação não pode ser desfeita.', 'Excluir', 'Cancelar')) return;
+        try {
+          await API.request('DELETE', '/app/versions/' + id);
+          showToast('Versão excluída!');
+          navigateTo('aplicativo');
+        } catch (e) {
+          showToast('Erro: ' + e.message, 'error');
+        }
+      });
+    });
+  }
+
   async function renderConfiguracoes(container) {
     const data = await API.getSettings();
     container.innerHTML = `
@@ -399,18 +628,6 @@
         </div>
         <button id="btnSaveConfig" class="btn btn--primary" style="margin-top:var(--space-lg);">SALVAR</button>
       </section>
-      <section class="admin-card admin-form" style="margin-top:var(--space-md);">
-        <h2 class="admin-form__section-title">📱 Página de Sucesso / APK</h2>
-        <div class="form-grid">
-          <div class="form-group form-group--full">
-            <label>URL do APK para download (após pagamento aprovado)</label>
-            <input type="url" id="settApkUrl" value="${data.settings.apk_url || ''}" placeholder="https://seusite.com/app.apk">
-            <div style="font-size:0.75rem;color:var(--color-text-muted);margin-top:4px;">Link direto para o arquivo .apk. Aparecerá na página de parabéns após o pagamento ser aprovado.</div>
-          </div>
-        </div>
-        <button id="btnSaveApkUrl" class="btn btn--primary" style="margin-top:var(--space-lg);">SALVAR URL DO APK</button>
-      </section>
-
       <section class="admin-card admin-form" style="margin-top:var(--space-md);">
         <h2 class="admin-form__section-title">📞 Rodapé</h2>
         <p style="font-size:0.8rem;color:var(--color-text-muted);margin-bottom:12px;">Informações exibidas no rodapé de todas as páginas.</p>
@@ -439,14 +656,6 @@
           whatsapp: $('#settWhatsapp').value
         });
         showToast('Configurações salvas!');
-      } catch (e) {
-        showToast('Erro ao salvar: ' + e.message, 'error');
-      }
-    });
-    $('#btnSaveApkUrl')?.addEventListener('click', async () => {
-      try {
-        await API.saveSettings({ apk_url: $('#settApkUrl').value });
-        showToast('URL do APK salva!');
       } catch (e) {
         showToast('Erro ao salvar: ' + e.message, 'error');
       }

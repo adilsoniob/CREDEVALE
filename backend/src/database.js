@@ -233,6 +233,23 @@ async function initDatabase() {
   try { db.run(`ALTER TABLE clients ADD COLUMN dispositivo TEXT`); } catch (e) {}
   try { db.run(`ALTER TABLE clients ADD COLUMN modelo TEXT`); } catch (e) {}
 
+  db.run(`
+    CREATE TABLE IF NOT EXISTS app_versions (
+      id TEXT PRIMARY KEY,
+      file_name TEXT,
+      original_name TEXT,
+      version TEXT,
+      file_path TEXT,
+      file_size INTEGER DEFAULT 0,
+      file_type TEXT DEFAULT 'apk',
+      external_link TEXT,
+      status TEXT DEFAULT 'archived',
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now')),
+      uploaded_by TEXT
+    )
+  `);
+
   // Seed default admin user
   const crypto = require('crypto');
   const { v4: uuidv4 } = require('uuid');
