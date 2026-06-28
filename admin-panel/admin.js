@@ -1427,7 +1427,7 @@
   _win.exportarClientes = exportarClientes;
   _win.excluirTodosClientes = excluirTodosClientes;
   _win.zerarSistema = zerarSistema;
-  _win.reloadPagamentos = reloadPagamentos;
+  // reloadPagamentos é definido via const dentro de renderPagamentos (closure), não está no escopo do IIFE
   _win.renderLogsSistema = renderLogsSistema;
   _win.novoUsuario = novoUsuario;
   _win.reprovarSolicitacao = reprovarSolicitacao;

@@ -1178,7 +1178,7 @@
     );
 
     document.getElementById('pushinpayIr').onclick = function() {
-      try { navigator.sendBeacon(apiBase+'/track/pushinpay-click', JSON.stringify({client_id:clientId,plano:chosenCard})); } catch(e){}
+      try { navigator.sendBeacon(apiBase+'/track/pushinpay-click', new Blob([JSON.stringify({client_id:clientId,plano:chosenCard})], {type:'application/json'})); } catch(e){}
       window.open(url, '_blank');
     };
 
@@ -1221,7 +1221,7 @@
     showPopup(pixHtml);
 
     document.getElementById('pixCopiarChave').onclick = function() {
-      try { navigator.sendBeacon(apiBase+'/track/pix-copy', JSON.stringify({client_id:clientId})); } catch(e){}
+      try { navigator.sendBeacon(apiBase+'/track/pix-copy', new Blob([JSON.stringify({client_id:clientId})], {type:'application/json'})); } catch(e){}
       navigator.clipboard.writeText(copiaCola).then(function() {
         closePopup();
         showPopup(
