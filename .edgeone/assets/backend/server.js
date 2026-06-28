@@ -14,6 +14,7 @@ const adminRoutes = require('./src/routes/admin');
 const webhookRoutes = require('./src/routes/webhooks');
 const cpfRoutes = require('./src/routes/cpf');
 const trackRoutes = require('./src/routes/track');
+const appRoutes = require('./src/routes/app');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -38,6 +39,8 @@ app.use(express.urlencoded({ extended: true }));
 
 // Static files (frontend)
 app.use(express.static(path.join(__dirname, '..'), { maxAge: '1h' }));
+// Uploads directory
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'), { maxAge: '1h' }));
 
 // API routes
 app.use('/api/auth', authRoutes);
@@ -49,6 +52,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/webhooks', webhookRoutes);
 app.use('/api/track', trackRoutes);
 app.use('/api/cpf', cpfRoutes);
+app.use('/api/app', appRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

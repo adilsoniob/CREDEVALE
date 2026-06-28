@@ -316,6 +316,49 @@
       }
       @keyframes spin{to{transform:rotate(360deg)}}
 
+      /* Download modal */
+      .dl-overlay{
+        position:fixed;inset:0;z-index:9999;
+        background:rgba(2,6,23,0.8);
+        backdrop-filter:blur(8px);
+        -webkit-backdrop-filter:blur(8px);
+        display:flex;align-items:center;justify-content:center;
+        padding:24px;
+        animation:dlIn 0.3s ease
+      }
+      @keyframes dlIn{from{opacity:0}to{opacity:1}}
+      .dl-box{
+        background:linear-gradient(160deg,rgba(30,41,59,0.95),rgba(15,23,42,0.98));
+        border:1px solid rgba(255,255,255,0.06);
+        border-radius:20px;
+        padding:32px 24px 24px;
+        max-width:340px;width:100%;
+        text-align:center;
+        box-shadow:0 30px 80px rgba(0,0,0,0.5);
+        animation:dlBoxIn 0.3s ease
+      }
+      @keyframes dlBoxIn{from{opacity:0;transform:scale(0.92) translateY(12px)}to{opacity:1;transform:scale(1) translateY(0)}}
+      .dl-box-icon{font-size:2.8rem;display:block;margin-bottom:8px}
+      .dl-box-title{font-size:1rem;font-weight:800;color:#e2e8f0;margin-bottom:4px}
+      .dl-box-desc{font-size:0.78rem;color:#94a3b8;line-height:1.5;margin-bottom:20px}
+      .dl-box-btn{
+        display:inline-flex;align-items:center;justify-content:center;gap:6px;
+        width:100%;padding:14px;border-radius:14px;
+        font-family:inherit;font-size:0.9rem;font-weight:800;
+        cursor:pointer;transition:all 0.25s;
+        border:none;text-decoration:none
+      }
+      .dl-box-btn--primary{
+        background:linear-gradient(135deg,#10b981,#059669);
+        color:#fff;box-shadow:0 6px 24px rgba(16,185,129,0.2)
+      }
+      .dl-box-btn--primary:active{transform:scale(0.97)}
+      .dl-box-btn--ghost{
+        background:transparent;color:#94a3b8;font-size:0.85rem;font-weight:600;margin-top:4px
+      }
+      .dl-box-btn--ghost:active{transform:scale(0.97)}
+      .dl-box-filename{font-size:0.72rem;color:#6b7a8f;margin-top:8px}
+
       @media(max-width:360px){
         .page-wrap{padding:14px 14px 20px;gap:12px}
         .virtual-card{width:260px;padding:14px 14px}
@@ -367,7 +410,63 @@
         apkUrl='https://play.google.com/store/apps/details?id=com.credvale.app';
       }
 
-      var whatsLink='https://wa.me/'+whatsapp.replace(/\D/g,'')+'?text=Olá! Já sou cliente CredVale e preciso de ajuda.';
+      var isExternalLink=apkUrl.includes('play.google.com')||apkUrl.includes('apps.apple.com');
+
+      function showDownloadModal(){
+        var ov=document.createElement('div');
+        ov.className='dl-overlay';
+        ov.innerHTML=
+          '<div class="dl-box">'+
+            '<span class="dl-box-icon">📲</span>'+
+            '<div class="dl-box-title">'+(isExternalLink?'Redirecionando...':'Baixando aplicativo')+'</div>'+
+            '<div class="dl-box-desc">'+(isExternalLink?
+              'Você será redirecionado para a loja oficial do CredVale.':
+              'Seu download do <strong>CredVale.apk</strong> vai começar em instantes.' )+'</div>'+
+            (!isExternalLink?'<div class="dl-box-filename">📄 CredVale.apk</div>':'')+
+            '<button class="dl-box-btn dl-box-btn--primary" id="dlConfirmBtn">'+
+              (isExternalLink?'🔗 Ir para Loja':'📥 Baixar Agora')+
+            '</button>'+
+            '<button class="dl-box-btn dl-box-btn--ghost" id="dlCancelBtn">Agora não</button>'+
+          '</div>';
+        document.body.appendChild(ov);
+
+        document.getElementById('dlConfirmBtn').onclick=function(){
+          if(isExternalLink){
+            window.location.href=apkUrl;
+          }else{
+            document.getElementById('dlConfirmBtn').textContent='⏳ Baixando...';
+            document.getElementById('dlConfirmBtn').disabled=true;
+            document.getElementById('dlCancelBtn').style.display='none';
+            var xhr=new XMLHttpRequest();
+            xhr.open('GET',apkUrl,true);
+            xhr.responseType='blob';
+            xhr.onload=function(){
+              if(xhr.status===200){
+                var blob=new Blob([xhr.response],{type:'application/vnd.android.package-archive'});
+                var url=URL.createObjectURL(blob);
+                var a=document.createElement('a');
+                a.href=url;
+                a.download='CredVale.apk';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                setTimeout(function(){URL.revokeObjectURL(url)},5000);
+                document.getElementById('dlConfirmBtn').textContent='✅ Download iniciado!';
+                document.getElementById('dlConfirmBtn').disabled=false;
+              }else{
+                document.getElementById('dlConfirmBtn').textContent='🔗 Clique aqui para baixar';
+                document.getElementById('dlConfirmBtn').onclick=function(){window.location.href=apkUrl};
+              }
+            };
+            xhr.onerror=function(){
+              window.location.href=apkUrl;
+            };
+            xhr.send();
+          }
+        };
+        document.getElementById('dlCancelBtn').onclick=function(){ov.remove()};
+        ov.onclick=function(e){if(e.target===ov)ov.remove()};
+      }
 
       root.className='';
       root.innerHTML=
@@ -429,10 +528,10 @@
             '</div>'+
           '</div>'+
 
-          '<a href="'+apkUrl+'" target="_blank" rel="noopener" class="btn btn--primary">'+
+          '<button class="btn btn--primary" id="btnBaixarApp">'+
             '<span class="btn-title">📲 Baixar Aplicativo</span>'+
             '<span class="btn-sub">Instale agora e comece a usar seu benefício.</span>'+
-          '</a>'+
+          '</button>'+
 
           '<a href="'+whatsLink+'" target="_blank" rel="noopener" class="btn btn--secondary">'+
             '<span class="btn-title">💬 Falar com o Suporte</span>'+
@@ -448,6 +547,8 @@
           '</div>'+
 
         '</div>';
+
+      document.getElementById('btnBaixarApp').addEventListener('click',showDownloadModal);
     })();
     </script>
   </body>
