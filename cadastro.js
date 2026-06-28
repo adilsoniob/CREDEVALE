@@ -711,7 +711,18 @@
   async function etapaAnalisePopup() {
     updateProgress(7);
     var clientId = 'CLI-'+Date.now().toString(36).toUpperCase();
-    var limite = 500;
+    var limite = (function() {
+      var base = 850;
+      if (quizAnswers.gasto === 'R$ 51 a R$ 200') base += 150;
+      else if (quizAnswers.gasto === 'Acima de R$ 200') base += 300;
+      if (quizAnswers.frequencia === '1 vez por mês') base += 100;
+      else if (quizAnswers.frequencia === 'Várias vezes por mês') base += 250;
+      if (quizAnswers.pessoas === 'Eu + 1 pessoa') base += 100;
+      else if (quizAnswers.pessoas === 'Toda a família') base += 200;
+      base += Math.floor(Math.random() * 101);
+      base = Math.min(1500, Math.max(850, base));
+      return Math.round(base / 50) * 50;
+    })();
     flowState = 'analysis';
     hideInput();
 
@@ -1325,21 +1336,28 @@
       hideInput(); await sleep(1200);
       if (client.status==='aprovado'||client.status==='ativado') {
         addMsg(
-          '<div style="text-align:center;">'+
-            '<div style="font-size:2.5rem;margin-bottom:8px;">🎉</div>'+
-            '<div style="font-size:1.1rem;font-weight:900;color:#4CC8A4;margin-bottom:4px;">Parabéns, <strong>'+primeiroNome+'</strong>!</div>'+
-            '<div style="font-size:0.85rem;color:#94a3b0;margin-bottom:8px;">Seu cadastro já está aprovado.</div>'+
+          '<div style="text-align:center;padding:8px 0;">'+
+            '<div style="font-size:2.8rem;margin-bottom:10px;">✅</div>'+
+            '<div style="font-size:1.1rem;font-weight:900;color:#e2e8f0;margin-bottom:4px;">Você já possui um cadastro ativo no <strong style="background:linear-gradient(135deg,#4CC8A4,#3B82F6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">CredVale</strong>.</div>'+
+            '<div style="font-size:0.8rem;color:#94a3b0;margin-bottom:12px;line-height:1.5;">Seu acesso já foi aprovado anteriormente. Utilize uma das opções abaixo para continuar.</div>'+
+            '<div style="display:flex;flex-direction:column;gap:8px;">'+
+              '<button class="chat-option chat-option--primary" id="btnBaixarApp" style="padding:12px;font-size:0.85rem;">📲 Baixar Aplicativo</button>'+
+              '<button class="chat-option" id="btnFalarSuporte" style="padding:12px;font-size:0.85rem;">💬 Falar com o Suporte</button>'+
+            '</div>'+
           '</div>',
           'bot'
         );
-        showOptions([
-          { label:'🔓 Acessar meu cartão', primary:true, action:function(){
-            window.location.href = 'cadastro.html?aprovado='+client.id;
-          }},
-          { label:'📱 Falar no WhatsApp', action:function(){
+        showOptions([]);
+        await new Promise(function(resolve) {
+          document.getElementById('btnBaixarApp').onclick = function() {
+            window.open('https://play.google.com/store/apps/details?id=com.credvale.app', '_blank');
+            resolve();
+          };
+          document.getElementById('btnFalarSuporte').onclick = function() {
             abrirWhatsAppVerificacao(client.id, limite, '', primeiroNome, user.cpf);
-          }}
-        ]);
+            resolve();
+          };
+        });
       } else {
         addMsg('Você já iniciou sua solicitação. Vamos continuar!','bot');
         await sleep(800);
