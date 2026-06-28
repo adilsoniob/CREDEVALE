@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Escolha seu Cartão - Vale Saúde</title>
+  <link rel="stylesheet" href="styles.css?v=2.0">
+  <link rel="stylesheet" href="escolha.css?v=2.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <script src="frontend/js/api.js?v=3.1"></script>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💊</text></svg>">
+</head>
+<body class="page-frontend">
+  <header class="header">
+    <img src="assets/cabecario-topo.png" alt="Vale Saúde" class="header__logo" width="480" height="80">
+    <nav class="header__nav">
+      <a href="index.html#como-funciona" class="header__nav-link">Como funciona</a>
+      <a href="index.html#beneficios" class="header__nav-link">Benefícios</a>
+      <a href="index.html#cartao" class="header__nav-link">Cartão</a>
+      <a href="index.html" class="header__nav-link header__nav-link--cta">Voltar início</a>
+    </nav>
+  </header>
+
+  <main style="padding: 16px 0;">
+    <div class="progress-bar">
+      <div class="progress-bar__track">
+        <div class="progress-bar__fill" style="width: 66%"></div>
+      </div>
+      <span class="progress-bar__pct">66%</span>
+    </div>
+
+    <section class="section">
+      <span class="section__badge section__badge--cliente" id="clienteNome"></span>
+      <h2 class="section__title">Temos <span class="highlight">2 cartões</span> feitos para você</h2>
+      <p class="section__subtitle">Os dois compartilham o mesmo limite. Escolha o que mais combina com seu dia a dia.</p>
+
+      <div class="plan-grid plan-grid--narrow">
+        <!-- PLANO 1: VALE SAÚDE DIGITAL -->
+        <div class="plan-card plan-card--featured" id="cardDigital">
+          <span class="top-badge">MAIS ESCOLHIDO</span>
+          <div class="plan-image">
+            <svg viewBox="0 0 340 210" xmlns="http://www.w3.org/2000/svg" style="width:80%;max-width:220px;height:auto;">
+              <defs>
+                <linearGradient id="cardBgPl" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#0f172a"/>
+                  <stop offset="50%" stop-color="#1a365d"/>
+                  <stop offset="100%" stop-color="#0d9488"/>
+                </linearGradient>
+                <linearGradient id="chipPl" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#fbbf24"/>
+                  <stop offset="100%" stop-color="#d97706"/>
+                </linearGradient>
+              </defs>
+              <rect width="340" height="210" rx="16" fill="url(#cardBgPl)"/>
+              <rect x="30" y="38" width="48" height="38" rx="6" fill="url(#chipPl)" opacity="0.9"/>
+              <rect x="34" y="42" width="40" height="30" rx="4" fill="none" stroke="#b45309" stroke-width="0.8" opacity="0.5"/>
+              <text x="310" y="48" font-family="Arial,sans-serif" font-size="10" font-weight="700" fill="rgba(255,255,255,0.5)" text-anchor="end">VALE SAÚDE</text>
+              <circle cx="274" cy="82" r="14" fill="#eb001b" opacity="0.7"/>
+              <circle cx="287" cy="82" r="14" fill="#f79e1b" opacity="0.7"/>
+              <text x="30" y="125" font-family="'Courier New',monospace" font-size="20" font-weight="700" fill="white" letter-spacing="3">****  ****  ****  ****</text>
+              <text x="30" y="160" font-family="Arial,sans-serif" font-size="11" fill="rgba(255,255,255,0.5)">TITULAR</text>
+              <text x="30" y="178" font-family="Arial,sans-serif" font-size="14" font-weight="600" fill="white">NOME DO TITULAR</text>
+              <text x="310" y="160" font-family="Arial,sans-serif" font-size="11" fill="rgba(255,255,255,0.5)" text-anchor="end">VALIDADE</text>
+              <text x="310" y="178" font-family="Arial,sans-serif" font-size="14" font-weight="600" fill="white" text-anchor="end">12/28</text>
+            </svg>
+          </div>
+          <div class="plan-choice">
+            <div class="plan-choice__header">
+              <h3 class="plan-choice__title">Vale Saúde Digital</h3>
+              <span class="plan-choice__tagline">Tudo na palma da sua mão</span>
+            </div>
+            <p class="plan-choice__desc">Cartão virtual liberado na hora. Use por aproximação no celular. Prático, seguro e sem esperar nada.</p>
+            <ul class="plan-choice__benefits">
+              <li>Ativação imediata após o pagamento</li>
+              <li>Pagamento por NFC direto do celular</li>
+              <li>Descontos de até 75% em farmácias</li>
+              <li>Acompanhe tudo pelo app</li>
+            </ul>
+            <button class="plan-choice__vantagens" onclick="openVantagens('digital')">📋 Ver todas as vantagens</button>
+            <div class="plan-choice__price">
+              <span class="plan-choice__price-label">Taxa de adesão<span class="plan-choice__price-hint">· pagamento único</span></span>
+              <span class="plan-choice__price-value">R$ 4,99</span>
+            </div>
+            <button class="plan-choice__cta" data-produto="virtual" data-preco="4.99">Liberar meu cartão</button>
+          </div>
+        </div>
+
+        <!-- PLANO 2: VALE SAÚDE COMPLETO -->
+        <div class="plan-card" id="cardCompleto">
+          <div class="plan-image plan-image--duo" style="gap:8px;padding:0 6px;">
+            <svg viewBox="0 0 340 210" xmlns="http://www.w3.org/2000/svg" style="width:auto;height:120px;">
+              <defs>
+                <linearGradient id="cardBgFis" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#0f172a"/>
+                  <stop offset="50%" stop-color="#1a365d"/>
+                  <stop offset="100%" stop-color="#0d9488"/>
+                </linearGradient>
+                <linearGradient id="chipFis" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#fbbf24"/>
+                  <stop offset="100%" stop-color="#d97706"/>
+                </linearGradient>
+              </defs>
+              <rect width="340" height="210" rx="16" fill="url(#cardBgFis)"/>
+              <rect x="30" y="38" width="48" height="38" rx="6" fill="url(#chipFis)" opacity="0.9"/>
+              <rect x="34" y="42" width="40" height="30" rx="4" fill="none" stroke="#b45309" stroke-width="0.8" opacity="0.5"/>
+              <text x="310" y="48" font-family="Arial,sans-serif" font-size="10" font-weight="700" fill="rgba(255,255,255,0.5)" text-anchor="end">VALE SAÚDE</text>
+              <circle cx="274" cy="82" r="14" fill="#eb001b" opacity="0.7"/>
+              <circle cx="287" cy="82" r="14" fill="#f79e1b" opacity="0.7"/>
+              <text x="30" y="125" font-family="'Courier New',monospace" font-size="20" font-weight="700" fill="white" letter-spacing="3">****  ****  ****  ****</text>
+              <text x="30" y="160" font-family="Arial,sans-serif" font-size="11" fill="rgba(255,255,255,0.5)">TITULAR</text>
+              <text x="30" y="178" font-family="Arial,sans-serif" font-size="14" font-weight="600" fill="white">NOME DO TITULAR</text>
+              <text x="310" y="160" font-family="Arial,sans-serif" font-size="11" fill="rgba(255,255,255,0.5)" text-anchor="end">VALIDADE</text>
+              <text x="310" y="178" font-family="Arial,sans-serif" font-size="14" font-weight="600" fill="white" text-anchor="end">12/28</text>
+            </svg>
+            <span style="color:#4CC8A4;font-size:1.4rem;font-weight:700;">+</span>
+            <svg viewBox="0 0 160 260" xmlns="http://www.w3.org/2000/svg" style="width:auto;height:120px;">
+              <defs>
+                <linearGradient id="cardBgPh2" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#0f172a"/>
+                  <stop offset="50%" stop-color="#1a365d"/>
+                  <stop offset="100%" stop-color="#0d9488"/>
+                </linearGradient>
+                <linearGradient id="chipPh2" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#fbbf24"/>
+                  <stop offset="100%" stop-color="#d97706"/>
+                </linearGradient>
+                <filter id="cardShadow2">
+                  <feDropShadow dx="0" dy="2" stdDeviation="4" flood-opacity="0.35"/>
+                </filter>
+              </defs>
+              <rect x="10" y="8" width="140" height="244" rx="22" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.12)" stroke-width="1.5"/>
+              <rect x="18" y="22" width="124" height="214" rx="12" fill="rgba(0,0,0,0.35)"/>
+              <rect x="55" y="5" width="50" height="3" rx="1.5" fill="rgba(255,255,255,0.12)"/>
+              <g transform="translate(22, 50)">
+                <rect width="116" height="72" rx="8" fill="url(#cardBgPh2)" filter="url(#cardShadow2)"/>
+                <rect x="8" y="12" width="16" height="12" rx="2.5" fill="url(#chipPh2)" opacity="0.8"/>
+                <text x="108" y="14" font-family="Arial,sans-serif" font-size="4" font-weight="700" fill="rgba(255,255,255,0.4)" text-anchor="end">VALE SAÚDE</text>
+                <circle cx="94" cy="28" r="5" fill="#eb001b" opacity="0.5"/>
+                <circle cx="99" cy="28" r="5" fill="#f79e1b" opacity="0.5"/>
+                <text x="8" y="46" font-family="'Courier New',monospace" font-size="7" font-weight="700" fill="white" letter-spacing="1.5">****  ****  ****  ****</text>
+                <text x="8" y="57" font-family="Arial,sans-serif" font-size="4" fill="rgba(255,255,255,0.4)">TITULAR</text>
+                <text x="8" y="65" font-family="Arial,sans-serif" font-size="6" font-weight="600" fill="white">NOME DO TITULAR</text>
+              </g>
+              <circle cx="80" cy="246" r="4" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.08)" stroke-width="0.8"/>
+            </svg>
+          </div>
+          <div class="plan-choice">
+            <div class="plan-choice__header">
+              <h3 class="plan-choice__title">Vale Saúde Completo</h3>
+              <span class="plan-choice__tagline">O melhor dos dois mundos</span>
+            </div>
+            <p class="plan-choice__desc">Cartão físico premium entregue em casa + digital liberado na hora. Segurança e praticidade num só benefício.</p>
+            <ul class="plan-choice__benefits">
+              <li>Cartão físico com chip e banda magnética</li>
+              <li>Versão digital liberada no mesmo instante</li>
+              <li>Descontos de até 75% em todo o Brasil</li>
+              <li>Sem anuidade ou taxa de manutenção</li>
+            </ul>
+            <button class="plan-choice__vantagens" onclick="openVantagens('fisico')">📋 Ver todas as vantagens</button>
+            <div class="plan-choice__price">
+              <span class="plan-choice__price-label">Taxa de adesão<span class="plan-choice__price-hint">· pagamento único</span></span>
+              <span class="plan-choice__price-value">R$ 19,99</span>
+            </div>
+            <button class="plan-choice__cta" data-produto="fisico" data-preco="19.99">Liberar meu cartão</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MODAL VANTAGENS -->
+    <div id="vantagensModal" class="modal-overlay" hidden>
+      <div class="modal-box">
+        <button class="modal-close" onclick="closeVantagens()">✕</button>
+        <h3 id="vantagensTitle" class="modal-title">Vantagens</h3>
+        <ul id="vantagensList" class="vantagens-list"></ul>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer__inner">
+      <div class="footer__brand">Vale Saúde</div>
+      <div class="footer__tagline">Cartão Benefício Farmácia</div>
+      <div class="footer__divider"></div>
+      <div id="footerInfo" class="footer__info"></div>
+      <div class="footer__links">
+        <a href="#">Política de Privacidade</a>
+        <a href="#">Termos de Uso</a>
+      </div>
+      <div class="footer__copy">© 2026 Vale Saúde. Todos os direitos reservados.</div>
+    </div>
+  </footer>
+  <script>
+  (function() {
+    var el = document.getElementById('footerInfo');
+    var _b=window.__API_BASE||'/api';fetch(_b+'/payments/config').then(function(r) { return r.json(); }).then(function(d) {
+      var parts = [];
+      if (d.footer_phone) parts.push('📞 ' + d.footer_phone);
+      if (d.footer_email) parts.push('✉️ ' + d.footer_email);
+      if (d.footer_cnpj) parts.push('CNPJ: ' + d.footer_cnpj);
+      if (parts.length) el.innerHTML = parts.join(' · ');
+    }).catch(function() {});
+  })();
+  </script>
+
+  <!-- Loading Modal -->
+  <div id="loadingModal" class="loading-modal" hidden>
+    <div class="loading-modal__overlay"></div>
+    <div class="loading-modal__box">
+      <div class="loading-modal__spinner"></div>
+      <p class="loading-modal__text">Aguarde um momento</p>
+      <p class="loading-modal__sub">Preparando seu checkout...</p>
+    </div>
+  </div>
+
+  <a href="https://wa.me/5511999999999" target="_blank" rel="noopener" class="whatsapp-float__icon" style="position:fixed;bottom:20px;right:20px;z-index:99;" aria-label="Fale conosco pelo WhatsApp">
+    <img src="assets/WHATS.png" alt="WhatsApp">
+  </a>
+
+  <script src="escolha.js?v=3.1"></script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" width="220" height="220" role="img" aria-label="QR Code PIX placeholder">
+  <rect width="220" height="220" fill="#FFFFFF"/>
+  <g fill="#052C6E">
+    <!-- Simulated QR pattern -->
+    <rect x="10" y="10" width="60" height="60"/>
+    <rect x="150" y="10" width="60" height="60"/>
+    <rect x="10" y="150" width="60" height="60"/>
+    <rect x="80" y="80" width="60" height="60"/>
+    <rect x="30" y="80" width="10" height="10"/>
+    <rect x="50" y="80" width="10" height="10"/>
+    <rect x="70" y="80" width="10" height="10"/>
+    <rect x="80" y="30" width="10" height="10"/>
+    <rect x="80" y="50" width="10" height="10"/>
+    <rect x="80" y="70" width="10" height="10"/>
+  </g>
+  <text x="110" y="210" text-anchor="middle" font-family="system-ui" font-size="10" fill="#64748B">QR Code PIX</text>
+</svg>
