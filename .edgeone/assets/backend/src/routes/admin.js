@@ -29,13 +29,16 @@ router.get('/dashboard', (req, res) => {
     const pageViewRow = get(`SELECT value FROM settings WHERE key = 'page_view_count'`);
     const supportClickCount = parseInt(supportClickRow?.value || '0', 10);
     const pageViewCount = parseInt(pageViewRow?.value || '0', 10);
-    const expectativaReceita = (totalPixCopies + totalPushinpayClicks) * 4.99;
+    const monthlyRevenue = get(`SELECT COALESCE(SUM(valor), 0) as total FROM payments WHERE status = 'pago' AND paid_at >= datetime('now', '-30 days')`).total;
+    const dailyRevenue = get(`SELECT COALESCE(SUM(valor), 0) as total FROM payments WHERE status = 'pago' AND paid_at >= datetime('now', '-1 day')`).total;
+    const weeklyRevenue = get(`SELECT COALESCE(SUM(valor), 0) as total FROM payments WHERE status = 'pago' AND paid_at >= datetime('now', '-7 days')`).total;
+    const expectativaReceita = monthlyRevenue;
 
     const recentClients = all('SELECT id, cpf, nome, whatsapp, status, created_at FROM clients ORDER BY created_at DESC LIMIT 10');
     const recentPayments = all(`SELECT p.*, c.nome as client_nome FROM payments p JOIN clients c ON p.client_id = c.id ORDER BY p.created_at DESC LIMIT 10`);
 
     res.json({
-      kpis: { totalClients, pendingClients, approvedClients, activatedClients, totalRequests, pendingRequests, totalPayments, paidPayments, totalRevenue, pixPayments, cardPayments, conversionRate, onlineAgora, totalPixCopies, totalPushinpayClicks, supportClickCount, pageViewCount, expectativaReceita },
+      kpis: { totalClients, pendingClients, approvedClients, activatedClients, totalRequests, pendingRequests, totalPayments, paidPayments, totalRevenue, pixPayments, cardPayments, conversionRate, onlineAgora, totalPixCopies, totalPushinpayClicks, supportClickCount, pageViewCount, expectativaReceita, dailyRevenue, weeklyRevenue, monthlyRevenue },
       recentClients, recentPayments
     });
   } catch (err) {
@@ -129,6 +132,32 @@ router.put('/settings', (req, res) => {
       run('INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES (?, ?, datetime("now"))', [key, String(value)]);
     }
     res.json({ message: 'Configurações salvas' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Admin: Reset system (clear all data)
+router.post('/reset', (req, res) => {
+  try {
+    run('DELETE FROM payments');
+    run('DELETE FROM requests');
+    run('DELETE FROM notifications');
+    run('DELETE FROM logs');
+    run('DELETE FROM clients');
+    run("INSERT INTO logs (action, entity, entity_id, details) VALUES (?, ?, ?, ?)",
+      ['system', 'reset', '*', JSON.stringify({ action: 'Sistema zerado' })]);
+    res.json({ message: 'Sistema zerado com sucesso' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Admin: Reset support clicks counter
+router.post('/reset-support-clicks', (req, res) => {
+  try {
+    run("UPDATE settings SET value = '0', updated_at = datetime('now') WHERE key = 'support_click_count'");
+    res.json({ message: 'Contador de suporte zerado' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

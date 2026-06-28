@@ -248,8 +248,9 @@
           <div class="admin-card__value" style="font-size:2rem;">${k.totalClients}</div>
         </article>
         <article class="admin-card" style="background:linear-gradient(135deg,rgba(251,146,60,0.12),rgba(251,146,60,0.05));border:1px solid rgba(251,146,60,0.2);">
-          <div class="admin-card__label">📊 Expectativa de Receita</div>
-          <div class="admin-card__value" style="font-size:1.5rem;color:var(--color-orange);">${fmtMoney(k.expectativaReceita ?? 0)}</div>
+          <div class="admin-card__label">📊 Receita (mês)</div>
+          <div class="admin-card__value" style="font-size:1.5rem;color:var(--color-orange);">${fmtMoney(k.monthlyRevenue ?? 0)}</div>
+          <div style="font-size:0.7rem;color:var(--color-text-muted);margin-top:4px;">7d: ${fmtMoney(k.weeklyRevenue ?? 0)} · Hoje: ${fmtMoney(k.dailyRevenue ?? 0)}</div>
         </article>
         <article class="admin-card" style="background:linear-gradient(135deg,rgba(16,185,129,0.12),rgba(16,185,129,0.05));border:1px solid rgba(16,185,129,0.2);">
           <div class="admin-card__label">📋 PIX Copiados</div>
@@ -707,7 +708,7 @@
         const pid = actionBtn.dataset.id;
         actionBtn.disabled = true;
         actionBtn.textContent = 'Aprovando...';
-        await fetch('/api/payments/' + pid + '/status', { method: 'PATCH' });
+        await API.request('PATCH', '/payments/' + pid + '/status', { status: 'pago' });
         showToast('Pagamento aprovado com sucesso!');
         await reloadPagamentos();
       }
@@ -1311,8 +1312,7 @@
 
   async function excluirTodosClientes() {
     try {
-      const resp = await fetch('/api/clients/delete-all', { method: 'POST' });
-      const data = await resp.json();
+      const data = await API.request('POST', '/clients/delete-all');
       showToast(data.message || 'Todos os clientes foram excluídos');
       navigateTo('clients');
     } catch (e) { showToast('Erro: ' + e.message, 'error'); }
@@ -1320,8 +1320,7 @@
 
   async function zerarSistema() {
     try {
-      const resp = await fetch('/api/admin/reset', { method: 'POST' });
-      const data = await resp.json();
+      const data = await API.request('POST', '/admin/reset');
       showToast(data.message || 'Sistema zerado com sucesso');
       navigateTo('dashboard');
     } catch (e) { showToast('Erro: ' + e.message, 'error'); }
@@ -1395,294 +1394,6 @@
 
   // ============================================================
   // WhatsApp render functions
-  // ============================================================
-
-  let waPollTimer = null;
-
-  function waStatusDot(s) { return 'status-dot--' + (s || 'starting'); }
-  function waStatusLabel(s) { return ({ connected:'Conectado', awaiting_qr:'Aguardando QR', reconnecting:'Reconectando', starting:'Iniciando', offline:'Desconectado', auth_failure:'Falha Auth', error:'Erro' })[s] || s; }
-  function waStatusTag(s) { return ({ connected:'success', awaiting_qr:'primary', reconnecting:'warning', starting:'info', offline:'primary', auth_failure:'primary', error:'primary' })[s] || 'info'; }
-
-  async function renderWADashboard(container) {
-    try {
-      const [status, dash] = await Promise.all([API.waStatus(), API.waDashboard()]);
-      const accounts = status.accounts || [];
-      const connected = accounts.filter(a => a.state === 'connected').length;
-      const offline = accounts.filter(a => a.state !== 'connected').length;
-      const qStats = await API.waQueue();
-      const queueStats = qStats.stats || { pending:0, processing:0, completed:0, failed:0, deadletter:0, total:0 };
-      container.innerHTML = `
-        <header class="admin-header">
-          <h1 class="admin-header__title">WhatsApp Status</h1>
-          <div style="display:flex;align-items:center;gap:8px;">
-            <span class="badge badge--${waStatusTag(status.state || 'connected')}">${waStatusLabel(status.state || 'connected')}</span>
-            <button class="btn btn--primary btn--sm" onclick="navigateTo('wa-contas')">Gerenciar Contas</button>
-          </div>
-        </header>
-        <section class="admin-card">
-          <div class="admin-form__section-title" style="display:flex;justify-content:space-between;align-items:center;">
-            <span>📊 KPIs do Servidor WhatsApp</span>
-            <span class="badge badge--primary">${dash.accounts?.total || 0} contas</span>
-          </div>
-          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-top:16px;">
-            <div style="background:var(--color-gray-light);border-radius:12px;padding:16px;text-align:center;"><div style="font-size:1.5rem;font-weight:700;color:var(--color-green);">${connected}</div><div style="font-size:0.75rem;color:var(--color-text-muted);">Conectadas</div></div>
-            <div style="background:var(--color-gray-light);border-radius:12px;padding:16px;text-align:center;"><div style="font-size:1.5rem;font-weight:700;color:var(--color-primary);">${offline}</div><div style="font-size:0.75rem;color:var(--color-text-muted);">Offline</div></div>
-            <div style="background:var(--color-gray-light);border-radius:12px;padding:16px;text-align:center;"><div style="font-size:1.5rem;font-weight:700;color:var(--color-green);">${queueStats.completed || 0}</div><div style="font-size:0.75rem;color:var(--color-text-muted);">Completadas</div></div>
-            <div style="background:var(--color-gray-light);border-radius:12px;padding:16px;text-align:center;"><div style="font-size:1.5rem;font-weight:700;color:var(--color-primary);">${queueStats.pending || 0}</div><div style="font-size:0.75rem;color:var(--color-text-muted);">Pendentes</div></div>
-            <div style="background:var(--color-gray-light);border-radius:12px;padding:16px;text-align:center;"><div style="font-size:1.5rem;font-weight:700;color:var(--color-primary);">${queueStats.failed || 0}</div><div style="font-size:0.75rem;color:var(--color-text-muted);">Falhas</div></div>
-            <div style="background:var(--color-gray-light);border-radius:12px;padding:16px;text-align:center;"><div style="font-size:1.5rem;font-weight:700;">${queueStats.total || 0}</div><div style="font-size:0.75rem;color:var(--color-text-muted);">Total</div></div>
-          </div>
-        </section>
-        <section class="admin-card" style="margin-top:var(--space-md);">
-          <h2 class="admin-form__section-title">👤 Contas</h2>
-          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-top:12px;">${accounts.map((a, i) => `
-            <div style="background:var(--color-gray-light);border-radius:12px;padding:14px;border:1px solid var(--color-gray-200);">
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                <strong style="font-size:0.85rem;">${a.label || 'Conta ' + (i+1)}</strong>
-                <span class="badge badge--${waStatusTag(a.state)}">${waStatusLabel(a.state)}</span>
-              </div>
-              <div style="font-size:0.75rem;color:var(--color-text-muted);">${a.profileName ? '<div>👤 ' + a.profileName + '</div>' : ''}${a.connectedAt ? '<div>📅 ' + fmtDate(a.connectedAt) + '</div>' : ''}${a.lastSendAt ? '<div>📤 ' + fmtDateTime(a.lastSendAt) + '</div>' : ''}</div>
-            </div>`).join('')}</div>
-        </section>
-      `;
-    } catch (e) {
-      container.innerHTML = `<div style="color:#DC2626;padding:40px;text-align:center;"><div style="font-size:2rem;margin-bottom:12px;">⚠️</div><p style="font-size:1rem;">Erro ao conectar ao WhatsApp Server</p><p style="font-size:0.8rem;color:var(--color-text-muted);margin-top:8px;">${e.message}</p><p style="margin-top:16px;"><strong>Configure a URL do WhatsApp Server</strong> em Configurações > WhatsApp Server URL</p></div>`;
-    }
-  }
-
-  async function renderWAContas(container) {
-    container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--color-text-muted);">Carregando...</div>';
-    const health = await API.waStatus();
-    const accounts = health.accounts || [];
-    container.innerHTML = `
-      <header class="admin-header">
-        <h1 class="admin-header__title">📱 Contas WhatsApp</h1>
-        <button class="btn btn--primary btn--sm" onclick="renderWAContas(document.getElementById('adminMain'))">🔄 Atualizar</button>
-      </header>
-      <section class="admin-card">
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;">${accounts.map((a, i) => {
-          const qrHtml = (a.qr && a.state === 'awaiting_qr') ? `<div style="text-align:center;padding:12px;"><img src="${a.qr}" alt="QR" style="width:160px;height:160px;border-radius:8px;background:#fff;padding:6px;border:1px solid var(--color-gray-200);"><p style="font-size:0.72rem;color:var(--color-text-muted);margin-top:6px;">Escaneie com WhatsApp</p></div>` : '';
-          const profileHtml = a.profileName ? `<div style="margin-bottom:8px;"><strong>${a.profileName}</strong>${a.profileNumber ? '<br><small style="color:var(--color-text-muted);">' + a.profileNumber + '</small>' : ''}</div>` : '';
-          return `<div style="background:var(--color-gray-light);border-radius:16px;padding:18px;border:1px solid var(--color-gray-200);">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-              <strong>${a.label || 'Conta ' + (i+1)}</strong>
-              <span class="badge badge--${waStatusTag(a.state)}">${waStatusLabel(a.state)}</span>
-            </div>
-            ${profileHtml}
-            <div style="font-size:0.78rem;color:var(--color-text-muted);line-height:1.6;">${a.connectedAt ? '<div>📅 Conectado: ' + fmtDateTime(a.connectedAt) + '</div>' : ''}${a.lastSendAt ? '<div>📤 Último envio: ' + fmtDateTime(a.lastSendAt) + '</div>' : ''}${a.lastError ? '<div style="color:#DC2626;">⚠️ ' + (a.lastError.error || '') + '</div>' : ''}</div>
-            ${qrHtml}
-            <div style="display:flex;gap:6px;margin-top:12px;flex-wrap:wrap;">
-              <button class="btn btn--success btn--sm" onclick="waConnect(${i})">Conectar</button>
-              <button class="btn btn--primary btn--sm" onclick="waReconnect(${i})">Reconectar</button>
-              <button class="btn btn--danger btn--sm" onclick="waDisconnect(${i})">Desconectar</button>
-            </div>
-          </div>`;
-        }).join('')}</div>
-      </section>
-    `;
-  }
-
-  async function waConnect(i) { try { await API.waAccountConnect(i); showToast('Conectando conta ' + (i+1)); } catch(e) { showToast(e.message, 'error'); } }
-  async function waReconnect(i) { try { await API.waAccountReconnect(i); showToast('Reconectando conta ' + (i+1)); } catch(e) { showToast(e.message, 'error'); } }
-  async function waDisconnect(i) { try { await API.waAccountDisconnect(i); showToast('Desconectando conta ' + (i+1)); } catch(e) { showToast(e.message, 'error'); } }
-
-  async function renderWAFila(container) {
-    container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--color-text-muted);">Carregando...</div>';
-    const data = await API.waQueue();
-    const stats = data.stats || { pending:0, processing:0, completed:0, failed:0, deadletter:0, total:0 };
-    const messages = data.messages || [];
-    container.innerHTML = `
-      <header class="admin-header">
-        <h1 class="admin-header__title">📨 Fila de Mensagens</h1>
-        <button class="btn btn--primary btn--sm" onclick="renderWAFila(document.getElementById('adminMain'))">🔄</button>
-      </header>
-      <section class="admin-card">
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-bottom:16px;">
-          <div style="background:var(--color-gray-light);border-radius:10px;padding:14px;text-align:center;"><div style="font-size:1.3rem;font-weight:700;color:var(--color-primary);">${stats.pending}</div><div style="font-size:0.65rem;color:var(--color-text-muted);">Pendentes</div></div>
-          <div style="background:var(--color-gray-light);border-radius:10px;padding:14px;text-align:center;"><div style="font-size:1.3rem;font-weight:700;color:var(--color-green);">${stats.completed}</div><div style="font-size:0.65rem;color:var(--color-text-muted);;">Completados</div></div>
-          <div style="background:var(--color-gray-light);border-radius:10px;padding:14px;text-align:center;"><div style="font-size:1.3rem;font-weight:700;color:#DC2626;">${stats.failed}</div><div style="font-size:0.65rem;color:var(--color-text-muted);">Falhas</div></div>
-          <div style="background:var(--color-gray-light);border-radius:10px;padding:14px;text-align:center;"><div style="font-size:1.3rem;font-weight:700;color:#DC2626;">${stats.deadletter}</div><div style="font-size:0.65rem;color:var(--color-text-muted);">Dead Letter</div></div>
-          <div style="background:var(--color-gray-light);border-radius:10px;padding:14px;text-align:center;"><div style="font-size:1.3rem;font-weight:700;">${stats.total}</div><div style="font-size:0.65rem;color:var(--color-text-muted);">Total</div></div>
-        </div>
-        <div style="max-height:400px;overflow-y:auto;border:1px solid var(--color-gray-200);border-radius:8px;">
-          ${!messages.length ? '<div style="padding:24px;text-align:center;color:var(--color-text-muted);">Fila vazia</div>' : messages.map(m => `
-          <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--color-gray-200);font-size:0.78rem;">
-            <span style="font-weight:600;font-family:monospace;min-width:100px;">${m.to || m.number || '---'}</span>
-            <span style="color:var(--color-text-muted);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${(m.message || m.body || '').slice(0, 80)}</span>
-            <span class="badge badge--${m.status === 'completed' ? 'success' : m.status === 'failed' || m.status === 'deadletter' ? 'primary' : 'warning'}">${m.status || 'pending'}</span>
-            <span style="color:var(--color-text-muted);font-size:0.7rem;">${m.retryCount ? 'tentativa ' + m.retryCount : ''}</span>
-          </div>`).join('')}
-        </div>
-      </section>
-    `;
-  }
-
-  async function renderWAMensagens(container) {
-    container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--color-text-muted);">Carregando...</div>';
-    const data = await API.waMessages('limit=100');
-    const msgs = data.messages || [];
-    container.innerHTML = `
-      <header class="admin-header">
-        <h1 class="admin-header__title">💬 Mensagens Enviadas</h1>
-        <button class="btn btn--primary btn--sm" onclick="renderWAMensagens(document.getElementById('adminMain'))">🔄</button>
-      </header>
-      <section class="admin-card">
-        <div style="max-height:500px;overflow-y:auto;border:1px solid var(--color-gray-200);border-radius:8px;">
-          <table class="admin-table"><thead><tr><th>Data</th><th>Número</th><th>Status</th><th>Origem</th></tr></thead>
-            <tbody>${msgs.map(m => `<tr><td>${fmtDateTime(m.timestamp)}</td><td style="font-family:monospace;">${m.to}</td><td><span class="badge badge--${m.status === 'delivered' ? 'success' : m.status === 'failed' ? 'primary' : 'warning'}">${m.status}</span></td><td>${m.source || 'api'}</td></tr>`).join('')}</tbody>
-          </table>
-          ${!msgs.length ? '<div style="padding:24px;text-align:center;color:var(--color-text-muted);">Nenhuma mensagem ainda</div>' : ''}
-        </div>
-      </section>
-    `;
-  }
-
-  async function renderWATemplates(container) {
-    container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--color-text-muted);">Carregando...</div>';
-    const [waMsgs, templates] = await Promise.all([API.waWAMessages(), API.waTemplates()]);
-    const msgs = waMsgs.messages || [];
-    container.innerHTML = `
-      <header class="admin-header">
-        <h1 class="admin-header__title">📝 Mensagens WhatsApp (EdgeOne)</h1>
-        <button class="btn btn--primary btn--sm" onclick="renderWATemplates(document.getElementById('adminMain'))">🔄</button>
-      </header>
-      <section class="admin-card" style="margin-bottom:var(--space-md);">
-        <h2 class="admin-form__section-title">Mensagens Aleatórias (máx. 50)</h2>
-        <div style="font-size:0.78rem;color:var(--color-text-muted);margin-bottom:8px;">Variáveis: {saudacao}, {primeiro_nome}, {nome}, {cpf}, {telefone}, {link}, {link_pagamento}, {data}, {hora}</div>
-        <button class="btn btn--primary btn--sm" onclick="waNewWAMsg()">+ Nova Mensagem</button>
-        <div style="max-height:300px;overflow-y:auto;border:1px solid var(--color-gray-200);border-radius:8px;margin-top:12px;">
-          ${!msgs.length ? '<div style="padding:24px;text-align:center;color:var(--color-text-muted);">Nenhuma mensagem criada</div>' : msgs.map(m => `
-          <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--color-gray-200);font-size:0.78rem;">
-            <span class="badge badge--${m.active ? 'success' : 'primary'}" style="min-width:50px;text-align:center;">${m.active ? 'Ativa' : 'Inativa'}</span>
-            <div style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${(m.text || '').slice(0, 100)}</div>
-            <div style="display:flex;gap:4px;">
-              <button class="btn btn--primary btn--sm" onclick="waToggleWAMsg(${m.id})">${m.active ? 'Desativar' : 'Ativar'}</button>
-              <button class="btn btn--danger btn--sm" onclick="waDeleteWAMsg(${m.id})">Excluir</button>
-            </div>
-          </div>`).join('')}
-        </div>
-      </section>
-      <section class="admin-card">
-        <h2 class="admin-form__section-title">📄 Templates de Mensagem</h2>
-        <div style="max-height:300px;overflow-y:auto;border:1px solid var(--color-gray-200);border-radius:8px;margin-top:8px;">
-          ${(!templates.templates || !templates.templates.length) ? '<div style="padding:24px;text-align:center;color:var(--color-text-muted);">Nenhum template</div>' : templates.templates.map(t => `
-          <div style="padding:10px 12px;border-bottom:1px solid var(--color-gray-200);font-size:0.78rem;">
-            <div style="white-space:pre-wrap;">${t.text}</div>
-            <div style="font-size:0.7rem;color:var(--color-text-muted);margin-top:4px;">ID: ${t.id} · ${fmtDateTime(t.createdAt)}</div>
-          </div>`).join('')}
-        </div>
-      </section>
-    `;
-  }
-
-  async function waNewWAMsg() {
-    const text = await showPromptModal('Nova Mensagem WhatsApp', '', 'Digite o texto da mensagem...');
-    if (!text) return;
-    try { await API.waCreateWAMessage({ text, active: true }); showToast('Mensagem criada'); navigateTo('wa-templates'); } catch(e) { showToast(e.message, 'error'); }
-  }
-
-  async function waToggleWAMsg(id) {
-    try { await API.waToggleWAMessage(id); showToast('Status alterado'); navigateTo('wa-templates'); } catch(e) { showToast(e.message, 'error'); }
-  }
-
-  async function waDeleteWAMsg(id) {
-    if (!await showConfirmModal('Excluir Mensagem', 'Tem certeza?', 'Excluir', 'Cancelar')) return;
-    try { await API.waDeleteWAMessage(id); showToast('Mensagem excluída'); navigateTo('wa-templates'); } catch(e) { showToast(e.message, 'error'); }
-  }
-
-  async function renderWAContatos(container) {
-    container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--color-text-muted);">Carregando...</div>';
-    const data = await API.waContacts();
-    const contacts = data.contacts || [];
-    container.innerHTML = `
-      <header class="admin-header">
-        <h1 class="admin-header__title">👤 Contatos WhatsApp</h1>
-        <span style="font-size:0.8rem;color:var(--color-text-muted);">${contacts.length} contatos</span>
-      </header>
-      <section class="admin-card">
-        <div style="max-height:500px;overflow-y:auto;border:1px solid var(--color-gray-200);border-radius:8px;">
-          ${!contacts.length ? '<div style="padding:24px;text-align:center;color:var(--color-text-muted);">Nenhum contato</div>' : contacts.map(c => `
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid var(--color-gray-200);font-size:0.78rem;">
-            <span style="font-weight:600;font-family:monospace;">${c.phone}</span>
-            <span style="color:var(--color-text-muted);">${c.count || 0} msgs</span>
-            <span class="badge badge--${c.lastStatus === 'delivered' ? 'success' : c.lastStatus === 'failed' ? 'primary' : 'warning'}">${c.lastStatus || '---'}</span>
-          </div>`).join('')}
-        </div>
-      </section>
-    `;
-  }
-
-  async function renderWALogs(container) {
-    container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--color-text-muted);">Carregando...</div>';
-    const data = await API.waLogs();
-    const logs = data.logs || [];
-    container.innerHTML = `
-      <header class="admin-header">
-        <h1 class="admin-header__title">📋 Logs do WhatsApp</h1>
-        <button class="btn btn--primary btn--sm" onclick="renderWALogs(document.getElementById('adminMain'))">🔄</button>
-      </header>
-      <section class="admin-card">
-        <div style="max-height:500px;overflow-y:auto;border:1px solid var(--color-gray-200);border-radius:8px;">
-          ${!logs.length ? '<div style="padding:24px;text-align:center;color:var(--color-text-muted);">Nenhum log</div>' : logs.map(l => `
-          <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--color-gray-200);font-size:0.75rem;">
-            <span style="color:var(--color-text-muted);font-family:monospace;min-width:130px;">${fmtDateTime(l.timestamp)}</span>
-            <span style="font-weight:600;color:var(--color-primary);min-width:80px;">${l.event}</span>
-            <span style="color:var(--color-text-muted);">${l.description || ''}</span>
-          </div>`).join('')}
-        </div>
-      </section>
-    `;
-  }
-
-  async function renderWACampanhas(container) {
-    container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--color-text-muted);">Carregando...</div>';
-    const data = await API.waCampaigns();
-    const campaigns = data.campaigns || [];
-    container.innerHTML = `
-      <header class="admin-header">
-        <h1 class="admin-header__title">📢 Campanhas</h1>
-        <div>
-          <button class="btn btn--primary btn--sm" onclick="waNewCampaign()">+ Nova Campanha</button>
-          <button class="btn btn--primary btn--sm" onclick="renderWACampanhas(document.getElementById('adminMain'))">🔄</button>
-        </div>
-      </header>
-      <section class="admin-card">
-        <div style="max-height:500px;overflow-y:auto;border:1px solid var(--color-gray-200);border-radius:8px;">
-          ${!campaigns.length ? '<div style="padding:24px;text-align:center;color:var(--color-text-muted);">Nenhuma campanha</div>' : campaigns.map(c => `
-          <div style="display:flex;align-items:center;gap:8px;padding:12px;border-bottom:1px solid var(--color-gray-200);font-size:0.78rem;">
-            <div style="flex:1;">
-              <strong>${c.name || c.nome || 'Sem nome'}</strong>
-              <div style="color:var(--color-text-muted);font-size:0.72rem;margin-top:2px;">${c.sent || 0} enviados · ${c.pending || 0} pendentes · ${c.errors || 0} erros</div>
-            </div>
-            <span class="badge badge--${c.status === 'active' || c.status === 'running' ? 'warning' : c.status === 'completed' ? 'success' : 'primary'}">${c.status || 'draft'}</span>
-            <button class="btn btn--danger btn--sm" onclick="waDeleteCampaign('${c.id || c._id || ''}')">Excluir</button>
-          </div>`).join('')}
-        </div>
-      </section>
-    `;
-  }
-
-  async function waNewCampaign() {
-    const nome = await showPromptModal('Nome da Campanha', '', 'Ex: Promoção Junho');
-    if (!nome) return;
-    const numbersRaw = await showPromptModal('Números (um por linha, máx 100)', '', '5511999999999\n5521988888888');
-    if (!numbersRaw) return;
-    const numbers = numbersRaw.split('\n').map(s => s.trim()).filter(Boolean).slice(0, 100);
-    const msg = await showPromptModal('Texto da Mensagem', '', 'Use {saudacao}, {primeiro_nome}...');
-    if (!msg) return;
-    try {
-      await API.waCreateCampaign({ name: nome, numbers, messages: [msg], delayMin: 180, delayMax: 300 });
-      showToast('Campanha criada');
-      navigateTo('wa-campanhas');
-    } catch(e) { showToast(e.message, 'error'); }
-  }
-
-  async function waDeleteCampaign(id) {
-    if (!id) return showToast('ID da campanha não encontrado', 'error');
-    if (!await showConfirmModal('Excluir Campanha', 'Tem certeza?', 'Excluir', 'Cancelar')) return;
-    try { await API.waDeleteCampaign(id); showToast('Campanha excluída'); navigateTo('wa-campanhas'); } catch(e) { showToast(e.message, 'error'); }
-  }
-
   async function startApp() {
     $('#btnLogin').addEventListener('click', () => doLogin($('#loginEmail').value, $('#loginPassword').value));
     $('#loginPassword').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin($('#loginEmail').value, $('#loginPassword').value); });
@@ -1717,12 +1428,6 @@
   _win.excluirTodosClientes = excluirTodosClientes;
   _win.zerarSistema = zerarSistema;
   _win.reloadPagamentos = reloadPagamentos;
-  _win.renderWACampanhas = renderWACampanhas;
-  _win.renderWAContas = renderWAContas;
-  _win.renderWAFila = renderWAFila;
-  _win.renderWALogs = renderWALogs;
-  _win.renderWAMensagens = renderWAMensagens;
-  _win.renderWATemplates = renderWATemplates;
   _win.renderLogsSistema = renderLogsSistema;
   _win.novoUsuario = novoUsuario;
   _win.reprovarSolicitacao = reprovarSolicitacao;
@@ -1730,12 +1435,5 @@
   _win.resetSupportClicks = resetSupportClicks;
   _win.removeCpfKey = removeCpfKey;
   _win.removeAllCpfKeys = removeAllCpfKeys;
-  _win.waConnect = waConnect;
-  _win.waDisconnect = waDisconnect;
-  _win.waReconnect = waReconnect;
-  _win.waNewCampaign = waNewCampaign;
-  _win.waNewWAMsg = waNewWAMsg;
-  _win.waDeleteCampaign = waDeleteCampaign;
-  _win.waDeleteWAMsg = waDeleteWAMsg;
-  _win.waToggleWAMsg = waToggleWAMsg;
+
 })();

@@ -8,7 +8,7 @@ const router = express.Router();
 // Public: Create client (registration)
 router.post('/', (req, res) => {
   try {
-    const { cpf, nome, nome_mae, nascimento, sexo, whatsapp, email, cep, rua, numero, complemento, bairro, cidade, uf } = req.body;
+    const { cpf, nome, nome_mae, nascimento, sexo, whatsapp, email, cep, rua, numero, complemento, bairro, cidade, uf, dispositivo, modelo } = req.body;
 
     if (!cpf || !nome || !whatsapp) {
       return res.status(400).json({ error: 'CPF, nome e WhatsApp são obrigatórios' });
@@ -24,14 +24,14 @@ router.post('/', (req, res) => {
       if (existing.status === 'aprovado' || existing.status === 'ativado') {
         return res.status(409).json({ error: 'CPF já cadastrado e aprovado', clientId: existing.id });
       }
-      run(`UPDATE clients SET nome=?, nome_mae=?, nascimento=?, sexo=?, whatsapp=?, email=?, cep=?, rua=?, numero=?, complemento=?, bairro=?, cidade=?, uf=?, updated_at=datetime('now') WHERE id=?`,
-        [nome, nome_mae || null, nascimento || null, sexo || null, whatsapp, email || null, cep || null, rua || null, numero || null, complemento || null, bairro || null, cidade || null, uf || null, existing.id]);
+      run(`UPDATE clients SET nome=?, nome_mae=?, nascimento=?, sexo=?, whatsapp=?, email=?, cep=?, rua=?, numero=?, complemento=?, bairro=?, cidade=?, uf=?, dispositivo=?, modelo=?, updated_at=datetime('now') WHERE id=?`,
+        [nome, nome_mae || null, nascimento || null, sexo || null, whatsapp, email || null, cep || null, rua || null, numero || null, complemento || null, bairro || null, cidade || null, uf || null, dispositivo || null, modelo || null, existing.id]);
       return res.json({ clientId: existing.id, status: existing.status, message: 'Dados atualizados' });
     }
 
     const id = uuidv4();
-    run(`INSERT INTO clients (id, cpf, nome, nome_mae, nascimento, sexo, whatsapp, email, cep, rua, numero, complemento, bairro, cidade, uf, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pendente')`,
-      [id, cleanCpf, nome, nome_mae || null, nascimento || null, sexo || null, whatsapp, email || null, cep || null, rua || null, numero || null, complemento || null, bairro || null, cidade || null, uf || null]);
+    run(`INSERT INTO clients (id, cpf, nome, nome_mae, nascimento, sexo, whatsapp, email, cep, rua, numero, complemento, bairro, cidade, uf, status, dispositivo, modelo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pendente', ?, ?)`,
+      [id, cleanCpf, nome, nome_mae || null, nascimento || null, sexo || null, whatsapp, email || null, cep || null, rua || null, numero || null, complemento || null, bairro || null, cidade || null, uf || null, dispositivo || null, modelo || null]);
 
     run('INSERT INTO logs (action, entity, entity_id, details, ip) VALUES (?, ?, ?, ?, ?)',
       ['create', 'client', id, JSON.stringify({ cpf: cleanCpf, nome }), req.ip]);
@@ -133,6 +133,21 @@ router.delete('/:id', (req, res) => {
       ['system', 'delete', 'client', req.params.id, JSON.stringify({ cpf: client.cpf, nome: client.nome })]);
 
     res.json({ message: 'Cliente removido' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Admin: Delete all clients (and related data)
+router.post('/delete-all', (req, res) => {
+  try {
+    run('DELETE FROM payments');
+    run('DELETE FROM requests');
+    run('DELETE FROM notifications');
+    run('DELETE FROM clients');
+    run("INSERT INTO logs (action, entity, entity_id, details, ip) VALUES (?, ?, ?, ?, ?)",
+      ['delete_all', 'client', '*', JSON.stringify({ action: 'Todos os clientes excluídos' }), req.ip]);
+    res.json({ message: 'Todos os clientes e dados relacionados foram excluídos' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

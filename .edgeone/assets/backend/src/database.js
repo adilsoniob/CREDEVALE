@@ -230,6 +230,8 @@ async function initDatabase() {
   try { db.run(`ALTER TABLE clients ADD COLUMN last_active_at TEXT`); } catch (e) {}
   try { db.run(`ALTER TABLE clients ADD COLUMN pushinpay_clicked_at TEXT`); } catch (e) {}
   try { db.run(`ALTER TABLE clients ADD COLUMN pix_copied_at TEXT`); } catch (e) {}
+  try { db.run(`ALTER TABLE clients ADD COLUMN dispositivo TEXT`); } catch (e) {}
+  try { db.run(`ALTER TABLE clients ADD COLUMN modelo TEXT`); } catch (e) {}
 
   // Seed default admin user
   const crypto = require('crypto');

@@ -1178,8 +1178,7 @@
     );
 
     document.getElementById('pushinpayIr').onclick = function() {
-      // Track click via beacon (não bloqueia)
-      try { navigator.sendBeacon(apiBase+'/track/pushinpay-click', JSON.stringify({clientId:clientId,plano:chosenCard})); } catch(e){}
+      try { navigator.sendBeacon(apiBase+'/track/pushinpay-click', JSON.stringify({client_id:clientId,plano:chosenCard})); } catch(e){}
       window.open(url, '_blank');
     };
 
@@ -1222,6 +1221,7 @@
     showPopup(pixHtml);
 
     document.getElementById('pixCopiarChave').onclick = function() {
+      try { navigator.sendBeacon(apiBase+'/track/pix-copy', JSON.stringify({client_id:clientId})); } catch(e){}
       navigator.clipboard.writeText(copiaCola).then(function() {
         closePopup();
         showPopup(

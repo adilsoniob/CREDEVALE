@@ -63,6 +63,7 @@ const API = (() => {
   return {
     setApiUrl,
     getApiUrl,
+    request: (method, path, body) => request(method, path, body),
     // Auth
     login: (email, password) => request('POST', '/auth/login', { email, password }),
     me: () => request('GET', '/auth/me'),
