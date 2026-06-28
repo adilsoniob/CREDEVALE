@@ -1717,7 +1717,6 @@
   _win.excluirTodosClientes = excluirTodosClientes;
   _win.zerarSistema = zerarSistema;
   _win.reloadPagamentos = reloadPagamentos;
-  _win.showPagamentoDetail = showPagamentoDetail;
   _win.renderWACampanhas = renderWACampanhas;
   _win.renderWAContas = renderWAContas;
   _win.renderWAFila = renderWAFila;

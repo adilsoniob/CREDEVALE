@@ -186,6 +186,24 @@ router.get('/:id/status', (req, res) => {
   }
 });
 
+// Admin: Update payment status (approve payment)
+router.patch('/:id/status', (req, res) => {
+  try {
+    const { status } = req.body;
+    const payment = get('SELECT * FROM payments WHERE id = ?', [req.params.id]);
+    if (!payment) return res.status(404).json({ error: 'Pagamento não encontrado' });
+    run('UPDATE payments SET status = ?, paid_at = CASE WHEN ? THEN datetime("now") ELSE paid_at END WHERE id = ?',
+      [status || 'pago', status === 'pago' ? 1 : 0, req.params.id]);
+    if (status === 'pago' && payment.request_id) {
+      run('UPDATE requests SET status = "pago", updated_at = datetime("now") WHERE id = ?', [payment.request_id]);
+      run('UPDATE clients SET status = "ativado", updated_at = datetime("now") WHERE id = ?', [payment.client_id]);
+    }
+    res.json({ message: 'Status atualizado' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.get('/', (req, res) => {
   try {
     const { status, page = 1, limit = 50 } = req.query;

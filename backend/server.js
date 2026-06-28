@@ -23,7 +23,14 @@ app.set('trust proxy', 1);
 
 // Security
 app.use(helmet({ contentSecurityPolicy: false }));
-app.use(cors({ origin: process.env.CORS_ORIGIN || '*', credentials: true }));
+const allowedOrigins = (process.env.CORS_ORIGIN || '*').split(',').map(s => s.trim());
+app.use(cors({
+  origin: function (origin, cb) {
+    if (!origin || allowedOrigins.includes('*') || allowedOrigins.includes(origin)) cb(null, true);
+    else cb(null, false);
+  },
+  credentials: true
+}));
 
 // Body parsing
 app.use(express.json({ limit: '1mb' }));

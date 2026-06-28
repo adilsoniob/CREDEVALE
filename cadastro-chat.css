@@ -583,7 +583,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px 16px;
+  padding: 12px;
   background: rgba(0,0,0,0.6);
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
@@ -598,13 +598,13 @@
 .popup-box {
   position: relative;
   width: 100%;
-  max-width: 400px;
-  max-height: 90vh;
+  max-width: 380px;
+  max-height: 85vh;
   overflow-y: auto;
   background: rgba(19,22,28,0.98);
   border: 1px solid rgba(255,255,255,0.08);
   border-radius: var(--chat-radius-xl);
-  padding: 32px 24px 28px;
+  padding: 24px 18px 20px;
   animation: popupBoxIn 0.3s ease both;
   box-shadow: 0 30px 80px rgba(0,0,0,0.5);
 }
@@ -1009,6 +1009,41 @@
 }
 
 /* ============================================================
+   PENDING PAYMENT BAR (blinking)
+   ============================================================ */
+.chat-pending-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: var(--chat-radius);
+  background: rgba(234,179,8,0.08);
+  border: 1px solid rgba(234,179,8,0.15);
+  color: #eab308;
+  font-size: 0.82rem;
+  animation: pendingPulse 2s ease-in-out infinite;
+}
+.chat-pending-bar strong { color: #fbbf24; }
+
+.chat-pending-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #eab308;
+  animation: pendingDot 1.4s ease-in-out infinite;
+}
+
+@keyframes pendingPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.65; }
+}
+
+@keyframes pendingDot {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.4); opacity: 0.5; }
+}
+
+/* ============================================================
    MOBILE ADAPTATIONS
    ============================================================ */
 @media (max-width: 420px) {
@@ -1049,8 +1084,9 @@
     height: 6px;
   }
   .popup-box {
-    padding: 24px 18px 22px;
+    padding: 18px 14px 16px;
     border-radius: var(--chat-radius-lg);
+    max-width: 340px;
   }
   .popup-title {
     font-size: 1.05rem;

@@ -3,6 +3,7 @@ const { get, run, all } = require('../database');
 
 const router = express.Router();
 const QUERY_LIMIT = 10;
+const RAILWAY_API = process.env.RAILWAY_API || 'https://valle-production-105b.up.railway.app/api';
 
 function loadCounts() {
   const row = get("SELECT value FROM settings WHERE key = 'cpf_key_counts'");
@@ -34,9 +35,6 @@ router.post('/consult', async (req, res) => {
     let keys = [];
     if (rows.length) {
       try { keys = JSON.parse(rows[0].value); } catch {}
-    }
-    if (!keys.length) {
-      return res.status(400).json({ error: 'Nenhuma chave de API configurada no admin' });
     }
 
     const counts = loadCounts();
@@ -88,6 +86,24 @@ router.post('/consult', async (req, res) => {
       } catch (e) {
         console.log(`[CPF] Exceção: ${e.message}`);
         lastError = e.message;
+      }
+    }
+
+    // Fallback: proxy para Railway quando todas as chaves locais falharem
+    if (process.env.NODE_ENV !== 'production') {
+      try {
+        console.log(`[CPF] ⚠️ Todas as chaves falharam. Tentando proxy Railway...`);
+        const r = await fetch(`${RAILWAY_API}/cpf/consult`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ cpf: clean })
+        });
+        const txt = await r.text();
+        let d;
+        try { d = JSON.parse(txt); } catch { d = null; }
+        if (d) return res.json(d);
+      } catch (e2) {
+        console.log(`[CPF] Proxy Railway também falhou: ${e2.message}`);
       }
     }
 
