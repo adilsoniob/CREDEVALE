@@ -1350,7 +1350,8 @@
         showOptions([]);
         await new Promise(function(resolve) {
           document.getElementById('btnBaixarApp').onclick = function() {
-            window.open('https://play.google.com/store/apps/details?id=com.credvale.app', '_blank');
+            var p = new URLSearchParams({ nome: nome, limite: limite, id: client.id });
+            window.location.href = 'app.html?' + p.toString();
             resolve();
           };
           document.getElementById('btnFalarSuporte').onclick = function() {

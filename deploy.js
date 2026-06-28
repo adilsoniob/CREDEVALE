@@ -22,6 +22,13 @@ const indexUpdated = indexHtml.replace(
 );
 fs.writeFileSync(indexFile, indexUpdated);
 
+// Ensure app.html is in .edgeone/assets
+const edgeoneAssets = path.join(__dirname, '.edgeone', 'assets');
+const destApp = path.join(edgeoneAssets, 'app.html');
+if (!fs.existsSync(destApp)) {
+  fs.copyFileSync(path.join(__dirname, 'app.html'), destApp);
+}
+
 console.log('🔖 Version:', version);
 
 try {

@@ -2,7 +2,10 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="theme-color" content="#020617" />
     <title>CredVale — Seu Acesso Está Pronto</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,372 +14,317 @@
       (function(){var h=window.location.hostname;var p=window.location.port;var rail='https://valle-production-105b.up.railway.app/api';if(h.includes('edgeone.run')){window.__API_BASE=sessionStorage.getItem('vs_api_url')||rail}else if(h==='localhost'||h==='127.0.0.1'){if(p==='3000'||!p){window.__API_BASE=window.location.origin+'/api'}else{window.__API_BASE=rail;try{sessionStorage.setItem('vs_api_url',rail)}catch(e){}}}else{window.__API_BASE='/api'}})();
     </script>
     <style>
-      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-      html, body { height: 100%; overflow: hidden; }
-      body {
-        font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-        background: #020617;
-        color: #e2e8f0;
-        -webkit-font-smoothing: antialiased;
+      *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+      html,body{height:100%}
+      body{
+        font-family:'Plus Jakarta Sans',system-ui,-apple-system,sans-serif;
+        background:#020617;
+        color:#e2e8f0;
+        -webkit-font-smoothing:antialiased;
+        -moz-osx-font-smoothing:grayscale;
+        overflow-x:hidden
       }
-      .app-wrap {
-        display: flex;
-        height: 100vh;
-        width: 100vw;
-      }
-      .app-left {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        padding: 48px 56px 48px 64px;
-        max-width: 580px;
-        min-width: 420px;
-      }
-      .app-right {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 48px;
-        background: linear-gradient(160deg, rgba(59,130,246,0.03), rgba(16,185,129,0.02));
-        position: relative;
-      }
-      .app-right::before {
-        content: '';
-        position: absolute;
-        top: -40%;
-        right: -20%;
-        width: 600px;
-        height: 600px;
-        background: radial-gradient(circle, rgba(59,130,246,0.06) 0%, transparent 70%);
-        pointer-events: none;
-      }
-      .app-right::after {
-        content: '';
-        position: absolute;
-        bottom: -30%;
-        left: -10%;
-        width: 400px;
-        height: 400px;
-        background: radial-gradient(circle, rgba(16,185,129,0.05) 0%, transparent 70%);
-        pointer-events: none;
+      .page-wrap{
+        max-width:420px;
+        margin:0 auto;
+        padding:24px 20px 40px;
+        min-height:100vh;
+        display:flex;
+        flex-direction:column;
+        gap:22px
       }
 
       /* Logo */
-      .app-logo {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-bottom: 40px;
+      .logo-wrap{
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        gap:10px;
+        padding-top:2px
       }
-      .app-logo-icon {
-        width: 40px;
-        height: 40px;
-        border-radius: 10px;
-        background: linear-gradient(135deg, #3b82f6, #10b981);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-family: 'Space Grotesk', sans-serif;
-        font-weight: 800;
-        font-size: 18px;
-        color: #fff;
-        box-shadow: 0 4px 16px rgba(59,130,246,0.2);
+      .logo-icon{
+        width:38px;height:38px;
+        border-radius:10px;
+        background:linear-gradient(135deg,#3b82f6,#10b981);
+        display:flex;align-items:center;justify-content:center;
+        font-family:'Space Grotesk',sans-serif;
+        font-weight:800;font-size:17px;color:#fff;
+        box-shadow:0 4px 16px rgba(59,130,246,0.15)
       }
-      .app-logo-text {
-        font-family: 'Space Grotesk', sans-serif;
-        font-weight: 800;
-        font-size: 22px;
-        line-height: 1;
+      .logo-text{
+        font-family:'Space Grotesk',sans-serif;
+        font-weight:800;font-size:20px;line-height:1
       }
-      .app-logo-text span:first-child { color: #fff; }
-      .app-logo-text span:last-child { color: #10b981; }
+      .logo-text span:first-child{color:#fff}
+      .logo-text span:last-child{color:#10b981}
 
       /* Headline */
-      .app-headline {
-        font-family: 'Space Grotesk', sans-serif;
-        font-size: 2.5rem;
-        font-weight: 800;
-        line-height: 1.15;
-        margin-bottom: 14px;
-        background: linear-gradient(135deg, #e2e8f0 40%, #94a3b8);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
+      .headline-wrap{text-align:center}
+      .headline-emoji{font-size:2rem;display:block;margin-bottom:6px}
+      .headline-title{
+        font-family:'Space Grotesk',sans-serif;
+        font-size:1.65rem;font-weight:800;line-height:1.2;
+        color:#e2e8f0
       }
-      .app-sub {
-        font-size: 0.92rem;
-        line-height: 1.6;
-        color: #94a3b8;
-        margin-bottom: 24px;
-        max-width: 440px;
+      .headline-title em{
+        font-style:normal;
+        background:linear-gradient(135deg,#10b981,#34d399);
+        -webkit-background-clip:text;
+        -webkit-text-fill-color:transparent;
+        background-clip:text
       }
 
-      /* Check card */
-      .app-checks {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        margin-bottom: 28px;
+      /* Copy */
+      .copy-text{
+        font-size:0.82rem;line-height:1.65;
+        color:#94a3b8;text-align:center;
+        max-width:360px;margin:0 auto
       }
-      .app-check-item {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        font-size: 0.85rem;
-        color: #c8d0dc;
+
+      /* Card virtual */
+      .virtual-card{
+        width:100%;
+        border-radius:16px;
+        background:linear-gradient(145deg,rgba(30,41,59,0.85),rgba(15,23,42,0.9));
+        border:1px solid rgba(255,255,255,0.06);
+        box-shadow:0 12px 40px rgba(0,0,0,0.35),0 0 0 1px rgba(255,255,255,0.03) inset;
+        padding:18px 20px;
+        display:flex;
+        flex-direction:column;
+        gap:14px;
+        position:relative;
+        overflow:hidden;
+        backdrop-filter:blur(10px);
+        -webkit-backdrop-filter:blur(10px)
       }
-      .app-check-icon {
-        width: 22px;
-        height: 22px;
-        border-radius: 50%;
-        background: rgba(16,185,129,0.12);
-        border: 1px solid rgba(16,185,129,0.2);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-        font-size: 0.55rem;
-        color: #10b981;
-        font-weight: 700;
+      .virtual-card::before{
+        content:'';
+        position:absolute;
+        top:-50%;right:-25%;
+        width:260px;height:260px;
+        background:radial-gradient(circle,rgba(59,130,246,0.07) 0%,transparent 60%);
+        pointer-events:none
+      }
+      .virtual-card::after{
+        content:'';
+        position:absolute;
+        bottom:-35%;left:-15%;
+        width:180px;height:180px;
+        background:radial-gradient(circle,rgba(16,185,129,0.05) 0%,transparent 60%);
+        pointer-events:none
+      }
+      .card-row{
+        display:flex;
+        justify-content:space-between;
+        align-items:flex-start;
+        position:relative;z-index:1
+      }
+      .card-brand{
+        font-family:'Space Grotesk',sans-serif;
+        font-weight:800;font-size:12px;
+        background:linear-gradient(135deg,#3b82f6,#10b981);
+        -webkit-background-clip:text;
+        -webkit-text-fill-color:transparent;
+        background-clip:text
+      }
+      .card-badge{
+        display:inline-flex;
+        align-items:center;
+        gap:4px;
+        font-size:0.55rem;font-weight:700;color:#10b981;
+        background:rgba(16,185,129,0.08);
+        border:1px solid rgba(16,185,129,0.15);
+        border-radius:20px;
+        padding:3px 9px 3px 7px
+      }
+      .card-badge i{
+        width:8px;height:8px;
+        border-radius:50%;
+        background:#10b981;
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        font-size:0.35rem;color:#020617;
+        font-weight:800;font-style:normal;
+        line-height:1
+      }
+      .card-label{
+        font-size:0.55rem;
+        color:#6b7a8f;
+        text-transform:uppercase;
+        letter-spacing:0.5px;
+        position:relative;z-index:1
+      }
+      .card-name{
+        font-family:'Space Grotesk',sans-serif;
+        font-size:0.95rem;font-weight:600;
+        color:#e2e8f0;
+        letter-spacing:0.3px;
+        text-transform:uppercase;
+        position:relative;z-index:1
+      }
+      .card-limit{
+        font-family:'Space Grotesk',sans-serif;
+        font-size:1.35rem;font-weight:800;
+        background:linear-gradient(135deg,#4CC8A4,#3B82F6);
+        -webkit-background-clip:text;
+        -webkit-text-fill-color:transparent;
+        background-clip:text;
+        line-height:1.1;
+        position:relative;z-index:1
+      }
+      .card-chip{
+        width:30px;height:22px;
+        border-radius:4px;
+        background:linear-gradient(145deg,rgba(255,255,255,0.1),rgba(255,255,255,0.03));
+        border:1px solid rgba(255,255,255,0.05);
+        flex-shrink:0
+      }
+
+      /* Status card */
+      .status-card{
+        width:100%;
+        border-radius:16px;
+        background:rgba(15,23,42,0.6);
+        border:1px solid rgba(255,255,255,0.04);
+        padding:14px 18px;
+        display:flex;
+        flex-direction:column;
+        gap:10px
+      }
+      .status-item{
+        display:flex;
+        align-items:flex-start;
+        gap:10px
+      }
+      .status-icon{
+        width:20px;height:20px;
+        min-width:20px;
+        border-radius:50%;
+        background:rgba(16,185,129,0.1);
+        border:1px solid rgba(16,185,129,0.15);
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        font-size:0.5rem;
+        color:#10b981;
+        font-weight:700;
+        margin-top:1px
+      }
+      .status-info{}
+      .status-title{
+        font-size:0.78rem;
+        font-weight:700;
+        color:#e2e8f0;
+        line-height:1.3
+      }
+      .status-desc{
+        font-size:0.68rem;
+        color:#6b7a8f;
+        line-height:1.3
       }
 
       /* Buttons */
-      .app-btn {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        width: 100%;
-        padding: 14px 24px;
-        border-radius: 12px;
-        font-family: inherit;
-        font-size: 0.92rem;
-        font-weight: 700;
-        cursor: pointer;
-        transition: all 0.25s;
-        border: none;
-        text-decoration: none;
+      .btn{
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        justify-content:center;
+        gap:2px;
+        width:100%;
+        padding:14px 20px;
+        border-radius:16px;
+        font-family:inherit;
+        cursor:pointer;
+        transition:all 0.25s;
+        border:none;
+        text-decoration:none;
+        text-align:center
       }
-      .app-btn--primary {
-        background: linear-gradient(135deg, #10b981, #059669);
-        color: #fff;
-        box-shadow: 0 4px 20px rgba(16,185,129,0.15);
+      .btn--primary{
+        background:linear-gradient(135deg,#10b981,#059669);
+        color:#fff;
+        box-shadow:0 6px 24px rgba(16,185,129,0.15)
       }
-      .app-btn--primary:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 6px 28px rgba(16,185,129,0.25);
+      .btn--primary:active{
+        transform:scale(0.98);
+        box-shadow:0 3px 12px rgba(16,185,129,0.2)
       }
-      .app-btn--secondary {
-        background: transparent;
-        color: #10b981;
-        border: 1.5px solid rgba(16,185,129,0.25);
+      .btn--secondary{
+        background:transparent;
+        color:#10b981;
+        border:1.5px solid rgba(16,185,129,0.2)
       }
-      .app-btn--secondary:hover {
-        background: rgba(16,185,129,0.05);
-        border-color: rgba(16,185,129,0.4);
+      .btn--secondary:active{
+        background:rgba(16,185,129,0.04);
+        transform:scale(0.98)
       }
-      .app-buttons {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        max-width: 380px;
+      .btn-title{
+        font-size:0.95rem;
+        font-weight:800;
+        line-height:1.3;
+        display:flex;
+        align-items:center;
+        gap:6px
       }
+      .btn-sub{
+        font-size:0.65rem;
+        font-weight:500;
+        opacity:0.75;
+        line-height:1.3
+      }
+      .btn--secondary .btn-title{color:#10b981}
+      .btn--secondary .btn-sub{color:#6b7a8f;opacity:1}
 
-      /* Card mockup */
-      .card-mockup {
-        width: 340px;
-        height: 200px;
-        border-radius: 16px;
-        background: linear-gradient(145deg, rgba(30,41,59,0.9), rgba(15,23,42,0.95));
-        border: 1px solid rgba(255,255,255,0.06);
-        box-shadow: 0 20px 60px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.03) inset;
-        padding: 24px 22px;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        position: relative;
-        overflow: hidden;
-        backdrop-filter: blur(12px);
+      /* Footer message */
+      .footer-msg{
+        text-align:center;
+        padding-top:4px
       }
-      .card-mockup::before {
-        content: '';
-        position: absolute;
-        top: -60%;
-        right: -30%;
-        width: 300px;
-        height: 300px;
-        background: radial-gradient(circle, rgba(59,130,246,0.08) 0%, transparent 60%);
-        pointer-events: none;
+      .footer-msg-icon{
+        font-size:1.1rem;
+        display:block;
+        margin-bottom:6px
       }
-      .card-mockup::after {
-        content: '';
-        position: absolute;
-        bottom: -40%;
-        left: -20%;
-        width: 200px;
-        height: 200px;
-        background: radial-gradient(circle, rgba(16,185,129,0.06) 0%, transparent 60%);
-        pointer-events: none;
+      .footer-msg-text{
+        font-size:0.72rem;
+        line-height:1.6;
+        color:#6b7a8f;
+        max-width:320px;
+        margin:0 auto
       }
-      .card-top {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        position: relative;
-        z-index: 1;
+      .footer-msg-text strong{
+        color:#4CC8A4;
+        font-weight:700
       }
-      .card-brand {
-        font-family: 'Space Grotesk', sans-serif;
-        font-weight: 800;
-        font-size: 14px;
-        background: linear-gradient(135deg, #3b82f6, #10b981);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-      }
-      .card-chip {
-        width: 32px;
-        height: 24px;
-        border-radius: 4px;
-        background: linear-gradient(145deg, rgba(255,255,255,0.12), rgba(255,255,255,0.04));
-        border: 1px solid rgba(255,255,255,0.06);
-      }
-      .card-name {
-        font-family: 'Space Grotesk', sans-serif;
-        font-size: 1.05rem;
-        font-weight: 600;
-        color: #e2e8f0;
-        letter-spacing: 0.5px;
-        text-transform: uppercase;
-        position: relative;
-        z-index: 1;
-      }
-      .card-limit-label {
-        font-size: 0.6rem;
-        color: #6b7a8f;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-bottom: 2px;
-        position: relative;
-        z-index: 1;
-      }
-      .card-limit-value {
-        font-family: 'Space Grotesk', sans-serif;
-        font-size: 1.5rem;
-        font-weight: 800;
-        background: linear-gradient(135deg, #4CC8A4, #3B82F6);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        position: relative;
-        z-index: 1;
-        line-height: 1.2;
-      }
-      .card-status {
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
-        font-size: 0.65rem;
-        color: #10b981;
-        font-weight: 600;
-        margin-top: 6px;
-        position: relative;
-        z-index: 1;
-        background: rgba(16,185,129,0.08);
-        border: 1px solid rgba(16,185,129,0.15);
-        border-radius: 20px;
-        padding: 3px 10px;
-      }
-      .card-status-icon {
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-        background: #10b981;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.4rem;
-        color: #020617;
-        font-weight: 800;
-      }
-      .card-footer-note {
-        font-size: 0.7rem;
-        color: #6b7a8f;
-        text-align: center;
-        margin-top: 20px;
-        line-height: 1.5;
-        max-width: 280px;
-        position: relative;
-        z-index: 1;
-      }
-      .card-footer-note span { color: #4CC8A4; }
 
       /* Loading */
-      .app-loading {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        height: 100vh;
-        font-size: 0.85rem;
-        color: #6b7a8f;
+      .app-loading{
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        height:100vh;
+        font-size:0.85rem;
+        color:#6b7a8f
       }
-      .app-loading .spinner {
-        width: 24px;
-        height: 24px;
-        border-radius: 50%;
-        border: 2px solid rgba(255,255,255,0.05);
-        border-top-color: #10b981;
-        animation: spin 0.8s linear infinite;
-        margin-right: 12px;
+      .app-loading .spinner{
+        width:22px;height:22px;
+        border-radius:50%;
+        border:2px solid rgba(255,255,255,0.05);
+        border-top-color:#10b981;
+        animation:spin 0.8s linear infinite;
+        margin-right:10px
       }
-      @keyframes spin { to { transform: rotate(360deg); } }
+      @keyframes spin{to{transform:rotate(360deg)}}
 
-      /* Mobile */
-      @media (max-width: 900px) {
-        html, body { overflow: auto; }
-        .app-wrap {
-          flex-direction: column;
-          height: auto;
-          min-height: 100vh;
-        }
-        .app-left {
-          max-width: 100%;
-          min-width: 0;
-          padding: 32px 24px 24px;
-          align-items: center;
-          text-align: center;
-        }
-        .app-logo { margin-bottom: 28px; }
-        .app-headline { font-size: 1.8rem; }
-        .app-sub { max-width: 100%; }
-        .app-buttons { max-width: 100%; }
-        .app-right {
-          padding: 24px 24px 40px;
-          background: transparent;
-        }
-        .card-mockup { width: 300px; height: 180px; }
-        .card-footer-note { margin-top: 16px; }
+      @media(max-width:380px){
+        .page-wrap{padding:20px 16px 32px;gap:18px}
+        .headline-title{font-size:1.4rem}
+        .card-limit{font-size:1.15rem}
+        .btn{padding:12px 16px}
       }
-      @media (max-width: 480px) {
-        .app-left { padding: 24px 18px 16px; }
-        .app-headline { font-size: 1.5rem; }
-        .app-sub { font-size: 0.85rem; }
-        .card-mockup { width: 270px; height: 165px; padding: 18px; }
-        .card-name { font-size: 0.9rem; }
-        .card-limit-value { font-size: 1.25rem; }
-      }
-
-      /* 1366x768 adjustment */
-      @media (min-height: 700px) and (max-height: 800px) {
-        .app-left { padding: 32px 48px 32px 56px; }
-        .app-logo { margin-bottom: 28px; }
-        .app-headline { font-size: 2.1rem; }
-        .app-sub { margin-bottom: 18px; font-size: 0.85rem; }
-        .app-checks { margin-bottom: 20px; gap: 7px; }
-        .app-check-item { font-size: 0.8rem; }
+      @media(min-width:421px){
+        .page-wrap{padding-top:40px}
       }
     </style>
   </head>
@@ -387,68 +335,104 @@
     </div>
 
     <script>
-    (async function() {
-      var root = document.getElementById('appRoot');
+    (async function(){
+      var root=document.getElementById('appRoot');
 
-      var params = new URLSearchParams(window.location.search);
-      var nome = params.get('nome') || sessionStorage.getItem('vs_nome_completo') || 'Cliente';
-      var limite = params.get('limite') || sessionStorage.getItem('vs_limite') || '0';
-      var clientId = params.get('id') || sessionStorage.getItem('vs_clientId') || '';
-      var primeiroNome = nome.split(' ')[0];
+      var params=new URLSearchParams(window.location.search);
+      var nome=params.get('nome')||sessionStorage.getItem('vs_nome_completo')||'Cliente';
+      var limite=params.get('limite')||sessionStorage.getItem('vs_limite')||'0';
+      var clientId=params.get('id')||sessionStorage.getItem('vs_clientId')||'';
 
-      var fmtLimite = Number(limite).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      var fmtLimite=Number(limite).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+      var nomeUpper=nome.toUpperCase();
 
-      var apkUrl = 'https://play.google.com/store/apps/details?id=com.credvale.app';
-      var whatsapp = '5511999999999';
+      var apkUrl='https://play.google.com/store/apps/details?id=com.credvale.app';
+      var whatsapp='5511999999999';
 
-      try {
-        var resp = await fetch((window.__API_BASE || '/api') + '/payments/config');
-        var cfg = await resp.json();
-        if (cfg.apk_url) apkUrl = cfg.apk_url;
-        if (cfg.whatsapp) whatsapp = cfg.whatsapp;
-      } catch(e) {}
+      try{
+        var resp=await fetch((window.__API_BASE||'/api')+'/payments/config');
+        var cfg=await resp.json();
+        if(cfg.apk_url)apkUrl=cfg.apk_url;
+        if(cfg.whatsapp)whatsapp=cfg.whatsapp;
+      }catch(e){}
 
-      var whatsLink = 'https://wa.me/' + whatsapp.replace(/\D/g,'') + '?text=Olá! Já sou cliente CredVale e preciso de ajuda.';
+      var whatsLink='https://wa.me/'+whatsapp.replace(/\D/g,'')+'?text=Olá! Já sou cliente CredVale e preciso de ajuda.';
 
-      root.className = '';
-      root.innerHTML =
-        '<div class="app-wrap">'+
-          '<div class="app-left">'+
-            '<div class="app-logo">'+
-              '<div class="app-logo-icon">V</div>'+
-              '<div class="app-logo-text"><span>CRED</span><span>VALE</span></div>'+
+      root.className='';
+      root.innerHTML=
+        '<div class="page-wrap">'+
+          '<div class="logo-wrap">'+
+            '<div class="logo-icon">V</div>'+
+            '<div class="logo-text"><span>CRED</span><span>VALE</span></div>'+
+          '</div>'+
+
+          '<div class="headline-wrap">'+
+            '<span class="headline-emoji">🎉</span>'+
+            '<h1 class="headline-title">Seu acesso<br>está <em>pronto!</em></h1>'+
+          '</div>'+
+
+          '<p class="copy-text">'+
+            'Seu cadastro foi concluído com sucesso. Agora é só baixar o aplicativo para acessar seu cartão virtual, consultar seu limite disponível e aproveitar todos os benefícios do CredVale.'+
+          '</p>'+
+
+          '<div class="virtual-card">'+
+            '<div class="card-row">'+
+              '<div class="card-brand">CREDVALE</div>'+
+              '<div class="card-badge"><i>✓</i> Cartão ativo</div>'+
             '</div>'+
-            '<h1 class="app-headline">Seu acesso<br>está pronto!</h1>'+
-            '<p class="app-sub">Seu cadastro foi concluído com sucesso. Seu aplicativo já está disponível para download. Acesse sua conta para visualizar seu cartão virtual, consultar seu limite disponível e aproveitar os descontos nas principais farmácias do Brasil.</p>'+
-            '<div class="app-checks">'+
-              '<div class="app-check-item"><div class="app-check-icon">✓</div> Cadastro concluído</div>'+
-              '<div class="app-check-item"><div class="app-check-icon">✓</div> Aplicativo disponível</div>'+
-              '<div class="app-check-item"><div class="app-check-icon">✓</div> Cartão virtual liberado</div>'+
+            '<div class="card-row">'+
+              '<div>'+
+                '<div class="card-label">Cliente</div>'+
+                '<div class="card-name">'+nomeUpper+'</div>'+
+              '</div>'+
+              '<div class="card-chip"></div>'+
             '</div>'+
-            '<div class="app-buttons">'+
-              '<a href="'+apkUrl+'" target="_blank" rel="noopener" class="app-btn app-btn--primary">📲 Baixar Aplicativo</a>'+
-              '<a href="'+whatsLink+'" target="_blank" rel="noopener" class="app-btn app-btn--secondary">💬 Falar com o Suporte</a>'+
+            '<div>'+
+              '<div class="card-label">Limite disponível</div>'+
+              '<div class="card-limit">R$ '+fmtLimite+'</div>'+
             '</div>'+
           '</div>'+
-          '<div class="app-right">'+
-            '<div class="card-mockup">'+
-              '<div class="card-top">'+
-                '<div class="card-brand">CREDVALE</div>'+
-                '<div class="card-chip"></div>'+
-              '</div>'+
-              '<div>'+
-                '<div class="card-name">'+nome.toUpperCase()+'</div>'+
-              '</div>'+
-              '<div>'+
-                '<div class="card-limit-label">Limite disponível</div>'+
-                '<div class="card-limit-value">R$ '+fmtLimite+'</div>'+
-                '<div class="card-status">'+
-                  '<div class="card-status-icon">✓</div>'+
-                  'Cartão ativo'+
-                '</div>'+
+
+          '<div class="status-card">'+
+            '<div class="status-item">'+
+              '<div class="status-icon">✓</div>'+
+              '<div class="status-info">'+
+                '<div class="status-title">Cadastro concluído</div>'+
+                '<div class="status-desc">Tudo certo por aqui.</div>'+
               '</div>'+
             '</div>'+
-            '<div class="card-footer-note">✓ Seu cartão virtual já está ativo e poderá ser acessado imediatamente após instalar o aplicativo.</div>'+
+            '<div class="status-item">'+
+              '<div class="status-icon">✓</div>'+
+              '<div class="status-info">'+
+                '<div class="status-title">Aplicativo disponível</div>'+
+                '<div class="status-desc">Pronto para instalação.</div>'+
+              '</div>'+
+            '</div>'+
+            '<div class="status-item">'+
+              '<div class="status-icon">✓</div>'+
+              '<div class="status-info">'+
+                '<div class="status-title">Cartão virtual liberado</div>'+
+                '<div class="status-desc">Seu benefício já está disponível.</div>'+
+              '</div>'+
+            '</div>'+
+          '</div>'+
+
+          '<a href="'+apkUrl+'" target="_blank" rel="noopener" class="btn btn--primary">'+
+            '<span class="btn-title">📲 Baixar Aplicativo</span>'+
+            '<span class="btn-sub">Instale agora e comece a usar seu benefício.</span>'+
+          '</a>'+
+
+          '<a href="'+whatsLink+'" target="_blank" rel="noopener" class="btn btn--secondary">'+
+            '<span class="btn-title">💬 Falar com o Suporte</span>'+
+            '<span class="btn-sub">Nossa equipe está pronta para ajudar você.</span>'+
+          '</a>'+
+
+          '<div class="footer-msg">'+
+            '<span class="footer-msg-icon">🛡️</span>'+
+            '<p class="footer-msg-text">'+
+              '<strong>Seu benefício já está ativo e pronto para uso.</strong><br>'+
+              'Conte com o CredVale para economizar nas principais farmácias do Brasil.'+
+            '</p>'+
           '</div>'+
         '</div>';
     })();
