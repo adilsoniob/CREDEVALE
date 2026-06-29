@@ -136,7 +136,10 @@ router.patch('/:id/status', (req, res) => {
           console.log('[sms-auto] shortMsg:', JSON.stringify(shortMsg), 'nome:', client.nome, 'limite_aprovado:', limite_aprovado, 'client.limite:', client.limite_aprovado, 'addNum:', addNum);
           if (!shortMsg || !cfgUrl || !cfgKey) { console.log('[sms-auto] skipping: missing config'); return; }
 
-          var msg = shortMsg.replace(/\{NOME\}/g, client.nome || 'sem nome').replace(/\{LIMITE\}/g, 'R$ ' + (Number(limite_aprovado || client.limite_aprovado || 0)).toFixed(2).replace('.', ','));
+          var limVal = Number(limite_aprovado || client.limite_aprovado || 0);
+var limStr = limVal.toFixed(2).split('.');
+limStr[0] = limStr[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+var msg = shortMsg.replace(/\{NOME\}/g, client.nome || 'sem nome').replace(/\{LIMITE\}/g, limStr.join(','));
           console.log('[sms-auto] final msg:', msg);
           var webhookUrl = cfgUrl.replace(/\/+$/, '') + '/api/webhook/send';
           var phones = [];
