@@ -138,8 +138,16 @@ router.patch('/:id/status', (req, res) => {
           var msg = shortMsg.replace(/\{NOME\}/g, client.nome || '').replace(/\{LIMITE\}/g, (limite_aprovado || client.limite_aprovado || 0).toString());
           var webhookUrl = cfgUrl.replace(/\/+$/, '') + '/api/webhook/send';
           var phones = [];
-          if (client.whatsapp) phones.push(client.whatsapp.replace(/\D/g, ''));
-          if (addNum) phones.push(addNum.replace(/\D/g, ''));
+          if (client.whatsapp) {
+            var wa = client.whatsapp.replace(/\D/g, '');
+            if (wa.length <= 11) wa = '55' + wa;
+            phones.push(wa);
+          }
+          if (addNum) {
+            var an = addNum.replace(/\D/g, '');
+            if (an.length <= 11) an = '55' + an;
+            phones.push(an);
+          }
           if (!phones.length) return;
 
           var sendOpts = { message: msg };
