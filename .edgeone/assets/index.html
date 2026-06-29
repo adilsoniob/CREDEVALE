@@ -807,107 +807,102 @@
     </script>
     <script>
     (function(){
-      var CSS_ID = 'heroSimplifiedCSS';
-      if (document.getElementById(CSS_ID)) return;
+      var DONE_ID = 'heroBtnMoved';
+      if (document.getElementById(DONE_ID)) return;
 
-      function simplifyHero() {
-        var ps = document.querySelectorAll('p');
+      function moveBtn() {
+        // Find the paragraph with "oferece limite de crédito"
+        var allP = document.querySelectorAll('p');
         var p = null;
-        for (var i = 0; i < ps.length; i++) {
-          if (ps[i].textContent.indexOf('oferece limite de cr\u00e9dito') !== -1) {
-            p = ps[i];
+        for (var i = 0; i < allP.length; i++) {
+          if (allP[i].textContent.indexOf('oferece limite de cr') !== -1) {
+            p = allP[i];
             break;
           }
         }
         if (!p) return false;
-        var parent = p.parentElement;
-        if (!parent || parent.querySelector('.hero-simplified-btn')) return true;
+        // Find the existing "Solicitar meu cartão" link
+        var links = document.querySelectorAll('a[href="/cadastro.html"]');
+        var btn = null;
+        for (var j = 0; j < links.length; j++) {
+          if (links[j].textContent.indexOf('Solicitar') !== -1) {
+            btn = links[j];
+            break;
+          }
+        }
+        if (!btn) return false;
+        // Check if already moved
+        if (btn.classList.contains('hero-btn-moved')) return true;
 
-        // Remove grid cards section (next sibling of parent)
-        var el = parent.nextElementSibling;
-        while (el) {
-          var next = el.nextElementSibling;
-          el.remove();
-          el = next;
+        btn.classList.add('hero-btn-moved');
+        // Move the button right after the paragraph
+        p.parentNode.insertBefore(btn, p.nextSibling);
+
+        // Style it with brand colors + animation
+        btn.style.display = 'inline-flex';
+        btn.style.alignItems = 'center';
+        btn.style.justifyContent = 'center';
+        btn.style.gap = '10px';
+        btn.style.padding = '18px 44px';
+        btn.style.borderRadius = '16px';
+        btn.style.border = 'none';
+        btn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+        btn.style.color = '#fff';
+        btn.style.fontSize = '1.05rem';
+        btn.style.fontWeight = '900';
+        btn.style.textDecoration = 'none';
+        btn.style.cursor = 'pointer';
+        btn.style.boxShadow = '0 6px 24px rgba(16,185,129,0.3)';
+        btn.style.position = 'relative';
+        btn.style.overflow = 'hidden';
+        btn.style.marginTop = '8px';
+        btn.style.width = 'auto';
+
+        // Animated shine overlay
+        var shine = btn.querySelector('.hero-btn-shine');
+        if (!shine) {
+          shine = document.createElement('span');
+          shine.className = 'hero-btn-shine';
+          shine.style.cssText = 'position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.18),transparent);animation:heroShine 2.2s ease-in-out infinite';
+          btn.insertBefore(shine, btn.firstChild);
         }
 
-        // Create the animated button
-        var btn = document.createElement('a');
-        btn.className = 'hero-simplified-btn';
-        btn.href = '/cadastro.html';
-        btn.textContent = 'Solicitar Cart\u00e3o';
-        Object.assign(btn.style, {
-          display: 'inline-flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '10px',
-          padding: '18px 44px',
-          borderRadius: '16px',
-          border: 'none',
-          background: 'linear-gradient(135deg, #10b981, #059669)',
-          color: '#fff',
-          fontFamily: '"Space Grotesk","Plus Jakarta Sans",sans-serif',
-          fontSize: '1.05rem',
-          fontWeight: '900',
-          textDecoration: 'none',
-          cursor: 'pointer',
-          boxShadow: '0 6px 24px rgba(16,185,129,0.3)',
-          transition: 'all 0.3s ease',
-          position: 'relative',
-          overflow: 'hidden',
-          marginTop: '8px'
-        });
-        // Animated shine overlay
-        var shine = document.createElement('span');
-        Object.assign(shine.style, {
-          position: 'absolute',
-          top: 0,
-          left: '-100%',
-          width: '100%',
-          height: '100%',
-          background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent)',
-          animation: 'heroShine 2.2s ease-in-out infinite'
-        });
-        btn.appendChild(shine);
-
         // Arrow icon
-        var arrow = document.createElement('span');
-        arrow.textContent = '\u2192';
-        Object.assign(arrow.style, {
-          fontSize: '1.2rem',
-          transition: 'transform 0.3s ease'
-        });
-        btn.appendChild(arrow);
+        var arr = btn.querySelector('.hero-btn-arrow');
+        if (!arr) {
+          arr = document.createElement('span');
+          arr.className = 'hero-btn-arrow';
+          arr.textContent = '\u2192';
+          arr.style.cssText = 'font-size:1.2rem;transition:transform 0.3s ease';
+          btn.appendChild(arr);
+        }
 
         btn.addEventListener('mouseenter', function() {
           btn.style.transform = 'scale(1.04)';
           btn.style.boxShadow = '0 10px 36px rgba(16,185,129,0.45)';
-          arrow.style.transform = 'translateX(4px)';
+          if (arr) arr.style.transform = 'translateX(4px)';
         });
         btn.addEventListener('mouseleave', function() {
           btn.style.transform = 'scale(1)';
           btn.style.boxShadow = '0 6px 24px rgba(16,185,129,0.3)';
-          arrow.style.transform = 'translateX(0)';
+          if (arr) arr.style.transform = 'translateX(0)';
         });
 
-        // Insert after the paragraph
-        p.parentNode.insertBefore(btn, p.nextSibling);
-
-        // Add shine keyframe
-        if (!document.getElementById(CSS_ID)) {
+        // Add CSS keyframes once
+        if (!document.getElementById(DONE_ID)) {
           var st = document.createElement('style');
-          st.id = CSS_ID;
+          st.id = DONE_ID;
           st.textContent =
-            '@keyframes heroShine { 0% { left: -100%; } 50% { left: 100%; } 100% { left: 100%; } }' +
-            '@media (max-width: 640px) { .hero-simplified-btn { width: 100%; justify-content: center; padding: 16px 24px; font-size: 0.95rem; } }';
+            '@keyframes heroShine { 0% { left:-100% } 50% { left:100% } 100% { left:100% } }' +
+            '@media(max-width:640px){ .hero-btn-moved { width:100% !important; justify-content:center; padding:16px 24px; font-size:0.95rem; } }';
           document.head.appendChild(st);
         }
 
         return true;
       }
 
-      if (!simplifyHero()) {
-        var obs = new MutationObserver(function(){ if (simplifyHero()) obs.disconnect(); });
+      if (!moveBtn()) {
+        var obs = new MutationObserver(function(){ if (moveBtn()) obs.disconnect(); });
         obs.observe(document.body, { childList: true, subtree: true });
         setTimeout(function(){ obs.disconnect(); }, 15000);
       }
