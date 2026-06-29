@@ -11,7 +11,6 @@ const productRoutes = require('./src/routes/products');
 const requestRoutes = require('./src/routes/requests');
 const paymentRoutes = require('./src/routes/payments');
 const adminRoutes = require('./src/routes/admin');
-const smsProxyRoutes = require('./src/routes/sms-proxy');
 const webhookRoutes = require('./src/routes/webhooks');
 const cpfRoutes = require('./src/routes/cpf');
 const trackRoutes = require('./src/routes/track');
@@ -50,7 +49,6 @@ app.use('/api/products', productRoutes);
 app.use('/api/requests', requestRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/admin', adminRoutes);
-app.use('/api/admin/sms', smsProxyRoutes);
 app.use('/api/webhooks', webhookRoutes);
 app.use('/api/track', trackRoutes);
 app.use('/api/cpf', cpfRoutes);
@@ -80,6 +78,7 @@ initDatabase();
 app.listen(PORT, () => {
   console.log(`[VALE SAUDE] Backend rodando na porta ${PORT}`);
   console.log(`[VALE SAUDE] http://localhost:${PORT}`);
+  console.log(`[VALE SAUDE] SMS routes mounted at /api/admin/sms`);
 });
 
 module.exports = app;
