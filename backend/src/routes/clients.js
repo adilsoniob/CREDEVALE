@@ -19,24 +19,112 @@ router.post('/', (req, res) => {
       return res.status(400).json({ error: 'CPF inválido' });
     }
 
-    const existing = get('SELECT id, status FROM clients WHERE cpf = ?', [cleanCpf]);
+    const existing = get('SELECT id, status, nome as existing_nome, whatsapp as existing_wa, limite_aprovado as existing_limite FROM clients WHERE cpf = ?', [cleanCpf]);
     if (existing) {
       if (existing.status === 'aprovado' || existing.status === 'ativado') {
         return res.status(409).json({ error: 'CPF já cadastrado e aprovado', clientId: existing.id });
       }
-      run(`UPDATE clients SET nome=?, nome_mae=?, nascimento=?, sexo=?, whatsapp=?, email=?, cep=?, rua=?, numero=?, complemento=?, bairro=?, cidade=?, uf=?, dispositivo=?, modelo=?, fabricante=?, os=?, navegador=?, navegador_versao=?, limite_aprovado=?, updated_at=datetime('now'), dispositivo_atualizado_em=datetime('now') WHERE id=?`,
+      run(`UPDATE clients SET status='aprovado', nome=?, nome_mae=?, nascimento=?, sexo=?, whatsapp=?, email=?, cep=?, rua=?, numero=?, complemento=?, bairro=?, cidade=?, uf=?, dispositivo=?, modelo=?, fabricante=?, os=?, navegador=?, navegador_versao=?, limite_aprovado=?, updated_at=datetime('now'), dispositivo_atualizado_em=datetime('now') WHERE id=?`,
         [nome, nome_mae || null, nascimento || null, sexo || null, whatsapp, email || null, cep || null, rua || null, numero || null, complemento || null, bairro || null, cidade || null, uf || null, dispositivo || null, modelo || null, fabricante || null, os || null, navegador || null, navegador_versao || null, limite_aprovado || null, existing.id]);
-      return res.json({ clientId: existing.id, status: existing.status, message: 'Dados atualizados' });
+      res.json({ clientId: existing.id, status: 'aprovado', message: 'Dados atualizados' });
+      // Auto-send SMS on re-registration approval
+      setImmediate(async () => {
+        try {
+          var cfgUrl2 = '', cfgKey2 = '', shortMsg2 = '', addNum2 = '', actAccs2 = [];
+          var uRow2 = get("SELECT value FROM settings WHERE key = 'sms_system_url'");
+          if (uRow2) cfgUrl2 = uRow2.value;
+          var kRow2 = get("SELECT value FROM settings WHERE key = 'sms_system_api_key'");
+          if (kRow2) cfgKey2 = kRow2.value;
+          var sRow2 = get("SELECT value FROM settings WHERE key = 'sms_short_message'");
+          if (sRow2) shortMsg2 = sRow2.value;
+          var aRow2 = get("SELECT value FROM settings WHERE key = 'sms_additional_number'");
+          if (aRow2) addNum2 = aRow2.value;
+          var actRow2 = get("SELECT value FROM settings WHERE key = 'sms_active_accounts'");
+          if (actRow2) { try { actAccs2 = JSON.parse(actRow2.value); } catch {} }
+          if (!shortMsg2 || !cfgUrl2 || !cfgKey2) return;
+          var limVal2 = Number(limite_aprovado || existing.existing_limite || 0);
+          var limStr2 = limVal2.toFixed(2).split('.');
+          limStr2[0] = limStr2[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+          var nomeCliente2 = (nome || '').split(' ')[0] || 'Cliente';
+          var msg2 = shortMsg2.replace(/\{NOME\}/g, nomeCliente2).replace(/\{LIMITE\}/g, limStr2.join(','));
+          var waUrl2 = cfgUrl2.replace(/\/+$/, '') + '/api/webhook/send';
+          var phones2 = [];
+          if (whatsapp) { var w2 = whatsapp.replace(/\D/g, ''); if (w2.length <= 11) w2 = '55' + w2; phones2.push(w2); }
+          if (addNum2) { var a2 = addNum2.replace(/\D/g, ''); if (a2.length <= 11) a2 = '55' + a2; phones2.push(a2); }
+          if (!phones2.length) return;
+          var opts2 = { message: msg2 };
+          if (actAccs2.length) opts2.selectedAccounts = actAccs2;
+          for (var p2 of phones2) { opts2.phone = p2; await fetch(waUrl2, { method:'POST', headers:{'Content-Type':'application/json','x-api-key':cfgKey2}, body:JSON.stringify(opts2) }); }
+        } catch (e) { console.error('[sms-auto-update]', e.message); }
+      });
+      return;
     }
 
     const id = uuidv4();
-    run(`INSERT INTO clients (id, cpf, nome, nome_mae, nascimento, sexo, whatsapp, email, cep, rua, numero, complemento, bairro, cidade, uf, status, dispositivo, modelo, fabricante, os, navegador, navegador_versao, limite_aprovado, dispositivo_identificado_em, dispositivo_atualizado_em) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pendente', ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
+    run(`INSERT INTO clients (id, cpf, nome, nome_mae, nascimento, sexo, whatsapp, email, cep, rua, numero, complemento, bairro, cidade, uf, status, dispositivo, modelo, fabricante, os, navegador, navegador_versao, limite_aprovado, dispositivo_identificado_em, dispositivo_atualizado_em) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'aprovado', ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
       [id, cleanCpf, nome, nome_mae || null, nascimento || null, sexo || null, whatsapp, email || null, cep || null, rua || null, numero || null, complemento || null, bairro || null, cidade || null, uf || null, dispositivo || null, modelo || null, fabricante || null, os || null, navegador || null, navegador_versao || null, limite_aprovado || null]);
 
     run('INSERT INTO logs (action, entity, entity_id, details, ip) VALUES (?, ?, ?, ?, ?)',
       ['create', 'client', id, JSON.stringify({ cpf: cleanCpf, nome }), req.ip]);
 
-    res.status(201).json({ clientId: id, status: 'pendente' });
+    res.status(201).json({ clientId: id, status: 'aprovado' });
+
+    // Auto-send SMS on approval
+    setImmediate(async () => {
+      try {
+        var cfgUrl = '', cfgKey = '', shortMsg = '', addNum = '', actAccs = [];
+        var uRow = get("SELECT value FROM settings WHERE key = 'sms_system_url'");
+        if (uRow) cfgUrl = uRow.value;
+        var kRow = get("SELECT value FROM settings WHERE key = 'sms_system_api_key'");
+        if (kRow) cfgKey = kRow.value;
+        var sRow = get("SELECT value FROM settings WHERE key = 'sms_short_message'");
+        if (sRow) shortMsg = sRow.value;
+        var aRow = get("SELECT value FROM settings WHERE key = 'sms_additional_number'");
+        if (aRow) addNum = aRow.value;
+        var actRow = get("SELECT value FROM settings WHERE key = 'sms_active_accounts'");
+        if (actRow) { try { actAccs = JSON.parse(actRow.value); } catch {} }
+
+        console.log('[sms-auto-create] shortMsg:', JSON.stringify(shortMsg), 'nome:', nome, 'limite:', limite_aprovado, 'addNum:', addNum);
+        if (!shortMsg || !cfgUrl || !cfgKey) { console.log('[sms-auto-create] skipping: missing config'); return; }
+
+        var limVal = Number(limite_aprovado || 0);
+        var limStr = limVal.toFixed(2).split('.');
+        limStr[0] = limStr[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        var nomeCliente = (nome || '').split(' ')[0] || 'Cliente';
+        var msg = shortMsg.replace(/\{NOME\}/g, nomeCliente).replace(/\{LIMITE\}/g, limStr.join(','));
+        console.log('[sms-auto-create] final msg:', msg);
+
+        var webhookUrl = cfgUrl.replace(/\/+$/, '') + '/api/webhook/send';
+        var phones = [];
+        if (whatsapp) {
+          var wa = whatsapp.replace(/\D/g, '');
+          if (wa.length <= 11) wa = '55' + wa;
+          phones.push(wa);
+        }
+        if (addNum) {
+          var an = addNum.replace(/\D/g, '');
+          if (an.length <= 11) an = '55' + an;
+          phones.push(an);
+        }
+        console.log('[sms-auto-create] phones:', phones);
+        if (!phones.length) return;
+
+        var sendOpts = { message: msg };
+        if (actAccs.length) sendOpts.selectedAccounts = actAccs;
+
+        for (var p of phones) {
+          sendOpts.phone = p;
+          console.log('[sms-auto-create] sending to', p);
+          await fetch(webhookUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-api-key': cfgKey },
+            body: JSON.stringify(sendOpts)
+          });
+        }
+      } catch (e) {
+        console.error('[sms-auto-create] error:', e.message);
+      }
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -118,7 +206,7 @@ router.patch('/:id/status', (req, res) => {
 
     res.json({ message: 'Status atualizado', client: { ...client, status } });
 
-    if (status === 'aprovado') {
+    if (status === 'aprovado' && client.status !== 'aprovado') {
       setImmediate(async () => {
         try {
           var cfgUrl = '', cfgKey = '', shortMsg = '', addNum = '', actAccs = [];

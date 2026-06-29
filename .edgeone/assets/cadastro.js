@@ -830,7 +830,6 @@
     clientId = apiResult ? apiResult.clientId : clientId;
     if (apiResult) {
       trackStage('Cadastro Aprovado', {nome: user.nome, cpf: user.cpf});
-      API.updateClientStatus(clientId, 'aprovado', limite);
     }
 
     sessionStorage.setItem('vs_clientId', clientId);
