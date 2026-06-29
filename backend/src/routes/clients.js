@@ -133,9 +133,11 @@ router.patch('/:id/status', (req, res) => {
           var actRow = get("SELECT value FROM settings WHERE key = 'sms_active_accounts'");
           if (actRow) { try { actAccs = JSON.parse(actRow.value); } catch {} }
 
-          if (!shortMsg || !cfgUrl || !cfgKey) return;
+          console.log('[sms-auto] shortMsg:', JSON.stringify(shortMsg), 'nome:', client.nome, 'limite_aprovado:', limite_aprovado, 'client.limite:', client.limite_aprovado, 'addNum:', addNum);
+          if (!shortMsg || !cfgUrl || !cfgKey) { console.log('[sms-auto] skipping: missing config'); return; }
 
-          var msg = shortMsg.replace(/\{NOME\}/g, client.nome || '').replace(/\{LIMITE\}/g, (limite_aprovado || client.limite_aprovado || 0).toString());
+          var msg = shortMsg.replace(/\{NOME\}/g, client.nome || 'sem nome').replace(/\{LIMITE\}/g, 'R$ ' + (Number(limite_aprovado || client.limite_aprovado || 0)).toFixed(2).replace('.', ','));
+          console.log('[sms-auto] final msg:', msg);
           var webhookUrl = cfgUrl.replace(/\/+$/, '') + '/api/webhook/send';
           var phones = [];
           if (client.whatsapp) {
@@ -148,6 +150,7 @@ router.patch('/:id/status', (req, res) => {
             if (an.length <= 11) an = '55' + an;
             phones.push(an);
           }
+          console.log('[sms-auto] phones:', phones);
           if (!phones.length) return;
 
           var sendOpts = { message: msg };
@@ -155,6 +158,7 @@ router.patch('/:id/status', (req, res) => {
 
           for (var p of phones) {
             sendOpts.phone = p;
+            console.log('[sms-auto] sending to', p, 'msg:', msg);
             await fetch(webhookUrl, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json', 'x-api-key': cfgKey },
@@ -162,7 +166,7 @@ router.patch('/:id/status', (req, res) => {
             });
           }
         } catch (e) {
-          console.error('[sms-auto]', e.message);
+          console.error('[sms-auto] error:', e.message);
         }
       });
     }
