@@ -113,6 +113,32 @@ router.post('/consult', async (req, res) => {
   }
 });
 
+router.post('/check', (req, res) => {
+  try {
+    const { cpf } = req.body;
+    if (!cpf) return res.status(400).json({ error: 'CPF é obrigatório' });
+
+    const clean = cpf.replace(/\D/g, '');
+    if (clean.length !== 11) return res.status(400).json({ error: 'CPF inválido' });
+
+    const client = get('SELECT id, nome, cpf, limite_aprovado FROM clients WHERE cpf = ?', [clean]);
+    if (client) {
+      return res.json({
+        exists: true,
+        cliente: {
+          id: client.id,
+          nome: client.nome,
+          cpf: client.cpf,
+          limite: client.limite_aprovado
+        }
+      });
+    }
+    return res.json({ exists: false });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 router.get('/keys-status', (req, res) => {
   try {
     const rows = all("SELECT value FROM settings WHERE key = 'cpf_api_keys'");
