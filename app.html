@@ -438,6 +438,7 @@
         document.body.appendChild(ov);
 
         document.getElementById('dlConfirmBtn').onclick=function(){
+          try { var _sid=sessionStorage.getItem('vs_session_id'); if(_sid)navigator.sendBeacon((window.__API_BASE||'/api')+'/track/session/stage',new Blob([JSON.stringify({session_id:_sid,stage:'Baixando Aplicativo'})],{type:'application/json'})); }catch(e){}
           if(isExternalLink){
             window.location.href=apkUrl;
           }else{

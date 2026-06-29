@@ -26,19 +26,22 @@ router.get('/dashboard', (req, res) => {
     const totalPushinpayClicks = get(`SELECT COALESCE(SUM(pushinpay_click_count), 0) as total FROM clients`).total;
 
     const supportClickRow = get(`SELECT value FROM settings WHERE key = 'support_click_count'`);
-    const pageViewRow = get(`SELECT value FROM settings WHERE key = 'page_view_count'`);
     const supportClickCount = parseInt(supportClickRow?.value || '0', 10);
-    const pageViewCount = parseInt(pageViewRow?.value || '0', 10);
+    const pageViewCount = get('SELECT COUNT(*) as count FROM page_views').count;
     const monthlyRevenue = get(`SELECT COALESCE(SUM(valor), 0) as total FROM payments WHERE status = 'pago' AND paid_at >= datetime('now', '-30 days')`).total;
     const dailyRevenue = get(`SELECT COALESCE(SUM(valor), 0) as total FROM payments WHERE status = 'pago' AND paid_at >= datetime('now', '-1 day')`).total;
     const weeklyRevenue = get(`SELECT COALESCE(SUM(valor), 0) as total FROM payments WHERE status = 'pago' AND paid_at >= datetime('now', '-7 days')`).total;
     const expectativaReceita = monthlyRevenue;
 
-    const recentClients = all('SELECT id, cpf, nome, whatsapp, status, created_at FROM clients ORDER BY created_at DESC LIMIT 10');
+    const onlineSessions = get(`SELECT COUNT(*) as count FROM sessions WHERE offline_at IS NULL AND last_heartbeat >= datetime('now', '-60 seconds')`).count;
+    const onlineSessionList = all(`SELECT id, nome, cpf, stage, dispositivo, modelo, fabricante, navegador, navegador_versao, os, ip, origem, last_activity FROM sessions WHERE offline_at IS NULL AND last_heartbeat >= datetime('now', '-60 seconds') ORDER BY last_activity DESC`);
+
+    const recentClients = all('SELECT id, cpf, nome, whatsapp, status, created_at, dispositivo, modelo, fabricante, os, navegador, navegador_versao FROM clients ORDER BY created_at DESC LIMIT 10');
     const recentPayments = all(`SELECT p.*, c.nome as client_nome FROM payments p JOIN clients c ON p.client_id = c.id ORDER BY p.created_at DESC LIMIT 10`);
 
     res.json({
-      kpis: { totalClients, pendingClients, approvedClients, activatedClients, totalRequests, pendingRequests, totalPayments, paidPayments, totalRevenue, pixPayments, cardPayments, conversionRate, onlineAgora, totalPixCopies, totalPushinpayClicks, supportClickCount, pageViewCount, expectativaReceita, dailyRevenue, weeklyRevenue, monthlyRevenue },
+      kpis: { totalClients, pendingClients, approvedClients, activatedClients, totalRequests, pendingRequests, totalPayments, paidPayments, totalRevenue, pixPayments, cardPayments, conversionRate, onlineAgora, onlineSessions, totalPixCopies, totalPushinpayClicks, supportClickCount, pageViewCount, expectativaReceita, dailyRevenue, weeklyRevenue, monthlyRevenue },
+      onlineSessionList,
       recentClients, recentPayments
     });
   } catch (err) {

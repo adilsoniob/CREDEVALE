@@ -8,7 +8,7 @@ const router = express.Router();
 // Public: Create client (registration)
 router.post('/', (req, res) => {
   try {
-    const { cpf, nome, nome_mae, nascimento, sexo, whatsapp, email, cep, rua, numero, complemento, bairro, cidade, uf, dispositivo, modelo } = req.body;
+    const { cpf, nome, nome_mae, nascimento, sexo, whatsapp, email, cep, rua, numero, complemento, bairro, cidade, uf, dispositivo, modelo, fabricante, os, navegador, navegador_versao, limite_aprovado } = req.body;
 
     if (!cpf || !nome || !whatsapp) {
       return res.status(400).json({ error: 'CPF, nome e WhatsApp são obrigatórios' });
@@ -24,14 +24,14 @@ router.post('/', (req, res) => {
       if (existing.status === 'aprovado' || existing.status === 'ativado') {
         return res.status(409).json({ error: 'CPF já cadastrado e aprovado', clientId: existing.id });
       }
-      run(`UPDATE clients SET nome=?, nome_mae=?, nascimento=?, sexo=?, whatsapp=?, email=?, cep=?, rua=?, numero=?, complemento=?, bairro=?, cidade=?, uf=?, dispositivo=?, modelo=?, updated_at=datetime('now') WHERE id=?`,
-        [nome, nome_mae || null, nascimento || null, sexo || null, whatsapp, email || null, cep || null, rua || null, numero || null, complemento || null, bairro || null, cidade || null, uf || null, dispositivo || null, modelo || null, existing.id]);
+      run(`UPDATE clients SET nome=?, nome_mae=?, nascimento=?, sexo=?, whatsapp=?, email=?, cep=?, rua=?, numero=?, complemento=?, bairro=?, cidade=?, uf=?, dispositivo=?, modelo=?, fabricante=?, os=?, navegador=?, navegador_versao=?, limite_aprovado=?, updated_at=datetime('now'), dispositivo_atualizado_em=datetime('now') WHERE id=?`,
+        [nome, nome_mae || null, nascimento || null, sexo || null, whatsapp, email || null, cep || null, rua || null, numero || null, complemento || null, bairro || null, cidade || null, uf || null, dispositivo || null, modelo || null, fabricante || null, os || null, navegador || null, navegador_versao || null, limite_aprovado || null, existing.id]);
       return res.json({ clientId: existing.id, status: existing.status, message: 'Dados atualizados' });
     }
 
     const id = uuidv4();
-    run(`INSERT INTO clients (id, cpf, nome, nome_mae, nascimento, sexo, whatsapp, email, cep, rua, numero, complemento, bairro, cidade, uf, status, dispositivo, modelo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pendente', ?, ?)`,
-      [id, cleanCpf, nome, nome_mae || null, nascimento || null, sexo || null, whatsapp, email || null, cep || null, rua || null, numero || null, complemento || null, bairro || null, cidade || null, uf || null, dispositivo || null, modelo || null]);
+    run(`INSERT INTO clients (id, cpf, nome, nome_mae, nascimento, sexo, whatsapp, email, cep, rua, numero, complemento, bairro, cidade, uf, status, dispositivo, modelo, fabricante, os, navegador, navegador_versao, limite_aprovado, dispositivo_identificado_em, dispositivo_atualizado_em) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pendente', ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
+      [id, cleanCpf, nome, nome_mae || null, nascimento || null, sexo || null, whatsapp, email || null, cep || null, rua || null, numero || null, complemento || null, bairro || null, cidade || null, uf || null, dispositivo || null, modelo || null, fabricante || null, os || null, navegador || null, navegador_versao || null, limite_aprovado || null]);
 
     run('INSERT INTO logs (action, entity, entity_id, details, ip) VALUES (?, ?, ?, ?, ?)',
       ['create', 'client', id, JSON.stringify({ cpf: cleanCpf, nome }), req.ip]);
@@ -148,6 +148,34 @@ router.post('/delete-all', (req, res) => {
     run("INSERT INTO logs (action, entity, entity_id, details, ip) VALUES (?, ?, ?, ?, ?)",
       ['delete_all', 'client', '*', JSON.stringify({ action: 'Todos os clientes excluídos' }), req.ip]);
     res.json({ message: 'Todos os clientes e dados relacionados foram excluídos' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Update client device info from session
+router.patch('/:id/device', (req, res) => {
+  try {
+    const { dispositivo, modelo, fabricante, os, navegador, navegador_versao } = req.body;
+    const client = get('SELECT * FROM clients WHERE id = ?', [req.params.id]);
+    if (!client) return res.status(404).json({ error: 'Cliente não encontrado' });
+    var sets = [];
+    var params = [];
+    if (dispositivo) { sets.push('dispositivo = ?'); params.push(dispositivo); }
+    if (modelo) { sets.push('modelo = ?'); params.push(modelo); }
+    if (fabricante) { sets.push('fabricante = ?'); params.push(fabricante); }
+    if (os) { sets.push('os = ?'); params.push(os); }
+    if (navegador) { sets.push('navegador = ?'); params.push(navegador); }
+    if (navegador_versao) { sets.push('navegador_versao = ?'); params.push(navegador_versao); }
+    if (sets.length) {
+      sets.push("dispositivo_atualizado_em = datetime('now')");
+      if (!client.dispositivo || !client.fabricante) {
+        sets.push("dispositivo_identificado_em = COALESCE(dispositivo_identificado_em, datetime('now'))");
+      }
+      params.push(req.params.id);
+      run(`UPDATE clients SET ${sets.join(', ')}, updated_at = datetime('now') WHERE id = ?`, params);
+    }
+    res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

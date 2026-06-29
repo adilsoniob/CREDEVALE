@@ -224,6 +224,16 @@ async function initDatabase() {
     )
   `);
 
+  db.run(`
+    CREATE TABLE IF NOT EXISTS page_views (
+      id TEXT PRIMARY KEY,
+      ip TEXT,
+      user_agent TEXT,
+      referrer TEXT,
+      created_at TEXT DEFAULT (datetime('now'))
+    )
+  `);
+
   // Add tracking columns (safe migration — ignores error if already exists)
   try { db.run(`ALTER TABLE clients ADD COLUMN pushinpay_click_count INTEGER DEFAULT 0`); } catch (e) {}
   try { db.run(`ALTER TABLE clients ADD COLUMN pix_copied_count INTEGER DEFAULT 0`); } catch (e) {}
@@ -232,6 +242,39 @@ async function initDatabase() {
   try { db.run(`ALTER TABLE clients ADD COLUMN pix_copied_at TEXT`); } catch (e) {}
   try { db.run(`ALTER TABLE clients ADD COLUMN dispositivo TEXT`); } catch (e) {}
   try { db.run(`ALTER TABLE clients ADD COLUMN modelo TEXT`); } catch (e) {}
+  try { db.run(`ALTER TABLE clients ADD COLUMN fabricante TEXT`); } catch (e) {}
+  try { db.run(`ALTER TABLE clients ADD COLUMN os TEXT`); } catch (e) {}
+  try { db.run(`ALTER TABLE clients ADD COLUMN navegador TEXT`); } catch (e) {}
+  try { db.run(`ALTER TABLE clients ADD COLUMN navegador_versao TEXT`); } catch (e) {}
+  try { db.run(`ALTER TABLE clients ADD COLUMN dispositivo_identificado_em TEXT`); } catch (e) {}
+  try { db.run(`ALTER TABLE clients ADD COLUMN dispositivo_atualizado_em TEXT`); } catch (e) {}
+  // Session table migrations
+  try { db.run(`ALTER TABLE sessions ADD COLUMN fabricante TEXT DEFAULT ''`); } catch (e) {}
+  try { db.run(`ALTER TABLE sessions ADD COLUMN navegador_versao TEXT DEFAULT ''`); } catch (e) {}
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS sessions (
+      id TEXT PRIMARY KEY,
+      visitor_id TEXT,
+      client_id TEXT,
+      stage TEXT DEFAULT 'Visitando Landing Page',
+      ip TEXT,
+      user_agent TEXT,
+      dispositivo TEXT DEFAULT '',
+      modelo TEXT DEFAULT '',
+      fabricante TEXT DEFAULT '',
+      navegador TEXT DEFAULT '',
+      navegador_versao TEXT DEFAULT '',
+      os TEXT DEFAULT '',
+      origem TEXT DEFAULT '',
+      nome TEXT,
+      cpf TEXT,
+      started_at TEXT DEFAULT (datetime('now')),
+      last_heartbeat TEXT DEFAULT (datetime('now')),
+      last_activity TEXT DEFAULT (datetime('now')),
+      offline_at TEXT
+    )
+  `);
 
   db.run(`
     CREATE TABLE IF NOT EXISTS app_versions (

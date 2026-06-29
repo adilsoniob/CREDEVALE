@@ -7,6 +7,15 @@
   const fmtDate = d => d ? new Date(d).toLocaleDateString('pt-BR') : '—';
   const fmtDateTime = d => d ? new Date(d).toLocaleString('pt-BR') : '—';
 
+  const SMS_TEMPLATE = `Ol\u00e1, {NOME}! \ud83c\udf89\n\nParab\u00e9ns! Seu cadastro foi aprovado com sucesso no CredVale.\n\n\ud83d\udcb3 Seu limite dispon\u00edvel \u00e9 de R$ {LIMITE}.\n\nAgora voc\u00ea j\u00e1 pode baixar o aplicativo do CredVale e come\u00e7ar a aproveitar todos os benef\u00edcios:\n\n\u2705 At\u00e9 75% de desconto em medicamentos\n\u2705 Parcelamento em at\u00e9 15x\n\u2705 Fatura com at\u00e9 45 dias para pagar\n\u2705 Cart\u00e3o virtual com libera\u00e7\u00e3o imediata\n\nBaixe agora:\n{LINK_APP}\n\nSe precisar de ajuda, nossa equipe est\u00e1 \u00e0 disposi\u00e7\u00e3o.\n\nSeja bem-vindo ao CredVale! \ud83d\udc99`;
+
+  function fillSmsTemplate(nome, limite, linkApp) {
+    return SMS_TEMPLATE
+      .replace(/\{NOME\}/g, nome)
+      .replace(/\{LIMITE\}/g, limite)
+      .replace(/\{LINK_APP\}/g, linkApp);
+  }
+
   let currentRoute = 'dashboard';
   let currentUser = null;
   let currentPage = { clients: 1, pagamentos: 1 };
@@ -126,6 +135,56 @@
     });
   }
 
+  function showSmsModal(msg, waNum) {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:16px;animation:modalIn 0.2s ease;';
+    overlay.innerHTML = `
+      <div style="background:#203A57;border-radius:24px;padding:28px 20px;max-width:440px;width:100%;border:1px solid rgba(255,255,255,0.08);box-shadow:0 30px 80px rgba(0,0,0,0.45);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+          <h3 style="font-size:1.125rem;font-weight:700;color:#fff;margin:0;">📩 Mensagem SMS</h3>
+          <button class="s-close" style="background:none;border:none;color:#B7C5D8;font-size:1.25rem;cursor:pointer;padding:4px;">✕</button>
+        </div>
+        <div style="background:rgba(0,0,0,0.25);border-radius:16px;padding:20px 16px;max-height:360px;overflow-y:auto;margin-bottom:20px;font-size:0.875rem;color:#e2e8f0;line-height:1.6;white-space:pre-wrap;word-break:break-word;text-align:left;">${escHtml(msg)}</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <button class="s-wa" style="width:100%;padding:14px;border-radius:14px;border:none;background:linear-gradient(90deg,#25D366,#128C7E);color:#fff;font-size:0.9375rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">Enviar no WhatsApp</button>
+          <button class="s-copy" style="width:100%;padding:14px;border-radius:14px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.06);color:#B7C5D8;font-size:0.9375rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">Copiar Mensagem</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+
+    const close = () => overlay.remove();
+    overlay.querySelector('.s-close').onclick = close;
+    overlay.onclick = e => { if (e.target === overlay) close(); };
+
+    overlay.querySelector('.s-wa').onclick = () => {
+      const waLink = 'https://wa.me/55' + waNum + '?text=' + encodeURIComponent(msg);
+      window.open(waLink, '_blank');
+      close();
+    };
+
+    overlay.querySelector('.s-copy').onclick = async () => {
+      try {
+        await navigator.clipboard.writeText(msg);
+        const btn = overlay.querySelector('.s-copy');
+        btn.textContent = '✓ Copiado!';
+        btn.style.background = 'rgba(16,185,129,0.2)';
+        btn.style.borderColor = '#10B981';
+        btn.style.color = '#10B981';
+        setTimeout(close, 1200);
+      } catch {
+        const btn = overlay.querySelector('.s-copy');
+        btn.textContent = 'Erro ao copiar';
+        btn.style.color = '#EF4444';
+      }
+    };
+  }
+
+  function escHtml(str) {
+    var d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+  }
+
   function renderPagination(totalPages, current, onChange) {
     if (totalPages <= 1) return '';
     let html = '<div style="display:flex;gap:6px;align-items:center;justify-content:center;margin-top:16px;">';
@@ -150,10 +209,12 @@
       { key: 'aplicativo', icon: '📱', label: 'Aplicativo' },
       { key: 'pagamento-config', icon: '🟢', label: 'PIX' },
       { key: 'popup-config', icon: '🪟', label: 'Pop-up' },
+      { key: 'sms', icon: '📨', label: 'SMS' },
       { key: 'pagamentos', icon: '💳', label: 'Pagamentos' },
       { key: 'clients', icon: '👥', label: 'Clientes' },
       { key: 'produtos', icon: '📦', label: 'Produtos' },
       { key: 'solicitacoes', icon: '📋', label: 'Solicitações' },
+      { key: 'online', icon: '🟢', label: 'Online' },
       { key: 'separator-sistema', separator: true, label: 'SISTEMA' },
       { key: 'api', icon: '🔑', label: 'API CPF' },
       { key: 'notificacoes', icon: '🔔', label: 'Notificações' },
@@ -216,10 +277,12 @@
         case 'aplicativo': await renderAplicativo(main); break;
         case 'pagamento-config': await renderPagamentoConfig(main); break;
         case 'popup-config': await renderPopupConfig(main); break;
+        case 'sms': await renderSmsPage(main); break;
         case 'pagamentos': await renderPagamentos(main); break;
         case 'clients': await renderClients(main); break;
         case 'produtos': await renderProdutos(main); break;
         case 'solicitacoes': await renderSolicitacoes(main); break;
+        case 'online': renderOnline(main); break;
         case 'api': await renderApiPage(main); break;
         case 'notificacoes': await renderNotificacoes(main); break;
         case 'usuarios': await renderUsuarios(main); break;
@@ -235,64 +298,69 @@
   async function renderDashboard(container) {
     const data = await API.getDashboard();
     const k = data.kpis;
+    var onlineOnline = data.onlineSessionList || [];
+    var visitantes = onlineOnline.filter(function(s){ return !s.nome; });
+    var clientesOnline = onlineOnline.filter(function(s){ return s.nome; });
     container.innerHTML = `
       <header class="admin-header">
         <h1 class="admin-header__title">Dashboard</h1>
-        <div style="display:flex;gap:16px;align-items:center;">
-          <span style="font-size:0.8125rem;color:var(--color-text-light);">👁️ Páginas visitadas: <strong>${k.pageViewCount ?? 0}</strong></span>
-          <span style="font-size:0.8125rem;color:var(--color-text-light);">💬 Suporte WhatsApp: <strong>${k.supportClickCount ?? 0}</strong></span>
-          <button class="btn btn--sm btn--ghost" onclick="resetSupportClicks()">Limpar</button>
-        </div>
       </header>
-      <div class="admin-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin-bottom: 24px;">
+      <div class="admin-grid" style="grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); margin-bottom: 24px;">
         <article class="admin-card" style="background:linear-gradient(135deg,rgba(59,130,246,0.12),rgba(59,130,246,0.05));border:1px solid rgba(59,130,246,0.2);">
-          <div class="admin-card__label">Total Usuários</div>
+          <div class="admin-card__label">Total de Clientes</div>
           <div class="admin-card__value" style="font-size:2rem;">${k.totalClients}</div>
         </article>
-        <article class="admin-card" style="background:linear-gradient(135deg,rgba(251,146,60,0.12),rgba(251,146,60,0.05));border:1px solid rgba(251,146,60,0.2);">
-          <div class="admin-card__label">📊 Receita (mês)</div>
-          <div class="admin-card__value" style="font-size:1.5rem;color:var(--color-orange);">${fmtMoney(k.monthlyRevenue ?? 0)}</div>
-          <div style="font-size:0.7rem;color:var(--color-text-muted);margin-top:4px;">7d: ${fmtMoney(k.weeklyRevenue ?? 0)} · Hoje: ${fmtMoney(k.dailyRevenue ?? 0)}</div>
-        </article>
         <article class="admin-card" style="background:linear-gradient(135deg,rgba(16,185,129,0.12),rgba(16,185,129,0.05));border:1px solid rgba(16,185,129,0.2);">
-          <div class="admin-card__label">📋 PIX Copiados</div>
+          <div class="admin-card__label">PIX Copiado</div>
           <div class="admin-card__value" style="font-size:2rem;color:var(--color-green);">${k.totalPixCopies ?? 0}</div>
         </article>
-        <article class="admin-card" style="background:linear-gradient(135deg,rgba(99,102,241,0.12),rgba(99,102,241,0.05));border:1px solid rgba(99,102,241,0.2);">
-          <div class="admin-card__label">🔗 PushinPay Cliques</div>
-          <div class="admin-card__value" style="font-size:2rem;">${k.totalPushinpayClicks ?? 0}</div>
+        <article class="admin-card" style="background:linear-gradient(135deg,rgba(251,146,60,0.12),rgba(251,146,60,0.05));border:1px solid rgba(251,146,60,0.2);">
+          <div class="admin-card__label">Push Clicado</div>
+          <div class="admin-card__value" style="font-size:2rem;color:var(--color-orange);">${k.totalPushinpayClicks ?? 0}</div>
+        </article>
+        <article class="admin-card" style="background:linear-gradient(135deg,rgba(139,92,246,0.12),rgba(139,92,246,0.05));border:1px solid rgba(139,92,246,0.2);">
+          <div class="admin-card__label">Visitantes na Tela</div>
+          <div class="admin-card__value" style="font-size:2rem;color:#a78bfa;">${visitantes.length}</div>
+          <div style="font-size:0.65rem;color:var(--color-text-muted);margin-top:2px;max-height:80px;overflow-y:auto;">${visitantes.length ? visitantes.map(function(s){ return '<div style="padding:1px 0;">' + (s.dispositivo||'') + (s.modelo ? ' ' + s.modelo : '') + '</div>'; }).join('') : '<span style="font-style:italic;">Nenhum</span>'}</div>
+        </article>
+        <article class="admin-card" style="background:linear-gradient(135deg,rgba(236,72,153,0.12),rgba(236,72,153,0.05));border:1px solid rgba(236,72,153,0.2);">
+          <div class="admin-card__label">Clientes Online</div>
+          <div class="admin-card__value" style="font-size:2rem;color:#f472b6;">${clientesOnline.length}</div>
+          <div style="font-size:0.65rem;color:var(--color-text-muted);margin-top:2px;max-height:80px;overflow-y:auto;">${clientesOnline.length ? clientesOnline.map(function(s){ return '<div style="padding:1px 0;">' + (s.nome||'') + (s.dispositivo ? ' · ' + s.dispositivo : '') + '</div>'; }).join('') : '<span style="font-style:italic;">Nenhum</span>'}</div>
+        </article>
+        <article class="admin-card" style="background:linear-gradient(135deg,rgba(245,158,11,0.12),rgba(245,158,11,0.05));border:1px solid rgba(245,158,11,0.2);">
+          <div class="admin-card__label">Quantidade de Visitas</div>
+          <div class="admin-card__value" style="font-size:2rem;color:#f59e0b;">${k.pageViewCount ?? 0}</div>
         </article>
       </div>
-      <div class="admin-grid">
-        <article class="admin-card"><div class="admin-card__label">📋 Pendentes</div><div class="admin-card__value" style="color:var(--color-blue-dark);">${k.pendingClients}</div></article>
-        <article class="admin-card"><div class="admin-card__label">✅ Aprovados</div><div class="admin-card__value" style="color:var(--color-green);">${k.approvedClients}</div></article>
-        <article class="admin-card"><div class="admin-card__label">✅ Ativados</div><div class="admin-card__value">${k.activatedClients}</div></article>
-        <article class="admin-card" style="background:linear-gradient(135deg,rgba(25,211,166,0.12),rgba(25,211,166,0.05));border:1px solid rgba(25,211,166,0.2);"><div class="admin-card__label">🟢 Online Agora</div><div class="admin-card__value" style="color:var(--color-green);font-size:1.5rem;">${k.onlineAgora ?? 0}</div></article>
-        <article class="admin-card"><div class="admin-card__label">💳 Pagos PIX</div><div class="admin-card__value">${k.pixPayments}</div></article>
-        <article class="admin-card"><div class="admin-card__label">💳 Pagos Cartão</div><div class="admin-card__value">${k.cardPayments}</div></article>
-      </div>
-      <section class="admin-card" style="grid-column:1/-1; margin-top: 24px;">
+      <section class="admin-card" style="grid-column:1/-1; margin-bottom:16px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
           <h2 class="admin-form__section-title" style="margin:0;">Últimos cadastros</h2>
           <button class="btn btn--primary btn--sm" onclick="navigateTo('clients')">Ver todos →</button>
         </div>
         <div class="admin-table-wrap">
           <table class="admin-table">
-            <thead><tr><th>Nome</th><th>CPF</th><th>WhatsApp</th><th>Data</th><th>Status</th><th>Ações</th></tr></thead>
-            <tbody>${data.recentClients.map(c => `
-              <tr>
-                <td>${c.nome}</td>
-                <td>${formatCpf(c.cpf)}</td>
-                <td>${c.whatsapp || '—'}</td>
-                <td>${fmtDate(c.created_at)}</td>
-                <td><span class="badge badge--${statusColor(c.status)}">${c.status}</span></td>
-                <td><button class="admin-btn-icon" onclick="viewClient('${c.id}')" title="Ver detalhes">👁️</button></td>
-              </tr>`).join('')}
-            </tbody>
-          </table>
+            <thead><tr><th>Nome</th><th>CPF</th><th>WhatsApp</th><th>Dispositivo</th><th>Modelo</th><th>Data</th><th>Status</th><th>Ações</th></tr></thead>
+            <tbody>${data.recentClients.map(function(c) {
+              var isOnline = onlineOnline.some(function(s){ return s.cpf && c.cpf && s.cpf.replace(/\D/g,'') === c.cpf.replace(/\D/g,''); });
+              var disp = c.dispositivo || '—';
+              var modelo = c.modelo || '—';
+              var fab = c.fabricante ? c.fabricante : '';
+              return '<tr>' +
+                '<td>' + (isOnline ? '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#10B981;margin-right:6px;vertical-align:middle;"></span>' : '') + c.nome + '</td>' +
+                '<td>' + formatCpf(c.cpf) + '</td>' +
+                '<td>' + (c.whatsapp || '—') + '</td>' +
+                '<td style="font-size:0.75rem;">' + disp + '</td>' +
+                '<td style="font-size:0.75rem;color:var(--color-text-muted);">' + (fab ? fab + ' ' : '') + modelo + '</td>' +
+                '<td>' + fmtDate(c.created_at) + '</td>' +
+                '<td><span class="badge badge--' + statusColor(c.status) + '">' + c.status + '</span></td>' +
+                '<td><button class="admin-btn-icon" onclick="viewClient(\'' + c.id + '\')" title="Ver detalhes">👁️</button></td>' +
+              '</tr>';
+            }).join('')}
+          </tbody></table>
         </div>
       </section>
-      <section class="admin-card" style="grid-column:1/-1; margin-top:16px;">
+      <section class="admin-card" style="grid-column:1/-1;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
           <h2 class="admin-form__section-title" style="margin:0;">Últimos pagamentos</h2>
           <button class="btn btn--primary btn--sm" onclick="navigateTo('pagamentos')">Ver todos →</button>
@@ -300,19 +368,111 @@
         <div class="admin-table-wrap">
           <table class="admin-table">
             <thead><tr><th>Cliente</th><th>Método</th><th>Valor</th><th>Status</th><th>Data</th></tr></thead>
-            <tbody>${data.recentPayments.map(p => `
-              <tr>
-                <td>${p.client_nome || '—'}</td>
-                <td>${p.metodo}</td>
-                <td>${fmtMoney(p.valor)}</td>
-                <td><span class="badge badge--${statusColor(p.status)}">${p.status}</span></td>
-                <td>${fmtDate(p.paid_at || p.created_at)}</td>
-              </tr>`).join('')}
+            <tbody>${data.recentPayments.map(function(p) { return '<tr>' +
+                '<td>' + (p.client_nome || '—') + '</td>' +
+                '<td>' + p.metodo + '</td>' +
+                '<td>' + fmtMoney(p.valor) + '</td>' +
+                '<td><span class="badge badge--' + statusColor(p.status) + '">' + p.status + '</span></td>' +
+                '<td>' + fmtDate(p.paid_at || p.created_at) + '</td>' +
+              '</tr>'; }).join('')}
             </tbody>
           </table>
         </div>
       </section>
     `;
+  }
+
+  function renderOnline(container) {
+    var tbodyId = 'onlineTbody' + Date.now();
+    container.innerHTML = `
+      <header class="admin-header">
+        <h1 class="admin-header__title">🟢 Usuários Online</h1>
+        <span style="font-size:0.8125rem;color:var(--color-text-light);">Atualização automática a cada 5s</span>
+      </header>
+      <section class="admin-card">
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead><tr><th>Status</th><th>Nome</th><th>CPF</th><th>Etapa</th><th>Tempo</th><th>Dispositivo</th><th>SO / Nav</th><th>IP / Origem</th></tr></thead>
+            <tbody id="${tbodyId}"><tr><td colspan="8" style="text-align:center;color:var(--color-text-muted);">Carregando...</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+      <section class="admin-card" style="margin-top:16px;">
+        <h2 class="admin-form__section-title" style="margin:0 0 8px;">⏳ Sessões Recentes (24h)</h2>
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead><tr><th>Nome</th><th>CPF</th><th>Etapa Final</th><th>Duração</th><th>Dispositivo</th><th>IP</th></tr></thead>
+            <tbody id="recentTbody"><tr><td colspan="6" style="text-align:center;color:var(--color-text-muted);">Carregando...</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+    `;
+    var poll = function(){
+      API.getActiveSessions().then(function(d){
+        var tb = document.getElementById(tbodyId);
+        if (!tb) return;
+        if (!d.sessions || !d.sessions.length) {
+          tb.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--color-text-muted);padding:24px;">Nenhum usuário online no momento</td></tr>';
+        } else {
+          tb.innerHTML = d.sessions.map(function(s){
+            var tempo = '';
+            try { var min = Math.floor((Date.now() - new Date(s.started_at+'Z').getTime()) / 60000); tempo = min + 'm'; if (min < 1) tempo = '<1m'; } catch(e){ tempo = '—'; }
+            var ultAtv = '';
+            try { var sec = Math.floor((Date.now() - new Date(s.last_activity+'Z').getTime()) / 1000); ultAtv = sec + 's'; if (sec > 120) ultAtv = Math.floor(sec/60) + 'm'; } catch(e){ ultAtv = '—'; }
+            var disp = s.dispositivo || '—';
+            if (s.modelo && s.dispositivo !== 'iPhone') disp += ' · ' + s.modelo;
+            var fab = s.fabricante ? s.fabricante + ' ' : '';
+            return '<tr>' +
+              '<td><span style="display:inline-flex;align-items:center;gap:4px;color:#10B981;font-weight:600;"><span style="width:8px;height:8px;border-radius:50%;background:#10B981;display:inline-block;animation:pulse 2s infinite;"></span> Online</span></td>' +
+              '<td><strong>' + (s.nome || 'Visitante') + '</strong></td>' +
+              '<td style="font-family:monospace;font-size:0.75rem;">' + (s.cpf || '—') + '</td>' +
+              '<td><span class="badge badge--primary" style="font-size:0.7rem;">' + (s.stage || '—') + '</span></td>' +
+              '<td style="font-size:0.75rem;color:var(--color-text-muted);">' + tempo + ' / ' + ultAtv + '</td>' +
+              '<td style="font-size:0.75rem;">' + fab + disp + '</td>' +
+              '<td style="font-size:0.7rem;color:var(--color-text-muted);">' + (s.os || '—') + '<br>' + (s.navegador || '—') + '</td>' +
+              '<td style="font-size:0.7rem;color:var(--color-text-muted);font-family:monospace;">' + (s.ip || '—') + '<br>' + (s.origem ? s.origem.slice(0, 40) : '—') + '</td>' +
+            '</tr>';
+          }).join('');
+        }
+        var rt = document.getElementById('recentTbody');
+        if (rt && d.recent) {
+          rt.innerHTML = d.recent.map(function(s){
+            var dur = '';
+            try {
+              var start = new Date(s.started_at+'Z').getTime();
+              var end = s.offline_at ? new Date(s.offline_at+'Z').getTime() : Date.now();
+              var min = Math.floor((end - start) / 60000);
+              dur = min + 'm';
+            } catch(e){ dur = '—'; }
+            return '<tr>' +
+              '<td>' + (s.nome || 'Visitante') + '</td>' +
+              '<td style="font-family:monospace;font-size:0.75rem;">' + (s.cpf || '—') + '</td>' +
+              '<td><span class="badge badge--' + (s.stage === 'Cadastro Aprovado' ? 'success' : '') + '" style="font-size:0.7rem;">' + (s.stage || '—') + '</span></td>' +
+              '<td style="font-size:0.75rem;color:var(--color-text-muted);">' + dur + '</td>' +
+              '<td style="font-size:0.75rem;">' + (s.dispositivo || '—') + '</td>' +
+              '<td style="font-size:0.7rem;color:var(--color-text-muted);font-family:monospace;">' + (s.ip || '—') + '</td>' +
+            '</tr>';
+          }).join('');
+        }
+        if (!tb) { clearInterval(pollInt); }
+      }).catch(function(){});
+    };
+    poll();
+    var pollInt = setInterval(poll, 5000);
+    // Also pulse animation style
+    if (!document.getElementById('onlinePulseStyle')) {
+      var st = document.createElement('style');
+      st.id = 'onlinePulseStyle';
+      st.textContent = '@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}';
+      document.head.appendChild(st);
+    }
+    // Store interval ref to clean up later
+    container._pollInt = pollInt;
+    // Observar para limpar se o container for removido
+    var obs = new MutationObserver(function(){
+      if (!document.body.contains(container)) { clearInterval(pollInt); obs.disconnect(); }
+    });
+    obs.observe(container.parentNode || document.body, {childList:true});
   }
 
   async function viewClient(id) {
@@ -323,9 +483,12 @@
       const pays = data.payments || [];
       const main = $('#adminMain');
       var devIcon = '💻';
-      if (c.dispositivo === 'Android') devIcon = '📱';
+      if (c.dispositivo === 'Android' || c.dispositivo === 'Celular') devIcon = '📱';
       else if (c.dispositivo === 'iPhone') devIcon = '📱';
       var waLink = c.whatsapp ? 'https://wa.me/55' + c.whatsapp.replace(/\D/g, '') : null;
+
+      var browserLabel = c.navegador || '—';
+      if (c.navegador && c.navegador_versao) browserLabel += ' ' + c.navegador_versao;
 
       main.innerHTML = `
         <header class="admin-header" style="margin-bottom:16px;">
@@ -335,7 +498,7 @@
             <button class="btn btn--primary btn--sm" onclick="navigateTo('clients')">← Voltar</button>
           </div>
         </header>
-        <div class="admin-grid" style="grid-template-columns:1fr 1fr;">
+        <div class="admin-grid" style="grid-template-columns:1fr 1fr 1fr;">
           <section class="admin-card">
             <h2 class="admin-form__section-title">Dados do Cliente</h2>
             <div style="display:grid;gap:8px;font-size:0.85rem;">
@@ -345,8 +508,19 @@
               <div><strong>Status:</strong> <span class="badge badge--${statusColor(c.status)}">${c.status}</span></div>
               <div><strong>Limite:</strong> ${c.limite_aprovado ? fmtMoney(c.limite_aprovado) : '—'}</div>
               <div><strong>Produto:</strong> ${c.produto_escolhido || '—'}</div>
-              <div><strong>Dispositivo:</strong> ${devIcon} ${c.dispositivo || '—'}${c.modelo && c.dispositivo !== 'iPhone' ? ' · ' + c.modelo : ''}</div>
               <div><strong>Cadastro:</strong> ${fmtDateTime(c.created_at)}</div>
+            </div>
+          </section>
+          <section class="admin-card">
+            <h2 class="admin-form__section-title">Dispositivo</h2>
+            <div style="display:grid;gap:8px;font-size:0.85rem;">
+              <div><strong>Tipo de dispositivo:</strong> ${devIcon} ${c.dispositivo || '—'}</div>
+              <div><strong>Fabricante:</strong> ${c.fabricante || '—'}</div>
+              <div><strong>Modelo:</strong> ${c.modelo || '—'}</div>
+              <div><strong>Sistema Operacional:</strong> ${c.os || (c.dispositivo === 'iPhone' ? 'iOS' : '') || '—'}</div>
+              <div><strong>Navegador:</strong> ${browserLabel}</div>
+              <div><strong>Primeiro acesso:</strong> ${c.dispositivo_identificado_em ? fmtDateTime(c.dispositivo_identificado_em) : (c.created_at ? fmtDateTime(c.created_at) : '—')}</div>
+              <div><strong>Última atividade:</strong> ${c.dispositivo_atualizado_em ? fmtDateTime(c.dispositivo_atualizado_em) : (c.updated_at ? fmtDateTime(c.updated_at) : '—')}</div>
             </div>
           </section>
           <section class="admin-card">
@@ -647,6 +821,17 @@
         </div>
         <button id="btnSaveFooter" class="btn btn--primary" style="margin-top:var(--space-lg);">SALVAR RODAPÉ</button>
       </section>
+      <section class="admin-card admin-form" style="margin-top:var(--space-md);">
+        <h2 class="admin-form__section-title">📩 SMS — Link do Aplicativo</h2>
+        <p style="font-size:0.8rem;color:var(--color-text-muted);margin-bottom:12px;">Link usado na mensagem SMS enviada para clientes aprovados.</p>
+        <div class="form-grid">
+          <div class="form-group form-group--full">
+            <label>Link do App</label>
+            <input type="url" id="settSmsAppLink" value="${data.settings.sms_app_link || 'https://app.credvale.com.br'}" placeholder="https://app.credvale.com.br">
+          </div>
+        </div>
+        <button id="btnSaveSms" class="btn btn--primary" style="margin-top:var(--space-lg);">SALVAR SMS</button>
+      </section>
     `;
     $('#btnSaveConfig').addEventListener('click', async () => {
       try {
@@ -668,6 +853,14 @@
           footer_cnpj: $('#settFooterCnpj').value
         });
         showToast('Rodapé salvo!');
+      } catch (e) {
+        showToast('Erro ao salvar: ' + e.message, 'error');
+      }
+    });
+    $('#btnSaveSms').addEventListener('click', async () => {
+      try {
+        await API.saveSettings({ sms_app_link: $('#settSmsAppLink').value });
+        showToast('Link SMS salvo!');
       } catch (e) {
         showToast('Erro ao salvar: ' + e.message, 'error');
       }
@@ -776,49 +969,251 @@
       <header class="admin-header">
         <h1 class="admin-header__title">🪟 Pop-up Promocional</h1>
       </header>
-      <section class="admin-card admin-form">
+      <section class="admin-card admin-form" id="popupConfigSection">
         <p style="font-size:0.85rem;color:var(--color-text-muted);margin-bottom:20px;background:rgba(59,130,246,0.08);padding:14px;border-radius:8px;border:1px solid rgba(59,130,246,0.2);">
-          O pop-up aparece na <strong>página inicial</strong> após <strong>700ms</strong>, com um timer de <strong>10 segundos</strong> e fecha automaticamente. O usuário vê apenas uma vez por sessão.
+          O pop-up aparece na <strong>página inicial</strong> ap\u00f3s <strong>700ms</strong>, com timer configur\u00e1vel e fecha automaticamente. O usu\u00e1rio v\u00ea apenas uma vez por sess\u00e3o.
         </p>
-        <div class="form-grid">
-          <div class="form-group form-group--half">
-            <label>Ativar pop-up</label>
-            <label class="form-checkbox--single" style="display:flex;align-items:center;gap:8px;margin-top:4px;">
-              <input type="checkbox" id="settPopupEnabled" ${popupConfig.enabled !== false ? 'checked' : ''}>
+        <div class="form-grid" id="popupConfigForm">
+          <div class="form-group form-group--full">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+              <input type="checkbox" id="settPopupEnabled" ${data.settings.popup_enabled === 'true' ? 'checked' : ''} style="width:18px;height:18px;cursor:pointer;">
               <span style="font-size:0.85rem;">Pop-up ativo</span>
             </label>
           </div>
-          <div class="form-group form-group--half">
-            <label>Texto do CTA</label>
-            <input type="text" id="settPopupCta" value="${(popupConfig.cta || 'Solicitar Vale Saúde').replace(/"/g, '&quot;')}" placeholder="Solicitar Vale Saúde">
-          </div>
           <div class="form-group form-group--full">
             <label>Título</label>
-            <input type="text" id="settPopupTitle" value="${(popupConfig.title || 'Mais economia. Mais praticidade. Mais saúde.').replace(/"/g, '&quot;')}" placeholder="Título do pop-up">
+            <input type="text" id="settPopupTitle" class="pc-preview-input" value="${(data.settings.popup_title || '').replace(/"/g,'&quot;')}" placeholder="Ex: Mais economia. Mais praticidade. Mais sa\u00fade.">
           </div>
           <div class="form-group form-group--full">
             <label>Subtítulo / Texto de apoio</label>
-            <textarea id="settPopupSubtitle" rows="3" style="width:100%;padding:10px 14px;border-radius:8px;background:var(--color-surface);border:1px solid var(--color-border);color:var(--color-text);font-family:inherit;font-size:0.85rem;resize:vertical;">${(popupConfig.subtitle || 'Descontos de até 75% em medicamentos e produtos de farmácia.').replace(/"/g, '&quot;')}</textarea>
+            <textarea id="settPopupMessage" class="pc-preview-input" rows="3" style="width:100%;font-family:monospace;font-size:0.8125rem;padding:10px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;color:#1e293b;" placeholder="Ex: Descontos de at\u00e9 75% em medicamentos...">${(data.settings.popup_message || '').replace(/"/g,'&quot;')}</textarea>
           </div>
+          <div class="form-group form-group--half">
+            <label>Texto do CTA</label>
+            <input type="text" id="settPopupCtaText" class="pc-preview-input" value="${(data.settings.popup_cta_text || '').replace(/"/g,'&quot;')}" placeholder="Ex: Solicitar Vale Sa\u00fade">
+          </div>
+          <div class="form-group form-group--half">
+            <label>Link do CTA</label>
+            <input type="url" id="settPopupCtaLink" value="${(data.settings.popup_cta_link || '').replace(/"/g,'&quot;')}" placeholder="Ex: https://credvale.edgeone.run/cadastro">
+          </div>
+          <div class="form-group form-group--half">
+            <label>Fonte</label>
+            <select id="settPopupFont" class="pc-preview-input" style="padding:10px 12px;border:1px solid var(--color-gray-200);border-radius:var(--radius-sm);font-size:0.875rem;width:100%;">
+              ${function(){ var html='',fonts=['Inter','Roboto','Poppins','Open Sans','Montserrat','Nunito','Lato','Raleway'],cur=data.settings.popup_font||'Inter'; for(var i=0;i<fonts.length;i++){ html+='<option value="'+fonts[i]+'"'+(cur===fonts[i]?' selected':'')+'>'+fonts[i]+'</option>'; } return html; }()}
+            </select>
+          </div>
+          <div class="form-group form-group--half">
+            <label>Tempo na tela (segundos)</label>
+            <input type="number" id="settPopupDuration" class="pc-preview-input" value="${parseInt(data.settings.popup_duration) || 10}" min="3" max="60" style="padding:10px 12px;border:1px solid var(--color-gray-200);border-radius:var(--radius-sm);font-size:0.875rem;width:100%;">
+          </div>
+        </div>
+        <div style="margin-top:var(--space-lg);">
+          <h3 style="font-size:0.85rem;font-weight:700;color:#e2e8f0;margin-bottom:12px;">📱 Pr\u00e9via</h3>
+          <div id="popupPreview" style="background:rgba(15,23,42,0.95);border-radius:16px;padding:32px 24px;min-height:240px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;border:1px solid rgba(255,255,255,0.08);"></div>
         </div>
         <button id="btnSavePopupConfig" class="btn btn--primary" style="margin-top:var(--space-lg);">SALVAR POP-UP</button>
       </section>
     `;
+    function renderPopupPreview() {
+      var title = $('#settPopupTitle');
+      var msg = $('#settPopupMessage');
+      var ctaText = $('#settPopupCtaText');
+      var font = $('#settPopupFont');
+      var preview = $('#popupPreview');
+      if (!preview) return;
+      var t = title ? title.value : '';
+      var m = msg ? msg.value : '';
+      var c = ctaText ? ctaText.value : '';
+      var f = font ? font.value : 'Inter';
+      preview.style.fontFamily = f;
+      preview.innerHTML =
+        '<div style="background:#203A57;border-radius:20px;padding:28px 24px;max-width:320px;width:100%;text-align:center;border:1px solid rgba(255,255,255,0.08);box-shadow:0 20px 60px rgba(0,0,0,0.3);">' +
+          (t ? '<div style="font-size:1.15rem;font-weight:800;color:#e2e8f0;margin-bottom:8px;">' + escHtml(t) + '</div>' : '') +
+          (m ? '<div style="font-size:0.82rem;color:#94a3b0;line-height:1.5;margin-bottom:18px;">' + escHtml(m).replace(/\n/g,'<br>') + '</div>' : '<div style="font-size:0.82rem;color:#475569;line-height:1.5;margin-bottom:18px;font-style:italic;">Sem mensagem</div>') +
+          (c ? '<div style="display:inline-block;padding:12px 28px;border-radius:12px;background:linear-gradient(90deg,#3B82F6,#4CC8A4);color:#fff;font-size:0.85rem;font-weight:700;">' + escHtml(c) + '</div>' : '') +
+          '<div style="margin-top:14px;font-size:0.65rem;color:#475569;">\u2715</div>' +
+        '</div>';
+    }
+    $$('.pc-preview-input').forEach(function(el){ el.addEventListener('input', renderPopupPreview); });
+    renderPopupPreview();
     $('#btnSavePopupConfig').addEventListener('click', async () => {
       try {
         await API.saveSettings({
-          popup_config: JSON.stringify({
-            enabled: $('#settPopupEnabled').checked,
-            title: $('#settPopupTitle').value,
-            subtitle: $('#settPopupSubtitle').value,
-            cta: $('#settPopupCta').value
-          })
+          popup_enabled: $('#settPopupEnabled').checked ? 'true' : 'false',
+          popup_title: $('#settPopupTitle').value,
+          popup_message: $('#settPopupMessage').value,
+          popup_cta_text: $('#settPopupCtaText').value,
+          popup_cta_link: $('#settPopupCtaLink').value,
+          popup_font: $('#settPopupFont').value,
+          popup_duration: String(parseInt($('#settPopupDuration').value) || 10)
         });
         showToast('Pop-up salvo com sucesso!');
       } catch (e) {
         showToast('Erro ao salvar: ' + e.message, 'error');
       }
     });
+  }
+
+  async function renderSmsPage(container) {
+    var cfg;
+    try { cfg = await API.getSmsConfig(); } catch { cfg = { url: '', key: '', accounts: [] }; }
+
+    var accList = cfg.accounts && cfg.accounts.length ? cfg.accounts : ['0122C371A', '0122C371B', '0122C371C', '0122C371D'];
+
+    container.innerHTML = `
+      <header class="admin-header">
+        <h1 class="admin-header__title">📨 Envio de SMS</h1>
+        <span style="font-size:0.8rem;color:var(--color-text-muted);">${cfg.url ? '✅ Conectado' : '⚠️ Configure abaixo'}</span>
+      </header>
+
+      <!-- Config -->
+      <section class="admin-card admin-form" style="margin-bottom:var(--space-md);">
+        <h2 class="admin-form__section-title">⚙️ Conexão com o Sistema de SMS</h2>
+        <div class="form-grid">
+          <div class="form-group form-group--full">
+            <label>URL do Sistema SMS</label>
+            <input type="url" id="smsSystemUrl" value="${cfg.url}" placeholder="https://sms-sistema.up.railway.app">
+          </div>
+          <div class="form-group form-group--full">
+            <label>API Key</label>
+            <input type="password" id="smsApiKey" value="" placeholder="${cfg.key ? '******** (definida)' : 'Digite a API key'}">
+          </div>
+          <div class="form-group form-group--full">
+            <label>Contas de SMS (uma por linha)</label>
+            <textarea id="smsAccountsConfig" rows="4" style="width:100%;font-family:monospace;font-size:0.8125rem;padding:10px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;color:#1e293b;">${accList.join('\n')}</textarea>
+          </div>
+        </div>
+        <button id="btnSaveSmsConfig" class="btn btn--primary" style="margin-top:var(--space-lg);">SALVAR CONFIGURAÇÃO</button>
+        <button id="btnTestConnection" class="btn btn--ghost" style="margin-top:var(--space-lg);margin-left:8px;">🔌 Testar Conexão</button>
+      </section>
+
+      <!-- Send SMS -->
+      <section class="admin-card admin-form" style="margin-bottom:var(--space-md);">
+        <h2 class="admin-form__section-title">📤 Enviar SMS</h2>
+        <div class="form-grid">
+          <div class="form-group form-group--full">
+            <label>Telefone (com DDD, apenas números)</label>
+            <input type="text" id="smsPhone" placeholder="5511999999999">
+          </div>
+          <div class="form-group form-group--full">
+            <label>Mensagem</label>
+            <textarea id="smsMessage" rows="4" style="width:100%;font-family:monospace;font-size:0.8125rem;padding:10px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;color:#1e293b;" placeholder="Digite a mensagem SMS..."></textarea>
+          </div>
+          <div class="form-group form-group--full">
+            <label>Conta(s) para enviar (segure Ctrl para selecionar múltiplas)</label>
+            <select id="smsSelectedAccounts" multiple style="width:100%;padding:10px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;color:#1e293b;min-height:100px;font-size:0.85rem;">
+              ${accList.map(function(a){ return '<option value="' + a + '" selected>' + a + '</option>'; }).join('')}
+            </select>
+            <div style="font-size:0.75rem;color:var(--color-text-muted);margin-top:4px;">Se nenhuma selecionada, o sistema fará rotação automática entre todas.</div>
+          </div>
+        </div>
+        <button id="btnSendSms" class="btn btn--primary" style="margin-top:var(--space-lg);">📨 ENVIAR SMS</button>
+        <div id="smsResult" style="display:none;margin-top:12px;padding:12px;border-radius:8px;background:rgba(0,0,0,0.08);"></div>
+      </section>
+
+      <!-- History -->
+      <section class="admin-card">
+        <h2 class="admin-form__section-title">📋 Últimos envios</h2>
+        <div id="smsHistoryContent" style="font-size:0.85rem;color:var(--color-text-muted);">Use o formulário acima para enviar SMS. O resultado aparecerá aqui.</div>
+      </section>
+    `;
+
+    var history = [];
+
+    $('#btnSaveSmsConfig').addEventListener('click', async function() {
+      var url = $('#smsSystemUrl').value.trim();
+      var key = $('#smsApiKey').value.trim();
+      var accountsRaw = $('#smsAccountsConfig').value;
+      var accounts = accountsRaw.split('\n').map(function(s){ return s.trim(); }).filter(Boolean);
+      try {
+        var payload = { sms_system_url: url };
+        if (key) payload.sms_system_api_key = key;
+        payload.sms_accounts = accounts;
+        await API.saveSmsConfig(payload);
+        showToast('Configuração salva!');
+      } catch (e) {
+        showToast('Erro: ' + e.message, 'error');
+      }
+    });
+
+    $('#btnTestConnection').addEventListener('click', async function() {
+      var url = $('#smsSystemUrl').value.trim();
+      var key = $('#smsApiKey').value.trim();
+      if (!url) { showToast('Configure a URL primeiro', 'error'); return; }
+      try {
+        var webhookUrl = url.replace(/\/+$/, '') + '/api/webhook/send';
+        var resp = await fetch(webhookUrl, {
+          method: 'HEAD',
+          headers: { 'x-api-key': key || 'test' }
+        });
+        if (resp.ok) showToast('✅ Conexão OK! Servidor respondeu.');
+        else showToast('⚠️ Servidor respondeu com status ' + resp.status + '. Verifique URL e chave.', 'error');
+      } catch (e) {
+        showToast('❌ Não foi possível conectar: ' + e.message, 'error');
+      }
+    });
+
+    $('#btnSendSms').addEventListener('click', async function() {
+      var phone = $('#smsPhone').value.trim();
+      var message = $('#smsMessage').value.trim();
+      if (!phone || !message) { showToast('Preencha telefone e mensagem', 'error'); return; }
+      var select = $('#smsSelectedAccounts');
+      var selected = [];
+      for (var i = 0; i < select.options.length; i++) {
+        if (select.options[i].selected) selected.push(select.options[i].value);
+      }
+
+      var btn = $('#btnSendSms');
+      btn.disabled = true;
+      btn.textContent = '⏳ Enviando...';
+      var resultDiv = $('#smsResult');
+      resultDiv.style.display = 'none';
+
+      try {
+        var resp = await API.smsSend({ phone: phone, message: message, selectedAccounts: selected.length ? selected : undefined });
+        resultDiv.style.display = '';
+        resultDiv.style.background = resp.status && resp.status < 300 ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)';
+        resultDiv.style.color = resp.status && resp.status < 300 ? '#10B981' : '#EF4444';
+        resultDiv.textContent = JSON.stringify(resp.data || resp, null, 2);
+        if (resp.status && resp.status < 300) showToast('✅ SMS enviado com sucesso!');
+        else showToast('⚠️ Resposta inesperada', 'error');
+
+        history.unshift({
+          phone: phone,
+          message: message.slice(0, 80) + (message.length > 80 ? '...' : ''),
+          accounts: selected.length ? selected.join(', ') : 'auto (rotação)',
+          status: resp.status && resp.status < 300 ? 'sucesso' : 'falha',
+          time: new Date().toLocaleString('pt-BR')
+        });
+        renderHistory();
+      } catch (e) {
+        resultDiv.style.display = '';
+        resultDiv.style.background = 'rgba(239,68,68,0.1)';
+        resultDiv.style.color = '#EF4444';
+        resultDiv.textContent = 'Erro: ' + e.message;
+        showToast('Erro ao enviar SMS: ' + e.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '📨 ENVIAR SMS';
+      }
+    });
+
+    function renderHistory() {
+      var histDiv = $('#smsHistoryContent');
+      if (!history.length) {
+        histDiv.innerHTML = 'Nenhum envio ainda.';
+        return;
+      }
+      histDiv.innerHTML = '<div style="max-height:300px;overflow-y:auto;">' + history.map(function(h) {
+        return '<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);font-size:0.78rem;">' +
+          '<span style="' + (h.status === 'sucesso' ? 'color:#10B981;' : 'color:#EF4444;') + '">' + (h.status === 'sucesso' ? '✅' : '❌') + '</span>' +
+          '<span style="font-family:monospace;color:var(--color-text-muted);min-width:100px;">' + h.time + '</span>' +
+          '<span style="font-family:monospace;font-weight:600;min-width:130px;">' + h.phone + '</span>' +
+          '<span style="flex:1;color:var(--color-text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escHtml(h.message) + '</span>' +
+          '<span style="font-size:0.7rem;color:var(--color-text-muted);font-style:italic;">' + h.accounts + '</span>' +
+        '</div>';
+      }).join('') + '</div>';
+    }
   }
 
   async function renderPagamentos(container, page) {
@@ -959,7 +1354,14 @@
     const filtro = currentFilter.clients || '';
     const params = `limit=${pageSize}&page=${p}${filtro ? '&status=' + filtro : ''}`;
     const data = await API.getClients(params);
-    const payments = await API.getPayments('limit=500');
+    const [payments, onlineData, settingsData] = await Promise.all([
+      API.getPayments('limit=500'),
+      API.getActiveSessions().catch(function(){ return { sessions: [] }; }),
+      API.getSettings().catch(function(){ return { settings: {} }; })
+    ]);
+    const linkApp = (settingsData.settings && settingsData.settings.sms_app_link) || 'https://app.credvale.com.br';
+    var onlineCpfMap = {};
+    (onlineData.sessions || []).forEach(function(s){ if (s.cpf) onlineCpfMap[s.cpf.replace(/\D/g,'')] = true; });
     const paymentMap = {};
     payments.payments.forEach(pay => {
       if (!paymentMap[pay.client_id]) paymentMap[pay.client_id] = [];
@@ -983,7 +1385,7 @@
         <div class="admin-table-wrap">
           <table class="admin-table">
             <thead><tr><th>Nome</th><th>CPF</th><th>WhatsApp</th><th>Dispositivo</th><th>Status</th><th>Data</th><th>Ações</th></tr></thead>
-            <tbody id="clientsTableBody">${renderClientRows(data.clients, paymentMap)}</tbody>
+            <tbody id="clientsTableBody">${renderClientRows(data.clients, paymentMap, onlineCpfMap, linkApp)}</tbody>
           </table>
         </div>
         <div id="clientsPagination">${renderPagination(data.pages || 1, p, 'clients')}</div>
@@ -1001,11 +1403,18 @@
       const s = e.target.value.trim();
       if (s.length < 2 && s.length > 0) return;
       const params2 = s.length >= 2 ? `search=${encodeURIComponent(s)}&limit=${pageSize}` : `limit=${pageSize}&page=${currentPage.clients || 1}${currentFilter.clients ? '&status=' + currentFilter.clients : ''}`;
-      const results = await API.getClients(params2);
-      const pay = await API.getPayments('limit=500');
+      const [results, pay, onlineData2, settingsData2] = await Promise.all([
+        API.getClients(params2),
+        API.getPayments('limit=500'),
+        API.getActiveSessions().catch(function(){ return { sessions: [] }; }),
+        API.getSettings().catch(function(){ return { settings: {} }; })
+      ]);
+      var ocp = {};
+      (onlineData2.sessions || []).forEach(function(s2){ if (s2.cpf) ocp[s2.cpf.replace(/\D/g,'')] = true; });
       const pmap = {};
       pay.payments.forEach(p => { if (!pmap[p.client_id]) pmap[p.client_id] = []; pmap[p.client_id].push(p); });
-      $('#clientsTableBody').innerHTML = renderClientRows(results.clients, pmap);
+      const linkApp2 = (settingsData2.settings && settingsData2.settings.sms_app_link) || 'https://app.credvale.com.br';
+      $('#clientsTableBody').innerHTML = renderClientRows(results.clients, pmap, ocp, linkApp2);
       const pagEl = $('#clientsPagination');
       if (pagEl && results.pages) pagEl.innerHTML = renderPagination(results.pages, currentPage.clients || 1, 'clients');
     });
@@ -1031,8 +1440,11 @@
       const id = btn.dataset.id;
       const action = btn.dataset.action;
       if (action === 'approve') {
-        const limite = await showPromptModal('Limite aprovado (R$):', '1500', 'Ex: 1500');
-        if (limite) { await API.updateClientStatus(id, 'aprovado', parseFloat(limite)); showToast('Cliente aprovado com limite de ' + fmtMoney(limite)); await reloadClientes(); }
+        var savedLimite = btn.dataset.limite;
+        var limite = savedLimite ? parseFloat(savedLimite) : 850;
+        await API.updateClientStatus(id, 'aprovado', limite);
+        showToast('Cliente aprovado com limite de ' + fmtMoney(limite));
+        await reloadClientes();
       } else if (action === 'reject') {
         if (await showConfirmModal('Rejeitar cliente', 'Tem certeza que deseja rejeitar este cliente?', 'Rejeitar', 'Cancelar')) { await API.updateClientStatus(id, 'reprovado'); showToast('Cliente rejeitado'); await reloadClientes(); }
       } else if (action === 'delete') {
@@ -1071,33 +1483,47 @@
               </div>`}
             </section>`;
         }
+      } else if (action === 'sms') {
+        const nome = btn.dataset.nome;
+        const raw = btn.dataset.limite;
+        const wa = btn.dataset.whatsapp;
+        const limite = fmtMoney(parseFloat(raw) || 0);
+        const settings = await API.getSettings();
+        const linkApp = (settings.settings && settings.settings.sms_app_link) || 'https://app.credvale.com.br';
+        var msg = fillSmsTemplate(nome, limite, linkApp);
+        var numero = wa ? wa.replace(/\D/g, '') : '';
+        showSmsModal(msg, numero);
       }
     });
   }
 
-  function renderClientRows(clients, paymentMap) {
+  function renderClientRows(clients, paymentMap, onlineCpfMap, linkApp) {
     if (!clients.length) return '<tr><td colspan="7" style="text-align:center;color:var(--color-text-muted);">Nenhum cliente encontrado</td></tr>';
+    if (!onlineCpfMap) onlineCpfMap = {};
     return clients.map(c => {
       var disp = c.dispositivo || '';
       var modelo = c.modelo ? c.modelo.slice(0, 60) : '';
-      var dispIcon = disp === 'Android' ? '📱' : disp === 'iPhone' ? '📱' : disp === 'Windows' ? '💻' : disp === 'Mac' ? '💻' : '';
-      var dispLabel = dispIcon + ' ' + disp;
-      if (disp === 'Android' && modelo) dispLabel += ' · ' + modelo;
-      if (disp === 'iPhone') dispLabel = '📱 iPhone';
+      var fab = c.fabricante ? c.fabricante : '';
+      var dispLabel = disp ? (disp === 'Android' ? '📱 ' : disp === 'iPhone' ? '📱 ' : disp === 'Windows' ? '💻 ' : disp === 'Mac' ? '💻 ' : disp === 'Celular' ? '📱 ' : disp === 'Tablet' ? '📱 ' : '') + disp : '—';
+      if (fab) dispLabel += ' · ' + fab;
+      if (disp === 'Android' && modelo) dispLabel += ' ' + modelo;
+      else if (disp === 'iPhone' && modelo && modelo !== 'iPhone') dispLabel += ' ' + modelo;
+      var isOnline = onlineCpfMap[c.cpf ? c.cpf.replace(/\D/g,'') : ''];
       const waNum = c.whatsapp ? c.whatsapp.replace(/\D/g, '') : '';
-      const waLink = waNum ? 'https://wa.me/55' + waNum + '?text=' + encodeURIComponent('Ol\u00e1, estou falando com voc\u00ea referente ao seu cart\u00e3o Vale Sa\u00fade.') : '';
+      const waMsg = linkApp ? fillSmsTemplate(c.nome, fmtMoney(parseFloat(c.limite_aprovado) || 0), linkApp) : '';
+      const waLink = (waNum && waMsg) ? 'https://wa.me/55' + waNum + '?text=' + encodeURIComponent(waMsg) : (waNum ? 'https://wa.me/55' + waNum + '?text=' + encodeURIComponent('Ol\u00e1, estou falando com voc\u00ea referente ao seu cart\u00e3o Vale Sa\u00fade.') : '');
       return `<tr>
-        <td><strong>${c.nome}</strong></td>
+        <td><strong>${isOnline ? '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#10B981;margin-right:6px;vertical-align:middle;animation:pulse 2s infinite;"></span>' : '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#475569;margin-right:6px;vertical-align:middle;"></span>'}${c.nome}</strong></td>
         <td>${formatCpf(c.cpf)}</td>
-        <td>${waLink ? `<a href="${waLink}" target="_blank" style="color:var(--color-secondary);font-weight:600;text-decoration:none;" title="Abrir conversa no WhatsApp">${c.whatsapp}</a>` : (c.whatsapp || '—')}</td>
-        <td style="font-size:0.78rem;color:var(--color-text-muted);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${modelo}">${dispLabel}</td>
+        <td>${waLink ? `<a href="${waLink}" target="_blank" style="color:var(--color-secondary);font-weight:600;text-decoration:none;" title="Abrir conversa no WhatsApp">${c.whatsapp}</a>` : (c.whatsapp || '—')} ${c.status === 'aprovado' ? `<button class="admin-btn-icon" data-action="sms" data-id="${c.id}" data-nome="${c.nome}" data-limite="${c.limite_aprovado || 0}" data-whatsapp="${c.whatsapp || ''}" title="Enviar SMS" style="vertical-align:middle;margin-left:4px;">📩</button>` : ''}</td>
+        <td style="font-size:0.78rem;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${modelo}">${dispLabel}</td>
         <td><span class="badge badge--${statusColor(c.status)}">${c.status}</span></td>
         <td style="font-size:0.78rem;color:var(--color-text-muted);">${fmtDate(c.created_at || '')}</td>
         <td class="admin-table__actions">
           <button class="admin-btn-icon" onclick="viewClient('${c.id}')" title="Ver detalhes">👁️</button>
           <button class="admin-btn-icon" data-action="view-payments" data-id="${c.id}" data-nome="${c.nome}" data-cpf="${c.cpf}" title="Ver pagamentos">💳</button>
           ${c.status === 'pendente' ? `
-            <button class="admin-btn-icon" data-action="approve" data-id="${c.id}" title="Aprovar">✅</button>
+            <button class="admin-btn-icon" data-action="approve" data-id="${c.id}" data-limite="${c.limite_aprovado || ''}" title="Aprovar">✅</button>
             <button class="admin-btn-icon admin-btn-icon--danger" data-action="reject" data-id="${c.id}" title="Rejeitar">❌</button>
           ` : ''}
           <button class="admin-btn-icon admin-btn-icon--danger" data-action="delete" data-id="${c.id}" title="Excluir">🗑️</button>
@@ -1573,10 +1999,10 @@
       const payments = await API.getPayments('limit=5000');
       const pmap = {};
       (payments.payments || []).forEach(p => { if (!pmap[p.client_id]) pmap[p.client_id] = []; pmap[p.client_id].push(p); });
-      let csv = 'Nome,CPF,WhatsApp,E-mail,Status,Limite,Produto,Data Cadastro,Total Pago\n';
+      let csv = 'Nome,CPF,WhatsApp,E-mail,Status,Limite,Produto,Dispositivo,Fabricante,Modelo,OS,Navegador,Data Cadastro,Total Pago\n';
       clients.forEach(c => {
         const total = (pmap[c.id] || []).filter(p => p.status === 'pago').reduce((s, p) => s + (p.valor || 0), 0);
-        csv += `"${c.nome}","${c.cpf}","${c.whatsapp || ''}","${c.email || ''}",${c.status},${c.limite_aprovado || 0},${c.produto_escolhido || ''},${c.created_at || ''},${total}\n`;
+        csv += `"${c.nome}","${c.cpf}","${c.whatsapp || ''}","${c.email || ''}",${c.status},${c.limite_aprovado || 0},${c.produto_escolhido || ''},"${c.dispositivo || ''}","${c.fabricante || ''}","${c.modelo || ''}","${c.os || ''}","${c.navegador || ''}${c.navegador_versao ? ' ' + c.navegador_versao : ''}",${c.created_at || ''},${total}\n`;
       });
       downloadCSV(csv, 'clientes.csv');
       showToast(`${clients.length} clientes exportados`);
