@@ -501,7 +501,7 @@
 
       addTyping(); await sleep(600); removeTyping();
       var end = null;
-      try { var r = await fetch('https://viacep.com.br/ws/'+cep+'/json/'); if (r.ok) end = await r.json(); } catch(e) {}
+      try { var ac = new AbortController(), to = setTimeout(function(){ac.abort()},8000); var r = await fetch('https://viacep.com.br/ws/'+cep+'/json/',{signal:ac.signal}); clearTimeout(to); if (r.ok) end = await r.json(); } catch(e) {}
 
       if (end && !end.erro) {
         user.rua = end.logradouro||'';
@@ -748,21 +748,20 @@
 
     showPopup(procHtml);
 
+    var fill = document.getElementById('popupProgressFill');
     for (var i=0; i<steps.length; i++) {
       var item = document.querySelector('.popup-step-item[data-idx="'+i+'"]');
       if (item) {
         item.classList.add('popup-step-item--active');
         var ic = item.querySelector('.popup-step-icon');
         if (ic) ic.textContent = '⟳';
-      }
-      await sleep(1800 + Math.floor(Math.random()*1200));
-      if (item) {
+        await sleep(1800 + Math.floor(Math.random()*1200));
         item.classList.remove('popup-step-item--active');
         item.classList.add('popup-step-item--done');
-        var ic2 = item.querySelector('.popup-step-icon');
-        if (ic2) ic2.textContent = '✓';
+        if (ic) ic.textContent = '✓';
+      } else {
+        await sleep(1800 + Math.floor(Math.random()*1200));
       }
-      var fill = document.getElementById('popupProgressFill');
       if (fill) fill.style.width = Math.round(((i+1)/steps.length)*100)+'%';
     }
 

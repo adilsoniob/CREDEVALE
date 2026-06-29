@@ -830,10 +830,6 @@ input, select, textarea { font: inherit; width: 100%; }
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* (modal-aprovado removido — código morto) */
-  box-shadow: 0 8px 24px rgba(59,130,246,0.3);
-}
-
 
 /* ============================================================
    CHECKOUT
