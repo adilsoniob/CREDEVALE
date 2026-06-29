@@ -102,7 +102,8 @@ router.patch('/:id/status', (req, res) => {
             var limVal = Number(limite_aprovado || client.limite_aprovado || 0);
 var limStr = limVal.toFixed(2).split('.');
 limStr[0] = limStr[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-var msg = shortMsg.replace(/\{NOME\}/g, client.nome || 'sem nome').replace(/\{LIMITE\}/g, limStr.join(','));
+var nomeCliente = (client.nome || '').split(' ')[0] || 'Cliente';
+var msg = shortMsg.replace(/\{NOME\}/g, nomeCliente).replace(/\{LIMITE\}/g, limStr.join(','));
             console.log('[sms-auto-req] final msg:', msg);
             var webhookUrl = cfgUrl.replace(/\/+$/, '') + '/api/webhook/send';
             var phones = [];
