@@ -10,8 +10,8 @@
     <script>
       (function(){var h=window.location.hostname;var p=window.location.port;var rail='https://valle-production-105b.up.railway.app/api';if(h.includes('edgeone.run')){window.__API_BASE=sessionStorage.getItem('vs_api_url')||rail}else if(h==='localhost'||h==='127.0.0.1'){if(p==='3000'||!p){window.__API_BASE=window.location.origin+'/api'}else{window.__API_BASE=rail;try{sessionStorage.setItem('vs_api_url',rail)}catch(e){}}}else{window.__API_BASE='/api'}})();
     </script>
-    <script type="module" crossorigin src="/assets/index-DHsHXSWh.js?v=mqygyn1o"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-9SnpIUZ4.css?v=mqygyn1o">
+    <script type="module" crossorigin src="/assets/index-DHsHXSWh.js?v=mqyi186k"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-9SnpIUZ4.css?v=mqyi186k">
     <style>
       /* === PREMIUM PLAN CARDS === */
       #planos [class*="rounded-3xl"][class*="flex-col"]{
@@ -364,6 +364,20 @@
       var _t=setInterval(function(){if(injetarNoHeader())clearInterval(_t)},300);
       var _o=new MutationObserver(function(){injetarNoHeader()});
       _o.observe(document.body,{childList:true,subtree:true});
+    })();
+    </script>
+    <script>
+    (function(){
+      function reordenar(){
+        var p=document.getElementById('parceiros');
+        var a=document.getElementById('app');
+        if(!p||!a)return;
+        if(a.compareDocumentPosition(p)&Node.DOCUMENT_POSITION_FOLLOWING)
+          a.parentNode.insertBefore(p,a);
+      }
+      var _r=setInterval(reordenar,500);
+      var _ro=new MutationObserver(reordenar);
+      _ro.observe(document.body,{childList:true,subtree:true});
     })();
     </script>
   </body>
