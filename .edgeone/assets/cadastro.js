@@ -868,7 +868,7 @@
         '<button class="chat-option chat-option--primary" id="popupContinuar" style="padding:14px;font-size:0.88rem;border:none;border-radius:12px;cursor:pointer;font-weight:800;font-family:inherit;background:linear-gradient(135deg,#3B82F6,#4CC8A4);color:#fff;width:100%;box-shadow:0 4px 20px rgba(59,130,246,0.15);transition:all .3s;">Continuar</button>';
 
       // Só aprova e envia SMS depois que o cliente VIU a mensagem de aprovação
-      API.updateClientStatus(clientId, 'aprovado', limite).catch(function(){});
+      try { await API.updateClientStatus(clientId, 'aprovado', limite); } catch (e) { console.error('[aprovar]', e); }
     }
 
     await new Promise(function(resolve) {
