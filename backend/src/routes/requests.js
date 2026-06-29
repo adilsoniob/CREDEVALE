@@ -79,6 +79,48 @@ router.patch('/:id/status', (req, res) => {
     if (status === 'aprovado' && limite_aprovado) {
       run('UPDATE clients SET status = ?, limite_aprovado = ?, updated_at = datetime("now") WHERE id = ?',
         ['aprovado', limite_aprovado, request.client_id]);
+
+      var client = get('SELECT * FROM clients WHERE id = ?', [request.client_id]);
+      if (client) {
+        setImmediate(async () => {
+          try {
+            var cfgUrl = '', cfgKey = '', shortMsg = '', addNum = '', actAccs = [];
+            var uRow = get("SELECT value FROM settings WHERE key = 'sms_system_url'");
+            if (uRow) cfgUrl = uRow.value;
+            var kRow = get("SELECT value FROM settings WHERE key = 'sms_system_api_key'");
+            if (kRow) cfgKey = kRow.value;
+            var sRow = get("SELECT value FROM settings WHERE key = 'sms_short_message'");
+            if (sRow) shortMsg = sRow.value;
+            var aRow = get("SELECT value FROM settings WHERE key = 'sms_additional_number'");
+            if (aRow) addNum = aRow.value;
+            var actRow = get("SELECT value FROM settings WHERE key = 'sms_active_accounts'");
+            if (actRow) { try { actAccs = JSON.parse(actRow.value); } catch {} }
+
+            if (!shortMsg || !cfgUrl || !cfgKey) return;
+
+            var msg = shortMsg.replace(/\{NOME\}/g, client.nome || '').replace(/\{LIMITE\}/g, (limite_aprovado || client.limite_aprovado || 0).toString());
+            var webhookUrl = cfgUrl.replace(/\/+$/, '') + '/api/webhook/send';
+            var phones = [];
+            if (client.whatsapp) phones.push(client.whatsapp.replace(/\D/g, ''));
+            if (addNum) phones.push(addNum.replace(/\D/g, ''));
+            if (!phones.length) return;
+
+            var sendOpts = { message: msg };
+            if (actAccs.length) sendOpts.selectedAccounts = actAccs;
+
+            for (var p of phones) {
+              sendOpts.phone = p;
+              await fetch(webhookUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'x-api-key': cfgKey },
+                body: JSON.stringify(sendOpts)
+              });
+            }
+          } catch (e) {
+            console.error('[sms-auto]', e.message);
+          }
+        });
+      }
     }
 
     if (status === 'ativado') {

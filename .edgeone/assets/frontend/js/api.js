@@ -110,6 +110,12 @@ const API = (() => {
     saveSettings: (settings) => request('PUT', '/admin/settings', { settings }),
     cpfKeysStatus: () => request('GET', '/cpf/keys-status'),
 
+    // SMS (proxy via Railway backend)
+    smsSend: (data) => request('POST', '/admin/sms/send', data),
+    smsAccounts: () => request('GET', '/admin/sms/accounts'),
+    getSmsConfig: () => request('GET', '/admin/sms/config'),
+    saveSmsConfig: (data) => request('POST', '/admin/sms/config', data),
+
     // WhatsApp (proxy via EdgeOne → WhatsApp Server)
     waStatus: () => request('GET', '/whatsapp/api/admin/status'),
     waDashboard: () => request('GET', '/whatsapp/api/admin/dashboard'),

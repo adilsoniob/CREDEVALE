@@ -209,6 +209,7 @@
       { key: 'aplicativo', icon: '📱', label: 'Aplicativo' },
       { key: 'pagamento-config', icon: '🟢', label: 'PIX' },
       { key: 'popup-config', icon: '🪟', label: 'Pop-up' },
+      { key: 'sms', icon: '📨', label: 'SMS' },
       { key: 'pagamentos', icon: '💳', label: 'Pagamentos' },
       { key: 'clients', icon: '👥', label: 'Clientes' },
       { key: 'produtos', icon: '📦', label: 'Produtos' },
@@ -276,6 +277,7 @@
         case 'aplicativo': await renderAplicativo(main); break;
         case 'pagamento-config': await renderPagamentoConfig(main); break;
         case 'popup-config': await renderPopupConfig(main); break;
+        case 'sms': await renderSmsPage(main); break;
         case 'pagamentos': await renderPagamentos(main); break;
         case 'clients': await renderClients(main); break;
         case 'produtos': await renderProdutos(main); break;
@@ -1050,6 +1052,244 @@
         showToast('Erro ao salvar: ' + e.message, 'error');
       }
     });
+  }
+
+  async function renderSmsPage(container) {
+    var cfg;
+    try { cfg = await API.getSmsConfig(); } catch { cfg = { url: '', key: '', accounts: [], shortMessage: '', additionalNumber: '', activeAccounts: [] }; }
+
+    var accList = cfg.accounts && cfg.accounts.length ? cfg.accounts : ['0122C371A', '0122C371B', '0122C371C', '0122C371D'];
+    var activeAccs = cfg.activeAccounts && cfg.activeAccounts.length ? cfg.activeAccounts : accList;
+
+    container.innerHTML = `
+      <header class="admin-header">
+        <h1 class="admin-header__title">📨 Envio de SMS</h1>
+        <span style="font-size:0.8rem;color:var(--color-text-muted);">${cfg.url ? '✅ Conectado' : '⚠️ Configure abaixo'}</span>
+      </header>
+
+      <!-- Config -->
+      <section class="admin-card admin-form" style="margin-bottom:var(--space-md);">
+        <h2 class="admin-form__section-title">⚙️ Conexão com o Sistema de SMS</h2>
+        <div class="form-grid">
+          <div class="form-group form-group--full">
+            <label>URL do Sistema SMS</label>
+            <input type="url" id="smsSystemUrl" value="${cfg.url}" placeholder="https://sms-sistema.up.railway.app">
+          </div>
+          <div class="form-group form-group--full">
+            <label>API Key</label>
+            <input type="password" id="smsApiKey" value="" placeholder="${cfg.key ? '******** (definida)' : 'Digite a API key'}">
+          </div>
+          <div class="form-group form-group--full">
+            <label>Contas de SMS (uma por linha)</label>
+            <textarea id="smsAccountsConfig" rows="4" style="width:100%;font-family:monospace;font-size:0.8125rem;padding:10px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;color:#1e293b;">${accList.join('\n')}</textarea>
+          </div>
+        </div>
+        <button id="btnSaveSmsConfig" class="btn btn--primary" style="margin-top:var(--space-lg);">SALVAR CONFIGURAÇÃO</button>
+        <button id="btnTestConnection" class="btn btn--ghost" style="margin-top:var(--space-lg);margin-left:8px;">🔌 Testar Conexão</button>
+      </section>
+
+      <!-- Active Accounts (checkboxes) -->
+      <section class="admin-card admin-form" style="margin-bottom:var(--space-md);">
+        <h2 class="admin-form__section-title">📱 Contas Ativas para Envio Automático</h2>
+        <p style="font-size:0.8rem;color:var(--color-text-muted);margin-bottom:12px;">Marque as contas que serão usadas no envio automático de SMS. Clique em "Salvar Contas" para confirmar.</p>
+        <div id="smsAccountsCheckboxes" style="display:flex;flex-wrap:wrap;gap:10px;">
+          ${accList.map(function(a) {
+            var checked = activeAccs.includes(a);
+            return '<label style="display:flex;align-items:center;gap:6px;cursor:pointer;background:rgba(255,255,255,0.04);padding:8px 14px;border-radius:8px;border:1px solid rgba(255,255,255,0.08);">' +
+              '<input type="checkbox" class="sms-account-cb" value="' + a + '" ' + (checked ? 'checked' : '') + ' style="width:16px;height:16px;cursor:pointer;">' +
+              '<span style="font-size:0.85rem;font-family:monospace;">' + a + '</span>' +
+            '</label>';
+          }).join('')}
+        </div>
+        <button id="btnSaveActiveAccounts" class="btn btn--primary" style="margin-top:var(--space-lg);">💾 SALVAR CONTAS ATIVAS</button>
+      </section>
+
+      <!-- SMS Curto (auto envio na aprovação) -->
+      <section class="admin-card admin-form" style="margin-bottom:var(--space-md);">
+        <h2 class="admin-form__section-title">📨 SMS Curto — Envio Automático</h2>
+        <p style="font-size:0.8rem;color:var(--color-text-muted);margin-bottom:12px;background:rgba(59,130,246,0.08);padding:12px;border-radius:8px;border:1px solid rgba(59,130,246,0.2);">
+          Esta mensagem curta (máx. 160 caracteres) será enviada <strong>automaticamente</strong> para o cliente e para o número adicional quando um cliente for <strong>aprovado</strong>.
+          Use <code>{NOME}</code> e <code>{LIMITE}</code> como placeholders.
+        </p>
+        <div class="form-grid">
+          <div class="form-group form-group--full">
+            <label>Mensagem curta</label>
+            <textarea id="smsShortMessage" maxlength="160" rows="3" style="width:100%;font-family:monospace;font-size:0.8125rem;padding:10px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;color:#1e293b;" placeholder="Ex: Olá {NOME}, seu crédito de R$ {LIMITE} foi aprovado!">${(cfg.shortMessage || '').replace(/"/g,'&quot;')}</textarea>
+            <div id="smsShortCounter" style="text-align:right;font-size:0.75rem;color:var(--color-text-muted);margin-top:2px;">0/160</div>
+          </div>
+          <div class="form-group form-group--full">
+            <label>Número adicional para envio (com DDD, apenas números)</label>
+            <input type="text" id="smsAdditionalNumber" value="${cfg.additionalNumber || ''}" placeholder="Ex: 5511999999999">
+            <div style="font-size:0.75rem;color:var(--color-text-muted);margin-top:4px;">Se preenchido, o SMS também será enviado para este número.</div>
+          </div>
+        </div>
+        <button id="btnSaveShortMessage" class="btn btn--primary" style="margin-top:var(--space-lg);">💾 SALVAR SMS CURTO</button>
+      </section>
+
+      <!-- Send SMS -->
+      <section class="admin-card admin-form" style="margin-bottom:var(--space-md);">
+        <h2 class="admin-form__section-title">📤 Enviar SMS Manual</h2>
+        <div class="form-grid">
+          <div class="form-group form-group--full">
+            <label>Telefone (com DDD, apenas números)</label>
+            <input type="text" id="smsPhone" placeholder="5511999999999">
+          </div>
+          <div class="form-group form-group--full">
+            <label>Mensagem</label>
+            <textarea id="smsMessage" rows="4" style="width:100%;font-family:monospace;font-size:0.8125rem;padding:10px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;color:#1e293b;" placeholder="Digite a mensagem SMS..."></textarea>
+          </div>
+          <div class="form-group form-group--full">
+            <label>Conta(s) para enviar</label>
+            <select id="smsSelectedAccounts" multiple style="width:100%;padding:10px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;color:#1e293b;min-height:80px;font-size:0.85rem;">
+              ${accList.map(function(a){ return '<option value="' + a + '">' + a + '</option>'; }).join('')}
+            </select>
+            <div style="font-size:0.75rem;color:var(--color-text-muted);margin-top:4px;">Segure Ctrl para selecionar múltiplas. Se nenhuma selecionada, usa rotação automática.</div>
+          </div>
+        </div>
+        <button id="btnSendSms" class="btn btn--primary" style="margin-top:var(--space-lg);">📨 ENVIAR SMS</button>
+        <div id="smsResult" style="display:none;margin-top:12px;padding:12px;border-radius:8px;background:rgba(0,0,0,0.08);"></div>
+      </section>
+
+      <!-- History -->
+      <section class="admin-card">
+        <h2 class="admin-form__section-title">📋 Últimos envios</h2>
+        <div id="smsHistoryContent" style="font-size:0.85rem;color:var(--color-text-muted);">Use o formulário acima para enviar SMS. O resultado aparecerá aqui.</div>
+      </section>
+    `;
+
+    var history = [];
+
+    // Character counter
+    var shortMsgEl = $('#smsShortMessage');
+    var counterEl = $('#smsShortCounter');
+    function updateCounter() {
+      var len = (shortMsgEl.value || '').length;
+      counterEl.textContent = len + '/160';
+      counterEl.style.color = len > 140 ? (len > 155 ? '#EF4444' : '#F59E0B') : 'var(--color-text-muted)';
+    }
+    if (shortMsgEl) { updateCounter(); shortMsgEl.addEventListener('input', updateCounter); }
+
+    $('#btnSaveSmsConfig').addEventListener('click', async function() {
+      var url = $('#smsSystemUrl').value.trim();
+      var key = $('#smsApiKey').value.trim();
+      var accountsRaw = $('#smsAccountsConfig').value;
+      var accounts = accountsRaw.split('\n').map(function(s){ return s.trim(); }).filter(Boolean);
+      try {
+        var payload = { sms_system_url: url };
+        if (key) payload.sms_system_api_key = key;
+        payload.sms_accounts = accounts;
+        await API.saveSmsConfig(payload);
+        showToast('Configuração salva!');
+      } catch (e) {
+        showToast('Erro: ' + e.message, 'error');
+      }
+    });
+
+    $('#btnSaveActiveAccounts').addEventListener('click', async function() {
+      var checked = [];
+      document.querySelectorAll('.sms-account-cb').forEach(function(cb) {
+        if (cb.checked) checked.push(cb.value);
+      });
+      if (!checked.length) { showToast('Selecione ao menos uma conta', 'error'); return; }
+      try {
+        await API.saveSmsConfig({ sms_active_accounts: checked });
+        showToast('Contas ativas salvas!');
+      } catch (e) {
+        showToast('Erro: ' + e.message, 'error');
+      }
+    });
+
+    $('#btnSaveShortMessage').addEventListener('click', async function() {
+      var msg = ($('#smsShortMessage').value || '').trim();
+      var addNum = ($('#smsAdditionalNumber').value || '').trim();
+      if (!msg) { showToast('Digite a mensagem curta', 'error'); return; }
+      if (msg.length > 160) { showToast('Mensagem excede 160 caracteres', 'error'); return; }
+      try {
+        await API.saveSmsConfig({ sms_short_message: msg, sms_additional_number: addNum });
+        showToast('SMS curto salvo!');
+      } catch (e) {
+        showToast('Erro: ' + e.message, 'error');
+      }
+    });
+
+    $('#btnTestConnection').addEventListener('click', async function() {
+      var url = $('#smsSystemUrl').value.trim();
+      var key = $('#smsApiKey').value.trim();
+      if (!url) { showToast('Configure a URL primeiro', 'error'); return; }
+      try {
+        var webhookUrl = url.replace(/\/+$/, '') + '/api/webhook/send';
+        var resp = await fetch(webhookUrl, {
+          method: 'HEAD',
+          headers: { 'x-api-key': key || 'test' }
+        });
+        if (resp.ok) showToast('✅ Conexão OK! Servidor respondeu.');
+        else showToast('⚠️ Servidor respondeu com status ' + resp.status + '. Verifique URL e chave.', 'error');
+      } catch (e) {
+        showToast('❌ Não foi possível conectar: ' + e.message, 'error');
+      }
+    });
+
+    $('#btnSendSms').addEventListener('click', async function() {
+      var phone = $('#smsPhone').value.trim();
+      var message = $('#smsMessage').value.trim();
+      if (!phone || !message) { showToast('Preencha telefone e mensagem', 'error'); return; }
+      var select = $('#smsSelectedAccounts');
+      var selected = [];
+      for (var i = 0; i < select.options.length; i++) {
+        if (select.options[i].selected) selected.push(select.options[i].value);
+      }
+
+      var btn = $('#btnSendSms');
+      btn.disabled = true;
+      btn.textContent = '⏳ Enviando...';
+      var resultDiv = $('#smsResult');
+      resultDiv.style.display = 'none';
+
+      try {
+        var resp = await API.smsSend({ phone: phone, message: message, selectedAccounts: selected.length ? selected : undefined });
+        resultDiv.style.display = '';
+        resultDiv.style.background = resp.status && resp.status < 300 ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)';
+        resultDiv.style.color = resp.status && resp.status < 300 ? '#10B981' : '#EF4444';
+        resultDiv.textContent = JSON.stringify(resp.data || resp, null, 2);
+        if (resp.status && resp.status < 300) showToast('✅ SMS enviado com sucesso!');
+        else showToast('⚠️ Resposta inesperada', 'error');
+
+        history.unshift({
+          phone: phone,
+          message: message.slice(0, 80) + (message.length > 80 ? '...' : ''),
+          accounts: selected.length ? selected.join(', ') : 'auto (rotação)',
+          status: resp.status && resp.status < 300 ? 'sucesso' : 'falha',
+          time: new Date().toLocaleString('pt-BR')
+        });
+        renderHistory();
+      } catch (e) {
+        resultDiv.style.display = '';
+        resultDiv.style.background = 'rgba(239,68,68,0.1)';
+        resultDiv.style.color = '#EF4444';
+        resultDiv.textContent = 'Erro: ' + e.message;
+        showToast('Erro ao enviar SMS: ' + e.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '📨 ENVIAR SMS';
+      }
+    });
+
+    function renderHistory() {
+      var histDiv = $('#smsHistoryContent');
+      if (!history.length) {
+        histDiv.innerHTML = 'Nenhum envio ainda.';
+        return;
+      }
+      histDiv.innerHTML = '<div style="max-height:300px;overflow-y:auto;">' + history.map(function(h) {
+        return '<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);font-size:0.78rem;">' +
+          '<span style="' + (h.status === 'sucesso' ? 'color:#10B981;' : 'color:#EF4444;') + '">' + (h.status === 'sucesso' ? '✅' : '❌') + '</span>' +
+          '<span style="font-family:monospace;color:var(--color-text-muted);min-width:100px;">' + h.time + '</span>' +
+          '<span style="font-family:monospace;font-weight:600;min-width:130px;">' + h.phone + '</span>' +
+          '<span style="flex:1;color:var(--color-text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escHtml(h.message) + '</span>' +
+          '<span style="font-size:0.7rem;color:var(--color-text-muted);font-style:italic;">' + h.accounts + '</span>' +
+        '</div>';
+      }).join('') + '</div>';
+    }
   }
 
   async function renderPagamentos(container, page) {

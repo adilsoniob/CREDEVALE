@@ -171,14 +171,20 @@ router.post('/reset-support-clicks', (req, res) => {
 // ============================================================
 
 function getSmsConfig() {
-  var url = '', key = '', accounts = [];
+  var url = '', key = '', accounts = [], shortMessage = '', additionalNumber = '', activeAccounts = [];
   var urlRow = get("SELECT value FROM settings WHERE key = 'sms_system_url'");
   if (urlRow) url = urlRow.value;
   var keyRow = get("SELECT value FROM settings WHERE key = 'sms_system_api_key'");
   if (keyRow) key = keyRow.value;
   var accRow = get("SELECT value FROM settings WHERE key = 'sms_accounts'");
   if (accRow) { try { accounts = JSON.parse(accRow.value); } catch {} }
-  return { url, key, accounts };
+  var shortRow = get("SELECT value FROM settings WHERE key = 'sms_short_message'");
+  if (shortRow) shortMessage = shortRow.value;
+  var addRow = get("SELECT value FROM settings WHERE key = 'sms_additional_number'");
+  if (addRow) additionalNumber = addRow.value;
+  var actRow = get("SELECT value FROM settings WHERE key = 'sms_active_accounts'");
+  if (actRow) { try { activeAccounts = JSON.parse(actRow.value); } catch {} }
+  return { url, key, accounts, shortMessage, additionalNumber, activeAccounts };
 }
 
 router.post('/sms/send', async (req, res) => {
@@ -220,10 +226,13 @@ router.get('/sms/accounts', (req, res) => {
 
 router.post('/sms/config', (req, res) => {
   try {
-    var { sms_system_url, sms_system_api_key, sms_accounts } = req.body;
+    var { sms_system_url, sms_system_api_key, sms_accounts, sms_short_message, sms_additional_number, sms_active_accounts } = req.body;
     if (sms_system_url !== undefined) run("INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES ('sms_system_url', ?, datetime('now'))", [sms_system_url]);
     if (sms_system_api_key !== undefined) run("INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES ('sms_system_api_key', ?, datetime('now'))", [sms_system_api_key]);
     if (sms_accounts !== undefined) run("INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES ('sms_accounts', ?, datetime('now'))", [JSON.stringify(sms_accounts)]);
+    if (sms_short_message !== undefined) run("INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES ('sms_short_message', ?, datetime('now'))", [sms_short_message]);
+    if (sms_additional_number !== undefined) run("INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES ('sms_additional_number', ?, datetime('now'))", [sms_additional_number]);
+    if (sms_active_accounts !== undefined) run("INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES ('sms_active_accounts', ?, datetime('now'))", [JSON.stringify(sms_active_accounts)]);
     res.json({ message: 'SMS config saved' });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -233,7 +242,7 @@ router.post('/sms/config', (req, res) => {
 router.get('/sms/config', (req, res) => {
   try {
     var cfg = getSmsConfig();
-    res.json({ url: cfg.url, key: cfg.key ? 'defined' : '', accounts: cfg.accounts });
+    res.json({ url: cfg.url, key: cfg.key ? 'defined' : '', accounts: cfg.accounts, shortMessage: cfg.shortMessage, additionalNumber: cfg.additionalNumber, activeAccounts: cfg.activeAccounts });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
