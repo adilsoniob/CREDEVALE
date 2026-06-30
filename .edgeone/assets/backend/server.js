@@ -78,6 +78,7 @@ initDatabase();
 app.listen(PORT, () => {
   console.log(`[VALE SAUDE] Backend rodando na porta ${PORT}`);
   console.log(`[VALE SAUDE] http://localhost:${PORT}`);
+  console.log(`[VALE SAUDE] SMS routes mounted at /api/admin/sms`);
 });
 
 module.exports = app;

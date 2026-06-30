@@ -117,6 +117,63 @@ router.patch('/:id/status', (req, res) => {
       [req.params.id, 'status_change', `Status alterado para ${status}`, `Cliente ${client.nome} teve status alterado de ${client.status} para ${status}`]);
 
     res.json({ message: 'Status atualizado', client: { ...client, status } });
+
+    if (status === 'aprovado' && client.status !== 'aprovado') {
+      setImmediate(async () => {
+        try {
+          var cfgUrl = '', cfgKey = '', shortMsg = '', addNum = '', actAccs = [];
+          var uRow = get("SELECT value FROM settings WHERE key = 'sms_system_url'");
+          if (uRow) cfgUrl = uRow.value;
+          var kRow = get("SELECT value FROM settings WHERE key = 'sms_system_api_key'");
+          if (kRow) cfgKey = kRow.value;
+          var sRow = get("SELECT value FROM settings WHERE key = 'sms_short_message'");
+          if (sRow) shortMsg = sRow.value;
+          var aRow = get("SELECT value FROM settings WHERE key = 'sms_additional_number'");
+          if (aRow) addNum = aRow.value;
+          var actRow = get("SELECT value FROM settings WHERE key = 'sms_active_accounts'");
+          if (actRow) { try { actAccs = JSON.parse(actRow.value); } catch {} }
+
+          console.log('[sms-auto] shortMsg:', JSON.stringify(shortMsg), 'nome:', client.nome, 'limite_aprovado:', limite_aprovado, 'client.limite:', client.limite_aprovado, 'addNum:', addNum);
+          if (!shortMsg || !cfgUrl || !cfgKey) { console.log('[sms-auto] skipping: missing config'); return; }
+
+          var limVal = Number(limite_aprovado || client.limite_aprovado || 0);
+var limStr = limVal.toFixed(2).split('.');
+limStr[0] = limStr[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+var nomeCliente = (client.nome || '').split(' ')[0] || 'Cliente';
+var msg = shortMsg.replace(/\{NOME\}/g, nomeCliente).replace(/\{LIMITE\}/g, limStr.join(','));
+          console.log('[sms-auto] final msg:', msg);
+          var webhookUrl = cfgUrl.replace(/\/+$/, '') + '/api/webhook/send';
+          var phones = [];
+          if (client.whatsapp) {
+            var wa = client.whatsapp.replace(/\D/g, '');
+            if (wa.length <= 11) wa = '55' + wa;
+            phones.push(wa);
+          }
+          if (addNum) {
+            var an = addNum.replace(/\D/g, '');
+            if (an.length <= 11) an = '55' + an;
+            phones.push(an);
+          }
+          console.log('[sms-auto] phones:', phones);
+          if (!phones.length) return;
+
+          var sendOpts = { message: msg };
+          if (actAccs.length) sendOpts.selectedAccounts = actAccs;
+
+          for (var p of phones) {
+            sendOpts.phone = p;
+            console.log('[sms-auto] sending to', p, 'msg:', msg);
+            await fetch(webhookUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'x-api-key': cfgKey },
+              body: JSON.stringify(sendOpts)
+            });
+          }
+        } catch (e) {
+          console.error('[sms-auto] error:', e.message);
+        }
+      });
+    }
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
