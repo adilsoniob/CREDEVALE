@@ -755,7 +755,7 @@
 
   /* ---- POPUP DE INTRODUÇÃO DA ANÁLISE ---- */
   async function etapaIntroAnalise() {
-    var nome = sessionStorage.getItem('vs_nome') || 'Cliente';
+    var nome = (user.nome||'').split(' ')[0] || 'Cliente';
     var frases = [
       'Iniciando análise das informações para verificar sua solicitação do CredVale.',
       'Processo rápido — leva apenas alguns segundos.',
