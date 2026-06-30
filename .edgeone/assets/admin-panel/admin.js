@@ -137,7 +137,7 @@
 
   function showSmsModal(msg, waNum) {
     const overlay = document.createElement('div');
-    overlay.style.cssText = 'position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:16px;animation:modalIn 0.2s ease;';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:16px;';
     overlay.innerHTML = `
       <div style="background:#203A57;border-radius:24px;padding:28px 20px;max-width:440px;width:100%;border:1px solid rgba(255,255,255,0.08);box-shadow:0 30px 80px rgba(0,0,0,0.45);">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
@@ -153,16 +153,18 @@
     document.body.appendChild(overlay);
 
     const close = () => overlay.remove();
-    overlay.querySelector('.s-close').onclick = close;
-    overlay.onclick = e => { if (e.target === overlay) close(); };
+    overlay.addEventListener('click', function(e) { if (e.target === overlay) close(); });
+    overlay.querySelector('.s-close').addEventListener('click', function(e) { e.stopPropagation(); close(); });
 
-    overlay.querySelector('.s-wa').onclick = () => {
+    overlay.querySelector('.s-wa').addEventListener('click', function(e) {
+      e.stopPropagation();
       const waLink = 'https://wa.me/55' + waNum + '?text=' + encodeURIComponent(msg);
       window.open(waLink, '_blank');
       close();
-    };
+    });
 
-    overlay.querySelector('.s-copy').onclick = async () => {
+    overlay.querySelector('.s-copy').addEventListener('click', async function(e) {
+      e.stopPropagation();
       try {
         await navigator.clipboard.writeText(msg);
         const btn = overlay.querySelector('.s-copy');
@@ -176,7 +178,7 @@
         btn.textContent = 'Erro ao copiar';
         btn.style.color = '#EF4444';
       }
-    };
+    });
   }
 
   function escHtml(str) {
@@ -476,6 +478,7 @@
           <h1 class="admin-header__title">👤 ${c.nome}</h1>
           <div style="display:flex;gap:8px;">
             ${waLink ? '<a href="' + waLink + '" target="_blank" class="btn btn--success btn--sm" style="text-decoration:none;">💬 WhatsApp</a>' : ''}
+            ${c.status === 'aprovado' ? '<button class="btn btn--primary btn--sm" data-action="sms-from-client" style="cursor:pointer;">📩 SMS</button>' : ''}
             <button class="btn btn--primary btn--sm" onclick="navigateTo('clients')">← Voltar</button>
           </div>
         </header>
@@ -522,6 +525,18 @@
           }).join('') + '</tbody></table></div>'}
         </section>
       `;
+      var smsBtn = main.querySelector('[data-action="sms-from-client"]');
+      if (smsBtn) {
+        smsBtn.addEventListener('click', async function() {
+          var settings = await API.getSettings();
+          var linkApp = (settings.settings && settings.settings.sms_app_link) || 'https://app.credvale.com.br';
+          var nome = c.nome || 'Cliente';
+          var limite = fmtMoney(parseFloat(c.limite_aprovado) || 0);
+          var msg = fillSmsTemplate(nome, limite, linkApp);
+          var numero = c.whatsapp ? c.whatsapp.replace(/\D/g, '') : '';
+          showSmsModal(msg, numero);
+        });
+      }
     } catch (e) {
       showToast('Erro ao carregar cliente: ' + e.message, 'error');
     }
