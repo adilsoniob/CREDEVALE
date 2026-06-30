@@ -731,7 +731,7 @@
           '<div class="cta-section__inner">' +
             '<div class="cta-section__badge">✦ Solicite e Ative Hoje Mesmo</div>' +
             '<h2 class="cta-section__title">Pare de pagar caro em medicamentos.<br>Pe\u00e7a seu <span>cart\u00e3o CredVale</span> hoje.</h2>' +
-            '<p class="cta-section__sub">Seja aprovado em poucos minutos, comece a economizar imediatamente com o cart\u00e3o virtual e tenha at\u00e9 <strong style="color:#e2e8f0;">R$ 10.000 de limite</strong> sem comprova\u00e7\u00e3o de renda excessiva.</p>' +
+            '<p class="cta-section__sub">Seja aprovado em poucos minutos, comece a economizar imediatamente com o cart\u00e3o virtual e tenha at\u00e9 <strong style="color:#e2e8f0;">R$ 5.000 de limite</strong> sem comprova\u00e7\u00e3o de renda excessiva.</p>' +
             '<div class="cta-section__actions">' +
               '<a href="/cadastro.html" class="cta-section__btn cta-section__btn--primary">Pedir Cart\u00e3o CredVale Gr\u00e1tis</a>' +
               '<a href="https://wa.me/5508007451200?text=Quero%20saber%20mais%20sobre%20o%20CREDVALE" target="_blank" rel="noopener" class="cta-section__btn cta-section__btn--secondary">Falar no WhatsApp</a>' +
@@ -903,33 +903,6 @@
 
       if (!moveBtn()) {
         var obs = new MutationObserver(function(){ if (moveBtn()) obs.disconnect(); });
-        obs.observe(document.body, { childList: true, subtree: true });
-        setTimeout(function(){ obs.disconnect(); }, 15000);
-      }
-    })();
-    </script>
-    <script>
-    (function(){
-      var STORE_ID = 'storeBadgeMerged';
-      if (document.getElementById(STORE_ID)) return;
-      function mergeBadges() {
-        var imgs = document.querySelectorAll('img[src*="google-play-badge"], img[src*="app-store-badge"]');
-        if (imgs.length < 2) return false;
-        var parent = imgs[0].parentElement;
-        if (!parent || parent.querySelector('img[src*="/assets/store.png"]')) return true;
-        // Hide originals
-        for (var i = 0; i < imgs.length; i++) imgs[i].style.display = 'none';
-        // Create single badge
-        var single = document.createElement('img');
-        single.src = '/assets/store.png';
-        single.alt = 'Baixe o App CREDVALE';
-        single.loading = 'lazy';
-        single.style.cssText = 'height:44px;width:auto;object-fit:contain;';
-        parent.appendChild(single);
-        return true;
-      }
-      if (!mergeBadges()) {
-        var obs = new MutationObserver(function(){ if (mergeBadges()) obs.disconnect(); });
         obs.observe(document.body, { childList: true, subtree: true });
         setTimeout(function(){ obs.disconnect(); }, 15000);
       }
