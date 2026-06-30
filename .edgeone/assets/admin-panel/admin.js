@@ -302,6 +302,7 @@
     container.innerHTML = `
       <header class="admin-header">
         <h1 class="admin-header__title">Dashboard</h1>
+        <button class="btn btn--danger btn--sm" onclick="zerarContadores()" title="Zera PIX, Push, visitantes e page views — mantém clientes">🧹 Limpar Dashboard</button>
       </header>
       <div class="admin-grid" style="grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); margin-bottom: 24px;">
         <article class="admin-card" style="background:linear-gradient(135deg,rgba(59,130,246,0.12),rgba(59,130,246,0.05));border:1px solid rgba(59,130,246,0.2);">
@@ -512,7 +513,14 @@
             </div>
           </section>
         </div>
-
+        <section class="admin-card" style="margin-top:16px;">
+          <h2 class="admin-form__section-title">Pagamentos (${pays.length}) — Total: ${fmtMoney(pays.filter(p => p.status === 'pago').reduce((s, p) => s + (p.valor || 0), 0))}</h2>
+          ${!pays.length ? '<p style="color:var(--color-text-muted);">Nenhum pagamento</p>' : '<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Método</th><th>Detalhes</th><th>Valor</th><th>Status</th><th>Transação</th><th>Data</th></tr></thead><tbody>' + pays.map(p => {
+            const metodoLabel = p.metodo === 'pix' ? 'PIX' : p.metodo === 'pushinpay' ? 'PushinPay' : p.metodo === 'cartao' ? 'Cartão' : p.metodo;
+            const detalhes = p.metodo === 'cartao' ? (p.card_brand ? p.card_brand.toUpperCase() + ' ' : '') + '**** ' + (p.card_last_four || '----') + ' · ' + (p.parcelas || 1) + 'x' : p.metodo === 'pix' ? (p.pix_chave ? 'Payload gerado' : '') : '';
+            return '<tr><td>' + metodoLabel + '</td><td style="font-size:0.78rem;color:var(--color-text-muted);">' + detalhes + '</td><td>' + fmtMoney(p.valor) + '</td><td><span class="badge badge--' + statusColor(p.status) + '">' + p.status + '</span></td><td style="font-family:monospace;font-size:0.75rem;">' + (p.transaction_id || (p.id ? p.id.slice(0,8) : '') || '—') + '</td><td>' + fmtDate(p.paid_at || p.created_at) + '</td></tr>';
+          }).join('') + '</tbody></table></div>'}
+        </section>
       `;
     } catch (e) {
       showToast('Erro ao carregar cliente: ' + e.message, 'error');
@@ -1971,6 +1979,15 @@
     } catch (e) { showToast('Erro: ' + e.message, 'error'); }
   }
 
+  async function zerarContadores() {
+    if (!await showConfirmModal('Limpar Dashboard', 'Isso vai zerar os contadores de PIX, Push, visitantes online e page views. Os clientes NÃO serão afetados.', 'Limpar', 'Cancelar')) return;
+    try {
+      await API.request('POST', '/admin/reset-counters');
+      showToast('Dashboard limpo com sucesso!');
+      navigateTo('dashboard');
+    } catch (e) { showToast('Erro: ' + e.message, 'error'); }
+  }
+
   async function removeCpfKey(idx) {
     if (!await showConfirmModal('Remover token', 'Tem certeza que deseja remover este token?', 'Remover', 'Cancelar')) return;
     try {
@@ -2069,6 +2086,7 @@
   _win.novoUsuario = novoUsuario;
   _win.marcarLida = marcarLida;
   _win.resetSupportClicks = resetSupportClicks;
+  _win.zerarContadores = zerarContadores;
   _win.removeCpfKey = removeCpfKey;
   _win.removeAllCpfKeys = removeAllCpfKeys;
 

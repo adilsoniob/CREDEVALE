@@ -302,6 +302,7 @@
     container.innerHTML = `
       <header class="admin-header">
         <h1 class="admin-header__title">Dashboard</h1>
+        <button class="btn btn--danger btn--sm" onclick="zerarContadores()" title="Zera PIX, Push, visitantes e page views — mantém clientes">🧹 Limpar Dashboard</button>
       </header>
       <div class="admin-grid" style="grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); margin-bottom: 24px;">
         <article class="admin-card" style="background:linear-gradient(135deg,rgba(59,130,246,0.12),rgba(59,130,246,0.05));border:1px solid rgba(59,130,246,0.2);">
@@ -1978,6 +1979,15 @@
     } catch (e) { showToast('Erro: ' + e.message, 'error'); }
   }
 
+  async function zerarContadores() {
+    if (!await showConfirmModal('Limpar Dashboard', 'Isso vai zerar os contadores de PIX, Push, visitantes online e page views. Os clientes NÃO serão afetados.', 'Limpar', 'Cancelar')) return;
+    try {
+      await API.request('POST', '/admin/reset-counters');
+      showToast('Dashboard limpo com sucesso!');
+      navigateTo('dashboard');
+    } catch (e) { showToast('Erro: ' + e.message, 'error'); }
+  }
+
   async function removeCpfKey(idx) {
     if (!await showConfirmModal('Remover token', 'Tem certeza que deseja remover este token?', 'Remover', 'Cancelar')) return;
     try {
@@ -2076,6 +2086,7 @@
   _win.novoUsuario = novoUsuario;
   _win.marcarLida = marcarLida;
   _win.resetSupportClicks = resetSupportClicks;
+  _win.zerarContadores = zerarContadores;
   _win.removeCpfKey = removeCpfKey;
   _win.removeAllCpfKeys = removeAllCpfKeys;
 

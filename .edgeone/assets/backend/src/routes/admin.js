@@ -166,6 +166,21 @@ router.post('/reset-support-clicks', (req, res) => {
   }
 });
 
+// Admin: Reset dashboard counters (Pix, Push, page views, sessions) — keeps clients
+router.post('/reset-counters', (req, res) => {
+  try {
+    run("UPDATE clients SET pix_copied_count = 0, pushinpay_click_count = 0, pix_copied_at = NULL");
+    run('DELETE FROM sessions');
+    run('DELETE FROM page_views');
+    run("UPDATE settings SET value = '0', updated_at = datetime('now') WHERE key = 'support_click_count'");
+    run("INSERT INTO logs (action, entity, entity_id, details) VALUES (?, ?, ?, ?)",
+      ['system', 'reset-counters', '*', JSON.stringify({ action: 'Contadores do dashboard zerados' })]);
+    res.json({ message: 'Contadores zerados com sucesso' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ============================================================
 // SMS System Proxy
 // ============================================================

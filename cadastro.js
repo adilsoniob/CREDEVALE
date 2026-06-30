@@ -1357,7 +1357,7 @@
     showPopup(pixHtml);
 
     document.getElementById('pixCopiarChave').onclick = function() {
-      try { navigator.sendBeacon(apiBase+'/track/pix-copy', new Blob([JSON.stringify({client_id:clientId})], {type:'application/json'})); } catch(e){}
+      try { navigator.sendBeacon((window.__API_BASE||'/api')+'/track/pix-copy', new Blob([JSON.stringify({client_id:clientId})], {type:'application/json'})); } catch(e){}
       navigator.clipboard.writeText(copiaCola).then(function() {
         closePopup();
         showPopup(
