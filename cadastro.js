@@ -755,42 +755,67 @@
 
   /* ---- POPUP DE INTRODUÇÃO DA ANÁLISE ---- */
   async function etapaIntroAnalise() {
+    var nome = sessionStorage.getItem('vs_nome') || 'Cliente';
     var frases = [
-      'Estamos iniciando a análise das informações para verificar sua solicitação do CredVale.',
-      'Esse processo é rápido e leva apenas alguns segundos.',
-      '⏳ Importante: mantenha esta página aberta e não atualize o navegador enquanto concluímos a verificação.',
+      'Iniciando análise das informações para verificar sua solicitação do CredVale.',
+      'Processo rápido — leva apenas alguns segundos.',
+      'Mantenha esta página aberta e não atualize o navegador.',
       'Em instantes você verá o resultado da análise.'
     ];
+    var labels = ['Conectando...', 'Verificando dados...', 'Processando...', 'Finalizando...'];
     var html =
-      '<div style="text-align:center;padding:8px 0 4px;">'+
-        '<div style="width:52px;height:52px;border-radius:50%;background:rgba(59,130,246,0.1);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;border:2px solid rgba(59,130,246,0.15);">'+
-          '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>'+
-        '</div>'+
-        '<div id="introFrase" style="font-size:0.82rem;color:#c8d0dc;line-height:1.6;min-height:3.4em;display:flex;align-items:center;justify-content:center;transition:opacity 0.35s;margin-bottom:16px;">'+frases[0]+'</div>'+
-        '<div style="background:rgba(255,255,255,0.04);border-radius:20px;height:5px;overflow:hidden;margin:0 4px 8px;">'+
-          '<div id="introBar" style="width:0%;height:100%;border-radius:20px;background:linear-gradient(90deg,#3B82F6,#4CC8A4);transition:width 0.3s linear;"></div>'+
-        '</div>'+
-        '<div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:2px;">'+
-          '<div style="width:5px;height:5px;border-radius:50%;background:#3B82F6;animation:pulse-scale 0.8s ease-in-out infinite;"></div>'+
-          '<span style="font-size:0.6rem;color:#6b7a8f;">Analisando</span>'+
+      '<div class="terminal-popup">'+
+        '<div class="terminal-window">'+
+          '<div class="terminal-titlebar">'+
+            '<span class="terminal-dot terminal-dot--red"></span>'+
+            '<span class="terminal-dot terminal-dot--yellow"></span>'+
+            '<span class="terminal-dot terminal-dot--green"></span>'+
+            '<span class="terminal-title-text">CREDVALE — análise</span>'+
+          '</div>'+
+          '<div class="terminal-body">'+
+            '<div class="terminal-greeting">'+
+              '<span class="terminal-greeting-icon">'+
+                (nome ? nome.charAt(0).toUpperCase() : '?')+
+              '</span>'+
+              '<span class="terminal-greeting-text">Olá '+nome+', sua análise está começando</span>'+
+            '</div>'+
+            '<div class="terminal-lines" id="terminalLines">'+
+              frases.map(function(f,i){
+                return '<div class="terminal-line" data-idx="'+i+'">'+
+                  '<span class="terminal-line-prefix">▸</span>'+
+                  '<span>'+f+'</span>'+
+                '</div>';
+              }).join('')+
+            '</div>'+
+            '<div class="terminal-footer">'+
+              '<div class="terminal-footer-bar">'+
+                '<div class="terminal-footer-fill" id="terminalFill"></div>'+
+              '</div>'+
+              '<span class="terminal-footer-label" id="terminalLabel">0%</span>'+
+            '</div>'+
+          '</div>'+
         '</div>'+
       '</div>';
     showPopup(html);
-    var fraseEl = document.getElementById('introFrase');
-    var barEl = document.getElementById('introBar');
-    var total = 10000;
-    var interval = total / frases.length;
     for (var i = 0; i < frases.length; i++) {
-      if (fraseEl) {
-        fraseEl.style.opacity = '0';
-        await sleep(150);
-        fraseEl.textContent = frases[i];
-        fraseEl.style.opacity = '1';
+      var el = document.querySelector('.terminal-line[data-idx="'+i+'"]');
+      if (el) {
+        await sleep(60);
+        el.classList.add('terminal-line--visible');
+        if (i > 0) {
+          var prev = document.querySelector('.terminal-line[data-idx="'+(i-1)+'"]');
+          if (prev) prev.classList.remove('terminal-line--active');
+        }
+        el.classList.add('terminal-line--active');
       }
-      if (barEl) barEl.style.width = Math.round(((i+1)/frases.length)*100)+'%';
-      if (i < frases.length - 1) await sleep(interval - 150);
+      var fill = document.getElementById('terminalFill');
+      var label = document.getElementById('terminalLabel');
+      var pct = Math.round(((i+1)/frases.length)*100);
+      if (fill) fill.style.width = pct+'%';
+      if (label) label.textContent = labels[i]+' '+pct+'%';
+      if (i < frases.length - 1) await sleep(2600);
     }
-    await sleep(800);
+    await sleep(1000);
     closePopup();
     await sleep(300);
     etapaAnalisePopup();
