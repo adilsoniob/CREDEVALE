@@ -213,7 +213,6 @@
       { key: 'pagamentos', icon: '💳', label: 'Pagamentos' },
       { key: 'clients', icon: '👥', label: 'Clientes' },
       { key: 'produtos', icon: '📦', label: 'Produtos' },
-      { key: 'solicitacoes', icon: '📋', label: 'Solicitações' },
       { key: 'online', icon: '🟢', label: 'Online' },
       { key: 'separator-sistema', separator: true, label: 'SISTEMA' },
       { key: 'api', icon: '🔑', label: 'API CPF' },
@@ -281,7 +280,6 @@
         case 'pagamentos': await renderPagamentos(main); break;
         case 'clients': await renderClients(main); break;
         case 'produtos': await renderProdutos(main); break;
-        case 'solicitacoes': await renderSolicitacoes(main); break;
         case 'online': renderOnline(main); break;
         case 'api': await renderApiPage(main); break;
         case 'notificacoes': await renderNotificacoes(main); break;
@@ -360,25 +358,7 @@
           </tbody></table>
         </div>
       </section>
-      <section class="admin-card" style="grid-column:1/-1;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-          <h2 class="admin-form__section-title" style="margin:0;">Últimos pagamentos</h2>
-          <button class="btn btn--primary btn--sm" onclick="navigateTo('pagamentos')">Ver todos →</button>
-        </div>
-        <div class="admin-table-wrap">
-          <table class="admin-table">
-            <thead><tr><th>Cliente</th><th>Método</th><th>Valor</th><th>Status</th><th>Data</th></tr></thead>
-            <tbody>${data.recentPayments.map(function(p) { return '<tr>' +
-                '<td>' + (p.client_nome || '—') + '</td>' +
-                '<td>' + p.metodo + '</td>' +
-                '<td>' + fmtMoney(p.valor) + '</td>' +
-                '<td><span class="badge badge--' + statusColor(p.status) + '">' + p.status + '</span></td>' +
-                '<td>' + fmtDate(p.paid_at || p.created_at) + '</td>' +
-              '</tr>'; }).join('')}
-            </tbody>
-          </table>
-        </div>
-      </section>
+
     `;
   }
 
@@ -532,18 +512,7 @@
             </div>
           </section>
         </div>
-        <section class="admin-card" style="margin-top:16px;">
-          <h2 class="admin-form__section-title">Solicitações (${reqs.length})</h2>
-          ${!reqs.length ? '<p style="color:var(--color-text-muted);">Nenhuma solicitação</p>' : '<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>ID</th><th>Tipo</th><th>Valor</th><th>Status</th><th>Data</th></tr></thead><tbody>' + reqs.map(r => `<tr><td>${r.id?.slice(0,8)}</td><td>${r.tipo_produto}</td><td>${fmtMoney(r.valor_total)}</td><td><span class="badge badge--${statusColor(r.status)}">${r.status}</span></td><td>${fmtDate(r.created_at)}</td></tr>`).join('') + '</tbody></table></div>'}
-        </section>
-        <section class="admin-card" style="margin-top:16px;">
-          <h2 class="admin-form__section-title">Pagamentos (${pays.length}) — Total: ${fmtMoney(pays.filter(p => p.status === 'pago').reduce((s, p) => s + (p.valor || 0), 0))}</h2>
-          ${!pays.length ? '<p style="color:var(--color-text-muted);">Nenhum pagamento</p>' : '<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Método</th><th>Detalhes</th><th>Valor</th><th>Status</th><th>Transação</th><th>Data</th></tr></thead><tbody>' + pays.map(p => {
-            const metodoLabel = p.metodo === 'pix' ? 'PIX' : p.metodo === 'pushinpay' ? 'PushinPay' : p.metodo === 'cartao' ? 'Cartão' : p.metodo;
-            const detalhes = p.metodo === 'cartao' ? (p.card_brand ? p.card_brand.toUpperCase() + ' ' : '') + '**** ' + (p.card_last_four || '----') + ' · ' + (p.parcelas || 1) + 'x' : p.metodo === 'pix' ? (p.pix_chave ? 'Payload gerado' : '') : '';
-            return '<tr><td>' + metodoLabel + '</td><td style="font-size:0.78rem;color:var(--color-text-muted);">' + detalhes + '</td><td>' + fmtMoney(p.valor) + '</td><td><span class="badge badge--' + statusColor(p.status) + '">' + p.status + '</span></td><td style="font-family:monospace;font-size:0.75rem;">' + (p.transaction_id || (p.id ? p.id.slice(0,8) : '') || '—') + '</td><td>' + fmtDate(p.paid_at || p.created_at) + '</td></tr>';
-          }).join('') + '</tbody></table></div>'}
-        </section>
+
       `;
     } catch (e) {
       showToast('Erro ao carregar cliente: ' + e.message, 'error');
@@ -1838,50 +1807,7 @@
     });
   }
 
-  // ============================================================
-  // Solicitações
-  // ============================================================
 
-  async function renderSolicitacoes(container) {
-    container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--color-text-muted);">Carregando...</div>';
-    const data = await API.getRequests('limit=50');
-    const reqs = data.requests || [];
-    container.innerHTML = `
-      <header class="admin-header">
-        <h1 class="admin-header__title">📋 Solicitações</h1>
-        <span style="font-size:0.8rem;color:var(--color-text-muted);">${data.total || reqs.length} registros</span>
-      </header>
-      <section class="admin-card">
-        <div class="admin-table-wrap">
-          <table class="admin-table">
-            <thead><tr><th>Cliente</th><th>Tipo</th><th>Valor</th><th>Status</th><th>Data</th><th>Ações</th></tr></thead>
-            <tbody>${reqs.map(r => `
-              <tr>
-                <td>${r.client_nome || '—'}</td>
-                <td>${r.tipo_produto}</td>
-                <td>${fmtMoney(r.valor_total)}</td>
-                <td><span class="badge badge--${statusColor(r.status)}">${r.status}</span></td>
-                <td>${fmtDate(r.created_at)}</td>
-                <td>
-                  ${r.status === 'pendente' ? `<button class="btn btn--success btn--sm" onclick="aprovarSolicitacao('${r.id}')">✅ Aprovar</button> <button class="btn btn--danger btn--sm" onclick="reprovarSolicitacao('${r.id}')">❌ Rejeitar</button>` : ''}
-                </td>
-              </tr>`).join('')}
-          </tbody></table>
-        </div>
-      </section>
-    `;
-  }
-
-  async function aprovarSolicitacao(id) {
-    const limite = await showPromptModal('Limite aprovado (R$):', '1500');
-    if (!limite) return;
-    try { await API.updateRequestStatus(id, 'aprovado', parseFloat(limite)); showToast('Solicitação aprovada'); navigateTo('solicitacoes'); } catch (e) { showToast(e.message, 'error'); }
-  }
-
-  async function reprovarSolicitacao(id) {
-    if (!await showConfirmModal('Rejeitar Solicitação', 'Tem certeza?', 'Rejeitar', 'Cancelar')) return;
-    try { await API.updateRequestStatus(id, 'reprovado'); showToast('Solicitação rejeitada'); navigateTo('solicitacoes'); } catch (e) { showToast(e.message, 'error'); }
-  }
 
   // ============================================================
   // Notificações
@@ -2141,7 +2067,6 @@
   // reloadPagamentos é definido via const dentro de renderPagamentos (closure), não está no escopo do IIFE
   _win.renderLogsSistema = renderLogsSistema;
   _win.novoUsuario = novoUsuario;
-  _win.reprovarSolicitacao = reprovarSolicitacao;
   _win.marcarLida = marcarLida;
   _win.resetSupportClicks = resetSupportClicks;
   _win.removeCpfKey = removeCpfKey;
