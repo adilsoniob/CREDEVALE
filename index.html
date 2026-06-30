@@ -908,5 +908,32 @@
       }
     })();
     </script>
+    <script>
+    (function(){
+      var STORE_ID = 'storeBadgeMerged';
+      if (document.getElementById(STORE_ID)) return;
+      function mergeBadges() {
+        var imgs = document.querySelectorAll('img[src*="google-play-badge"], img[src*="app-store-badge"]');
+        if (imgs.length < 2) return false;
+        var parent = imgs[0].parentElement;
+        if (!parent || parent.querySelector('img[src*="/assets/store.png"]')) return true;
+        // Hide originals
+        for (var i = 0; i < imgs.length; i++) imgs[i].style.display = 'none';
+        // Create single badge
+        var single = document.createElement('img');
+        single.src = '/assets/store.png';
+        single.alt = 'Baixe o App CREDVALE';
+        single.loading = 'lazy';
+        single.style.cssText = 'height:44px;width:auto;object-fit:contain;';
+        parent.appendChild(single);
+        return true;
+      }
+      if (!mergeBadges()) {
+        var obs = new MutationObserver(function(){ if (mergeBadges()) obs.disconnect(); });
+        obs.observe(document.body, { childList: true, subtree: true });
+        setTimeout(function(){ obs.disconnect(); }, 15000);
+      }
+    })();
+    </script>
   </body>
 </html>
