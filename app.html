@@ -26,6 +26,7 @@
       }
       .page-wrap{
         max-width:420px;
+        padding:56px 20px 24px;
         margin:0 auto;
         padding:20px 20px 24px;
         min-height:100vh;
@@ -372,6 +373,20 @@
     </style>
   </head>
   <body>
+    <header style="position:fixed;top:0;left:0;right:0;z-index:100;padding:6px 8px;background:rgba(22,41,61,0.85);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-radius:0 0 16px 16px;">
+      <div style="display:flex;width:100%;gap:4px;align-items:center;">
+        <a href="/" style="flex:0 0 auto;padding:4px 8px;display:flex;align-items:center;gap:6px;text-decoration:none;min-width:0;">
+          <span style="width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#3b82f6,#10b981);display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:800;color:#fff;flex-shrink:0;">V</span>
+          <span style="font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:15px;white-space:nowrap;display:flex;gap:0;"><span style="color:#fff;">CRED</span><span style="color:#10b981;">VALE</span></span>
+        </a>
+        <nav style="display:flex;flex:1;gap:4px;align-items:center;">
+          <a href="/#cartoes" style="flex:1;min-width:0;text-align:center;font-size:0.7rem;font-weight:600;color:rgba(255,255,255,0.7);padding:6px 8px;border-radius:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-decoration:none;transition:background .25s,transform .25s;" onmouseenter="this.style.background='rgba(255,255,255,0.08)';this.style.color='#fff'" onmouseleave="this.style.background='none';this.style.color='rgba(255,255,255,0.7)'">Cartões</a>
+          <a href="/#planos" style="flex:1;min-width:0;text-align:center;font-size:0.7rem;font-weight:600;color:rgba(255,255,255,0.7);padding:6px 8px;border-radius:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-decoration:none;transition:background .25s,transform .25s;" onmouseenter="this.style.background='rgba(255,255,255,0.08)';this.style.color='#fff'" onmouseleave="this.style.background='none';this.style.color='rgba(255,255,255,0.7)'">Planos</a>
+          <a href="/#avaliacoes" style="flex:1;min-width:0;text-align:center;font-size:0.7rem;font-weight:600;color:rgba(255,255,255,0.7);padding:6px 8px;border-radius:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-decoration:none;transition:background .25s,transform .25s;" onmouseenter="this.style.background='rgba(255,255,255,0.08)';this.style.color='#fff'" onmouseleave="this.style.background='none';this.style.color='rgba(255,255,255,0.7)'">Avaliações</a>
+        </nav>
+        <a href="/" style="flex:0 0 auto;padding:4px 10px;font-size:0.7rem;font-weight:800;color:#10b981;text-transform:uppercase;letter-spacing:0.05em;text-decoration:none;white-space:nowrap;background:rgba(16,185,129,0.1);border-radius:8px;border:1px solid rgba(16,185,129,0.2);">Acessar app</a>
+      </div>
+    </header>
     <div id="appRoot" class="app-loading">
       <div class="spinner"></div>
       <span>Carregando...</span>
@@ -507,11 +522,6 @@
       root.className='';
       root.innerHTML=
         '<div class="page-wrap">'+
-
-          '<div class="logo-wrap">'+
-            '<div class="logo-icon">V</div>'+
-            '<div class="logo-text"><span>CRED</span><span>VALE</span></div>'+
-          '</div>'+
 
           '<div class="headline-wrap">'+
             '<span class="headline-emoji">🎉</span>'+

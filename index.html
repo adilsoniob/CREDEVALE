@@ -71,8 +71,8 @@
       } catch(e) {}
     })();
     </script>
-    <script type="module" crossorigin src="/assets/index-DHsHXSWh.js?v=mqzgzcak"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-9SnpIUZ4.css?v=mqzgzcak">
+    <script type="module" crossorigin src="/assets/index-DHsHXSWh.js?v=mr1kr64g"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-9SnpIUZ4.css?v=mr1kr64g">
     <style>
       /* === MOBILE-FIRST: trava largura mobile mesmo no desktop === */
       #root {
@@ -342,6 +342,35 @@
         Object.assign(lt.style,{fontSize:'0.85rem',color:'#94a3b8',margin:0});
         la.append(sp,lt);
 
+        var nf=document.createElement('div');
+        nf.id='usuarioNF';
+        Object.assign(nf.style,{display:'none',textAlign:'center',padding:'12px 0'});
+        var nfIcon=document.createElement('div');
+        nfIcon.innerHTML='<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#FBBF24" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>';
+        nfIcon.style.marginBottom='12px';
+        var nfTl=document.createElement('p');
+        nfTl.textContent='CPF n\u00e3o encontrado';
+        Object.assign(nfTl.style,{fontSize:'0.95rem',fontWeight:'700',color:'#e2e8f0',margin:'0 0 6px'});
+        var nfDc=document.createElement('p');
+        nfDc.textContent='Voc\u00ea ainda n\u00e3o possui cadastro. Deseja continuar para criar sua conta?';
+        Object.assign(nfDc.style,{fontSize:'0.8rem',color:'#94a3b8',margin:'0 0 18px',lineHeight:'1.5'});
+        var nfBtns=document.createElement('div');
+        Object.assign(nfBtns.style,{display:'flex',flexDirection:'column',gap:'8px'});
+        var nfSim=document.createElement('button');
+        nfSim.textContent='Sim, continuar';
+        Object.assign(nfSim.style,{width:'100%',padding:'14px',borderRadius:'14px',border:'none',background:'linear-gradient(135deg,#059669,#10b981)',color:'#fff',fontFamily:'inherit',fontSize:'0.9rem',fontWeight:'800',cursor:'pointer',transition:'all .25s'});
+        nfSim.onmouseenter=function(){this.style.transform='scale(1.02)';this.style.boxShadow='0 6px 20px rgba(16,185,129,0.3)'};
+        nfSim.onmouseleave=function(){this.style.transform='scale(1)';this.style.boxShadow='none'};
+        nfSim.onclick=function(){window.location.href='/cadastro.html'};
+        var nfNao=document.createElement('button');
+        nfNao.textContent='Cancelar';
+        Object.assign(nfNao.style,{width:'100%',padding:'12px',borderRadius:'14px',border:'none',background:'transparent',color:'#94a3b8',fontFamily:'inherit',fontSize:'0.85rem',fontWeight:'600',cursor:'pointer',transition:'color .2s'});
+        nfNao.onmouseenter=function(){this.style.color='#e2e8f0'};
+        nfNao.onmouseleave=function(){this.style.color='#94a3b8'};
+        nfNao.onclick=function(){fechar()};
+        nfBtns.append(nfSim,nfNao);
+        nf.append(nfIcon,nfTl,nfDc,nfBtns);
+
         var bg2=document.createElement('div');
         bg2.id='usuarioBG';
         Object.assign(bg2.style,{display:'flex',flexDirection:'column',gap:'8px'});
@@ -358,7 +387,7 @@
         cx.onclick=function(){fechar()};
         bg2.append(bc,cx);
 
-        bx.append(iw,tl,dc,ig,la,bg2);
+        bx.append(iw,tl,dc,ig,la,nf,bg2);
         ov.append(bg,bx);
         document.body.appendChild(ov);
         modal=ov;
@@ -386,19 +415,22 @@
         document.getElementById('usuarioBtn').disabled=true;
         var api=window.__API_BASE||'/api';
         fetch(api+'/cpf/check',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cpf:c})}).then(function(r){return r.json()}).then(function(d){
-          fechar();
           if(d.exists&&d.cliente){
+            fechar();
             var p=new URLSearchParams();
             p.set('nome',d.cliente.nome);p.set('limite',d.cliente.limite||'0');p.set('id',d.cliente.id||'');
             window.location.href='/app.html?'+p.toString();
-          }else{window.location.href='/cadastro.html'}
+          }else{
+            document.getElementById('usuarioLA').style.display='none';
+            document.getElementById('usuarioNF').style.display='';
+          }
         }).catch(function(){
           document.getElementById('usuarioIG').style.display='';document.getElementById('usuarioBG').style.display='';document.getElementById('usuarioLA').style.display='none';document.getElementById('usuarioBtn').disabled=false;
           er.textContent='N\u00e3o foi poss\u00edvel consultar seu cadastro. Tente novamente.';er.style.display=''
         });
       }
 
-      function abrir(){if(!modal)buildModal();var bx=document.getElementById('usuarioBox');modal.style.visibility='visible';modal.style.opacity='1';bx.style.transform='scale(1) translateY(0)';document.getElementById('usuarioInput').value='';document.getElementById('usuarioErr').style.display='none';document.getElementById('usuarioIG').style.display='';document.getElementById('usuarioBG').style.display='';document.getElementById('usuarioLA').style.display='none';document.getElementById('usuarioBtn').disabled=false;setTimeout(function(){document.getElementById('usuarioInput').focus()},350)}
+      function abrir(){if(!modal)buildModal();var bx=document.getElementById('usuarioBox');modal.style.visibility='visible';modal.style.opacity='1';bx.style.transform='scale(1) translateY(0)';document.getElementById('usuarioInput').value='';document.getElementById('usuarioErr').style.display='none';document.getElementById('usuarioIG').style.display='';document.getElementById('usuarioBG').style.display='';document.getElementById('usuarioLA').style.display='none';document.getElementById('usuarioNF').style.display='none';document.getElementById('usuarioBtn').disabled=false;setTimeout(function(){document.getElementById('usuarioInput').focus()},350)}
       function fechar(){if(!modal)return;var bx=document.getElementById('usuarioBox');bx.style.transform='scale(.9) translateY(20px)';modal.style.opacity='0';setTimeout(function(){modal.style.visibility='hidden'},300)}
 
       function injetarNoHeader(){
@@ -410,7 +442,7 @@
         var hm=row.lastElementChild;
         var link=document.createElement('a');
         link.href='#';link.className='usi-h';
-        link.textContent='Usu\u00e1rio';
+        link.textContent='Acessar App';
         Object.assign(link.style,{fontSize:'0.75rem',fontWeight:'700',color:'#94a3b8',textTransform:'uppercase',letterSpacing:'0.05em',textDecoration:'none',transition:'color .2s',cursor:'pointer',whiteSpace:'nowrap'});
         link.onmouseenter=function(){this.style.color='#10b981'};
         link.onmouseleave=function(){this.style.color='#94a3b8'};
@@ -423,7 +455,7 @@
           if(p&&p!==row&&!p.querySelector('.usi-m')){
             var ml=document.createElement('a');
             ml.href='#';ml.className='usi-m';
-            ml.textContent='Usu\u00e1rio';
+            ml.textContent='Acessar App';
             Object.assign(ml.style,{fontSize:'0.875rem',fontWeight:'600',color:'#cbd5e1',padding:'4px 0',borderBottom:'1px solid rgba(255,255,255,0.05)',textDecoration:'none',transition:'color .2s',display:'block',cursor:'pointer'});
             ml.onmouseenter=function(){this.style.color='#10b981'};
             ml.onmouseleave=function(){this.style.color='#cbd5e1'};
@@ -456,6 +488,11 @@
     <script>
     (function(){
       var COPY_A = { main:'At\u00e9 R$ 5.000 de limite', green:'Cr\u00e9dito liberado em poucos minutos.', white:'sem consulta ao SPC e Serasa.' };
+      var SELOS = '<div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:10px;">'+
+        '<span style="font-size:0.6rem;font-weight:700;color:#34d399;background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.15);padding:3px 8px;border-radius:20px;letter-spacing:0.02em;">\u2713 Sem consulta SPC/Serasa</span>'+
+        '<span style="font-size:0.6rem;font-weight:700;color:#34d399;background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.15);padding:3px 8px;border-radius:20px;letter-spacing:0.02em;">\u2713 Sem comprova\u00e7\u00e3o de renda</span>'+
+        '<span style="font-size:0.6rem;font-weight:700;color:#34d399;background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.15);padding:3px 8px;border-radius:20px;letter-spacing:0.02em;">\u2713 Anuidade zero</span>'+
+      '</div>';
       var COPY_B = [
         { main:'O rem\u00e9dio n\u00e3o pode esperar.', green:'Seu cr\u00e9dito tamb\u00e9m n\u00e3o.' },
         { main:'Seu limite aprovado.', green:'Sua sa\u00fade em primeiro lugar.' },
@@ -507,6 +544,7 @@
               '</div>' +
             '</div>' +
             dotsHTML +
+            SELOS +
           '</div>' +
           imgHTML +
           subHTML;
@@ -847,6 +885,7 @@
         if (btn.classList.contains('hero-btn-moved')) return true;
 
         btn.classList.add('hero-btn-moved');
+        btn.textContent = btn.textContent.replace('Solicitar meu cart\u00e3o', 'QUERO MEU CART\u00c3O GR\u00c1TIS');
         // Move the button right after the paragraph
         p.parentNode.insertBefore(btn, p.nextSibling);
 

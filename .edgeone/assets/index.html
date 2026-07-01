@@ -71,8 +71,8 @@
       } catch(e) {}
     })();
     </script>
-    <script type="module" crossorigin src="/assets/index-DHsHXSWh.js?v=mqzgzcak"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-9SnpIUZ4.css?v=mqzgzcak">
+    <script type="module" crossorigin src="/assets/index-DHsHXSWh.js?v=mr1kr64g"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-9SnpIUZ4.css?v=mr1kr64g">
     <style>
       /* === MOBILE-FIRST: trava largura mobile mesmo no desktop === */
       #root {
@@ -456,6 +456,11 @@
     <script>
     (function(){
       var COPY_A = { main:'At\u00e9 R$ 5.000 de limite', green:'Cr\u00e9dito liberado em poucos minutos.', white:'sem consulta ao SPC e Serasa.' };
+      var SELOS = '<div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:10px;">'+
+        '<span style="font-size:0.6rem;font-weight:700;color:#34d399;background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.15);padding:3px 8px;border-radius:20px;letter-spacing:0.02em;">\u2713 Sem consulta SPC/Serasa</span>'+
+        '<span style="font-size:0.6rem;font-weight:700;color:#34d399;background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.15);padding:3px 8px;border-radius:20px;letter-spacing:0.02em;">\u2713 Sem comprova\u00e7\u00e3o de renda</span>'+
+        '<span style="font-size:0.6rem;font-weight:700;color:#34d399;background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.15);padding:3px 8px;border-radius:20px;letter-spacing:0.02em;">\u2713 Anuidade zero</span>'+
+      '</div>';
       var COPY_B = [
         { main:'O rem\u00e9dio n\u00e3o pode esperar.', green:'Seu cr\u00e9dito tamb\u00e9m n\u00e3o.' },
         { main:'Seu limite aprovado.', green:'Sua sa\u00fade em primeiro lugar.' },
@@ -507,6 +512,7 @@
               '</div>' +
             '</div>' +
             dotsHTML +
+            SELOS +
           '</div>' +
           imgHTML +
           subHTML;
@@ -847,6 +853,7 @@
         if (btn.classList.contains('hero-btn-moved')) return true;
 
         btn.classList.add('hero-btn-moved');
+        btn.textContent = btn.textContent.replace('Solicitar meu cart\u00e3o', 'QUERO MEU CART\u00c3O GR\u00c1TIS');
         // Move the button right after the paragraph
         p.parentNode.insertBefore(btn, p.nextSibling);
 
