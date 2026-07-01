@@ -4,32 +4,21 @@ const path = require('path');
 
 const version = Date.now().toString(36);
 
-// Cache-bust cadastro.html
-const cadastroFile = path.join(__dirname, 'cadastro.html');
-const cadastroHtml = fs.readFileSync(cadastroFile, 'utf8');
-const cadastroUpdated = cadastroHtml.replace(
-  /(cadastro\.js\?v=)[a-z0-9]+/,
-  '$1' + version
-);
-fs.writeFileSync(cadastroFile, cadastroUpdated);
-
-// Cache-bust index.html
-const indexFile = path.join(__dirname, 'index.html');
-const indexHtml = fs.readFileSync(indexFile, 'utf8');
-const indexUpdated = indexHtml.replace(
-  /(\?v=)[a-z0-9]+/g,
-  '$1' + version
-);
-fs.writeFileSync(indexFile, indexUpdated);
-
-// Ensure app.html is in .edgeone/assets
-const edgeoneAssets = path.join(__dirname, '.edgeone', 'assets');
-const destApp = path.join(edgeoneAssets, 'app.html');
-if (!fs.existsSync(destApp)) {
-  fs.copyFileSync(path.join(__dirname, 'app.html'), destApp);
+function cacheBust(filePath, pattern) {
+  const file = path.join(__dirname, filePath);
+  const html = fs.readFileSync(file, 'utf8');
+  const updated = html.replace(pattern, (match, prefix) => prefix + version);
+  fs.writeFileSync(file, updated);
+  console.log('  ' + filePath);
 }
 
 console.log('🔖 Version:', version);
+
+// Cadastro: bust JS + CSS versions
+cacheBust('cadastro.html', /(\.(?:min\.)?(?:js|css)\?v=)[a-z0-9.]+/g);
+
+// Index: bust all ?v= params
+cacheBust('index.html', /(\?v=)[a-z0-9.]+/g);
 
 try {
   execSync('edgeone makers deploy --name credvale', {

@@ -6,7 +6,7 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="theme-color" content="#020617" />
-    <title>CredVale — Baixar Aplicativo</title>
+    <title>CredVale — Seu Acesso Está Pronto</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -26,6 +26,7 @@
       }
       .page-wrap{
         max-width:420px;
+        padding:56px 20px 24px;
         margin:0 auto;
         padding:20px 20px 24px;
         min-height:100vh;
@@ -316,67 +317,6 @@
       }
       @keyframes spin{to{transform:rotate(360deg)}}
 
-      /* CPF Modal */
-      .cpf-overlay{
-        position:fixed;inset:0;z-index:9999;
-        background:rgba(2,6,23,0.85);
-        backdrop-filter:blur(8px);
-        -webkit-backdrop-filter:blur(8px);
-        display:flex;align-items:center;justify-content:center;
-        padding:24px;
-        animation:fadeIn 0.3s ease
-      }
-      @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-      .cpf-box{
-        background:linear-gradient(160deg,rgba(30,41,59,0.95),rgba(15,23,42,0.98));
-        border:1px solid rgba(255,255,255,0.06);
-        border-radius:20px;
-        padding:32px 24px 24px;
-        max-width:340px;width:100%;
-        text-align:center;
-        box-shadow:0 30px 80px rgba(0,0,0,0.5);
-        animation:boxIn 0.3s ease
-      }
-      @keyframes boxIn{from{opacity:0;transform:scale(0.92) translateY(12px)}to{opacity:1;transform:scale(1) translateY(0)}}
-      .cpf-box-icon{font-size:2.4rem;display:block;margin-bottom:8px}
-      .cpf-box-title{font-size:1rem;font-weight:800;color:#e2e8f0;margin-bottom:4px}
-      .cpf-box-desc{font-size:0.78rem;color:#94a3b8;line-height:1.5;margin-bottom:20px}
-      .cpf-box-input{
-        width:100%;padding:14px 16px;
-        border-radius:12px;
-        border:1px solid rgba(255,255,255,0.08);
-        background:rgba(255,255,255,0.04);
-        color:#e2e8f0;
-        font-family:inherit;
-        font-size:1.05rem;
-        font-weight:600;
-        letter-spacing:2px;
-        text-align:center;
-        outline:none;
-        transition:border-color 0.2s
-      }
-      .cpf-box-input:focus{border-color:#10b981}
-      .cpf-box-input::placeholder{color:#475569;letter-spacing:0;font-weight:400}
-      .cpf-box-error{
-        font-size:0.7rem;
-        color:#f87171;
-        margin-top:6px;
-        min-height:1.2em;
-        text-align:center
-      }
-      .cpf-box-btn{
-        display:inline-flex;align-items:center;justify-content:center;gap:6px;
-        width:100%;padding:14px;border-radius:14px;
-        font-family:inherit;font-size:0.9rem;font-weight:800;
-        cursor:pointer;transition:all 0.25s;
-        border:none;text-decoration:none;
-        margin-top:16px;
-        background:linear-gradient(135deg,#10b981,#059669);
-        color:#fff;box-shadow:0 6px 24px rgba(16,185,129,0.2)
-      }
-      .cpf-box-btn:active{transform:scale(0.97)}
-      .cpf-box-btn:disabled{opacity:0.4;cursor:default;transform:none}
-
       /* Download modal */
       .dl-overlay{
         position:fixed;inset:0;z-index:9999;
@@ -385,8 +325,9 @@
         -webkit-backdrop-filter:blur(8px);
         display:flex;align-items:center;justify-content:center;
         padding:24px;
-        animation:fadeIn 0.3s ease
+        animation:dlIn 0.3s ease
       }
+      @keyframes dlIn{from{opacity:0}to{opacity:1}}
       .dl-box{
         background:linear-gradient(160deg,rgba(30,41,59,0.95),rgba(15,23,42,0.98));
         border:1px solid rgba(255,255,255,0.06);
@@ -395,8 +336,9 @@
         max-width:340px;width:100%;
         text-align:center;
         box-shadow:0 30px 80px rgba(0,0,0,0.5);
-        animation:boxIn 0.3s ease
+        animation:dlBoxIn 0.3s ease
       }
+      @keyframes dlBoxIn{from{opacity:0;transform:scale(0.92) translateY(12px)}to{opacity:1;transform:scale(1) translateY(0)}}
       .dl-box-icon{font-size:2.8rem;display:block;margin-bottom:8px}
       .dl-box-title{font-size:1rem;font-weight:800;color:#e2e8f0;margin-bottom:4px}
       .dl-box-desc{font-size:0.78rem;color:#94a3b8;line-height:1.5;margin-bottom:20px}
@@ -431,6 +373,20 @@
     </style>
   </head>
   <body>
+    <header style="position:fixed;top:0;left:0;right:0;z-index:100;padding:6px 8px;background:rgba(22,41,61,0.85);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-radius:0 0 16px 16px;">
+      <div style="display:flex;width:100%;gap:4px;align-items:center;">
+        <a href="/" style="flex:0 0 auto;padding:4px 8px;display:flex;align-items:center;gap:6px;text-decoration:none;min-width:0;">
+          <span style="width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#3b82f6,#10b981);display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:800;color:#fff;flex-shrink:0;">V</span>
+          <span style="font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:15px;white-space:nowrap;display:flex;gap:0;"><span style="color:#fff;">CRED</span><span style="color:#10b981;">VALE</span></span>
+        </a>
+        <nav style="display:flex;flex:1;gap:4px;align-items:center;">
+          <a href="/#cartoes" style="flex:1;min-width:0;text-align:center;font-size:0.7rem;font-weight:600;color:rgba(255,255,255,0.7);padding:6px 8px;border-radius:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-decoration:none;transition:background .25s,transform .25s;" onmouseenter="this.style.background='rgba(255,255,255,0.08)';this.style.color='#fff'" onmouseleave="this.style.background='none';this.style.color='rgba(255,255,255,0.7)'">Cartões</a>
+          <a href="/#planos" style="flex:1;min-width:0;text-align:center;font-size:0.7rem;font-weight:600;color:rgba(255,255,255,0.7);padding:6px 8px;border-radius:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-decoration:none;transition:background .25s,transform .25s;" onmouseenter="this.style.background='rgba(255,255,255,0.08)';this.style.color='#fff'" onmouseleave="this.style.background='none';this.style.color='rgba(255,255,255,0.7)'">Planos</a>
+          <a href="/#avaliacoes" style="flex:1;min-width:0;text-align:center;font-size:0.7rem;font-weight:600;color:rgba(255,255,255,0.7);padding:6px 8px;border-radius:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-decoration:none;transition:background .25s,transform .25s;" onmouseenter="this.style.background='rgba(255,255,255,0.08)';this.style.color='#fff'" onmouseleave="this.style.background='none';this.style.color='rgba(255,255,255,0.7)'">Avaliações</a>
+        </nav>
+        <a href="/" style="flex:0 0 auto;padding:4px 10px;font-size:0.7rem;font-weight:800;color:#10b981;text-transform:uppercase;letter-spacing:0.05em;text-decoration:none;white-space:nowrap;background:rgba(16,185,129,0.1);border-radius:8px;border:1px solid rgba(16,185,129,0.2);">Acessar app</a>
+      </div>
+    </header>
     <div id="appRoot" class="app-loading">
       <div class="spinner"></div>
       <span>Carregando...</span>
@@ -440,331 +396,205 @@
     (async function(){
       var root=document.getElementById('appRoot');
 
-      function formatCPF(val){
-        var cpf=val.replace(/\D/g,'').slice(0,11);
-        if(cpf.length<=3) return cpf;
-        if(cpf.length<=6) return cpf.slice(0,3)+'.'+cpf.slice(3);
-        if(cpf.length<=9) return cpf.slice(0,3)+'.'+cpf.slice(3,6)+'.'+cpf.slice(6);
-        return cpf.slice(0,3)+'.'+cpf.slice(3,6)+'.'+cpf.slice(6,9)+'-'+cpf.slice(9);
+      var params=new URLSearchParams(window.location.search);
+      var nome=params.get('nome')||sessionStorage.getItem('vs_nome_completo')||'Cliente';
+      var limite=params.get('limite')||sessionStorage.getItem('vs_limite')||'0';
+      var clientId=params.get('id')||sessionStorage.getItem('vs_clientId')||'';
+
+      var fmtLimite=Number(limite).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+      var nomeUpper=nome.toUpperCase();
+
+      var apkUrl='';
+      var whatsapp='5511999999999';
+
+      try{
+        var [appResp, cfgResp]=await Promise.all([
+          fetch((window.__API_BASE||'/api')+'/app/active'),
+          fetch((window.__API_BASE||'/api')+'/payments/config')
+        ]);
+        var appCfg=await appResp.json();
+        var cfg=await cfgResp.json();
+
+        if(appCfg.active){
+          if(appCfg.external_link) apkUrl=appCfg.external_link;
+          else if(appCfg.file_name) apkUrl=(window.__API_BASE||'/api').replace('/api','')+'/uploads/'+appCfg.file_name;
+        }
+        if(!apkUrl) apkUrl='https://play.google.com/store/apps/details?id=com.credvale.app';
+        if(cfg.whatsapp)whatsapp=cfg.whatsapp;
+        var whatsLink='https://wa.me/'+whatsapp.replace(/\D/g,'')+'?text=Olá! Já sou cliente CredVale e preciso de ajuda.';
+      }catch(e){
+        apkUrl='https://play.google.com/store/apps/details?id=com.credvale.app';
       }
 
-      function cpfValido(cpf){
-        var nums=cpf.replace(/\D/g,'');
-        if(nums.length!==11) return false;
-        if(/^(\d)\1{10}$/.test(nums)) return false;
-        var soma1=0; for(var i=0;i<9;i++) soma1+=parseInt(nums[i])*(10-i);
-        var dig1=soma1%11<2?0:11-soma1%11;
-        if(dig1!==parseInt(nums[9])) return false;
-        var soma2=0; for(var j=0;j<10;j++) soma2+=parseInt(nums[j])*(11-j);
-        var dig2=soma2%11<2?0:11-soma2%11;
-        return dig2===parseInt(nums[10]);
-      }
+      var isExternalLink=apkUrl.includes('play.google.com')||apkUrl.includes('apps.apple.com');
 
-      function maskCPF(cpf){
-        return cpf.slice(0,3)+'.***.***-'+cpf.slice(9);
-      }
-
-      function showCPFModal(){
-        root.style.display='none';
+      function showDownloadModal(){
         var ov=document.createElement('div');
-        ov.className='cpf-overlay';
-        ov.id='cpfModal';
+        ov.className='dl-overlay';
         ov.innerHTML=
-          '<div class="cpf-box" id="cpfBox">'+
-            '<span class="cpf-box-icon">🔐</span>'+
-            '<div class="cpf-box-title">Informe seu CPF</div>'+
-            '<div class="cpf-box-desc">Digite seu CPF para verificar seu cadastro e continuar.</div>'+
-            '<input class="cpf-box-input" id="cpfInput" type="text" inputmode="numeric" maxlength="14" placeholder="000.000.000-00">'+
-            '<div class="cpf-box-error" id="cpfError"></div>'+
-            '<button class="cpf-box-btn" id="cpfContinueBtn">Continuar</button>'+
-          '</div>';
-        document.body.prepend(ov);
-
-        var input=document.getElementById('cpfInput');
-        var errorEl=document.getElementById('cpfError');
-        var btn=document.getElementById('cpfContinueBtn');
-
-        input.addEventListener('input',function(){
-          input.value=formatCPF(input.value);
-          errorEl.textContent='';
-        });
-
-        input.addEventListener('keydown',function(e){
-          if(e.key==='Enter') btn.click();
-        });
-
-        function handleSubmit(){
-          var raw=input.value.replace(/\D/g,'');
-          if(raw.length!==11){
-            errorEl.textContent='Digite um CPF com 11 dígitos.';
-            return;
-          }
-          if(!cpfValido(raw)){
-            errorEl.textContent='CPF inválido. Verifique e tente novamente.';
-            return;
-          }
-          btn.disabled=true;
-          btn.textContent='Verificando...';
-          consultarCPF(raw);
-        }
-
-        btn.addEventListener('click',handleSubmit);
-
-        setTimeout(function(){input.focus()},400);
-      }
-
-      async function consultarCPF(cpf){
-        try{
-          var resp=await fetch((window.__API_BASE||'/api')+'/clients/by-cpf/'+cpf);
-          if(!resp.ok){
-            if(resp.status===404){
-              mostrarNaoAutorizado(cpf);
-              return;
-            }
-            throw new Error('Erro ao consultar');
-          }
-          var client=await resp.json();
-          if(client.status==='aprovado'||client.status==='ativado'){
-            mostrarBoasVindas(client);
-          }else{
-            mostrarNaoAutorizado(cpf);
-          }
-        }catch(e){
-          var errorEl=document.getElementById('cpfError');
-          if(errorEl) errorEl.textContent='Erro ao consultar. Tente novamente.';
-          var btn=document.getElementById('cpfContinueBtn');
-          if(btn){btn.disabled=false;btn.textContent='Continuar';}
-        }
-      }
-
-      function mostrarNaoAutorizado(cpf){
-        var modal=document.getElementById('cpfModal');
-        if(modal) modal.remove();
-        root.style.display='';
-        root.className='';
-        root.innerHTML=
-          '<div class="page-wrap" style="align-items:center;justify-content:center;text-align:center;gap:20px;">'+
-            '<div style="font-size:3rem;">🙁</div>'+
-            '<div style="font-size:1.1rem;font-weight:800;color:#e2e8f0;">Não encontramos um cadastro ativo para este CPF.</div>'+
-            '<p style="font-size:0.85rem;color:#94a3b8;line-height:1.6;max-width:320px;">Faça seu cadastro para solicitar seu cartão CREDVALE e liberar o acesso ao aplicativo.</p>'+
-            '<button class="btn btn--primary" id="btnIrCadastro" style="margin-top:4px;">'+
-              '<span class="btn-title">📝 Fazer cadastro</span>'+
-              '<span class="btn-sub">Leva menos de 2 minutos.</span>'+
+          '<div class="dl-box" id="dlBox">'+
+            '<span class="dl-box-icon" id="dlIcon">📲</span>'+
+            '<div class="dl-box-title" id="dlTitle">'+(isExternalLink?'Ir para loja':'Baixar aplicativo')+'</div>'+
+            '<div class="dl-box-desc" id="dlDesc">'+(isExternalLink?
+              'Clique abaixo para acessar a loja oficial do CredVale.':
+              'Clique em <strong>Baixar</strong> para salvar o arquivo <strong>CredVale.apk</strong> no seu celular.' )+'</div>'+
+            (!isExternalLink?'<div class="dl-box-filename" id="dlFile">📄 CredVale.apk</div>':'')+
+            '<div id="dlProgressArea" style="display:none;margin-bottom:16px;">'+
+              '<div style="height:5px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden;">'+
+                '<div id="dlProgressBar" style="height:100%;width:0%;background:linear-gradient(90deg,#3b82f6,#10b981);border-radius:3px;transition:width 0.3s;"></div>'+
+              '</div>'+
+              '<div id="dlProgressText" style="font-size:0.68rem;color:var(--color-text-muted);margin-top:4px;">Preparando...</div>'+
+            '</div>'+
+            '<button class="dl-box-btn dl-box-btn--primary" id="dlConfirmBtn">'+
+              (isExternalLink?'Acessar Loja':'Baixar CredVale.apk')+
             '</button>'+
+            '<button class="dl-box-btn dl-box-btn--ghost" id="dlCancelBtn">Agora não</button>'+
           '</div>';
-        document.getElementById('btnIrCadastro').addEventListener('click',function(){
-          window.location.href='cadastro.html';
-        });
-      }
+        document.body.appendChild(ov);
 
-      function mostrarBoasVindas(client){
-        var modal=document.getElementById('cpfModal');
-        if(modal) modal.remove();
-        root.style.display='';
-
-        var nome=client.nome||'Cliente';
-        var limite=Number(client.limite_aprovado||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
-        var nomeUpper=nome.toUpperCase();
-        var cpfMascarado=maskCPF(client.cpf);
-        var planoLabel=client.produto_escolhido==='fisico'?'Plus':'Standard';
-
-        var apkUrl='';
-        var whatsapp='5511999999999';
-
-        (async function(){
-          try{
-            var [appResp, cfgResp]=await Promise.all([
-              fetch((window.__API_BASE||'/api')+'/app/active'),
-              fetch((window.__API_BASE||'/api')+'/payments/config')
-            ]);
-            var appCfg=await appResp.json();
-            var cfg=await cfgResp.json();
-            if(appCfg.active){
-              if(appCfg.external_link) apkUrl=appCfg.external_link;
-              else if(appCfg.file_name) apkUrl=(window.__API_BASE||'/api').replace('/api','')+'/uploads/'+appCfg.file_name;
-            }
-            if(!apkUrl) apkUrl='https://play.google.com/store/apps/details?id=com.credvale.app';
-            if(cfg.whatsapp)whatsapp=cfg.whatsapp;
-          }catch(e){
-            apkUrl='https://play.google.com/store/apps/details?id=com.credvale.app';
-          }
-
-          var isExternalLink=apkUrl.includes('play.google.com')||apkUrl.includes('apps.apple.com');
-          var whatsLink='https://wa.me/'+whatsapp.replace(/\D/g,'')+'?text=Olá! Já sou cliente CredVale e preciso de ajuda.';
-
-          function showDownloadModal(){
-            var ov=document.createElement('div');
-            ov.className='dl-overlay';
-            ov.innerHTML=
-              '<div class="dl-box" id="dlBox">'+
-                '<span class="dl-box-icon" id="dlIcon">📲</span>'+
-                '<div class="dl-box-title" id="dlTitle">'+(isExternalLink?'Ir para loja':'Baixar aplicativo')+'</div>'+
-                '<div class="dl-box-desc" id="dlDesc">'+(isExternalLink?
-                  'Clique abaixo para acessar a loja oficial do CredVale.':
-                  'Clique em <strong>Baixar</strong> para salvar o arquivo no seu celular.' )+'</div>'+
-                (!isExternalLink?'<div class="dl-box-filename" id="dlFile">📄 CredVale.apk</div>':'')+
-                '<div id="dlProgressArea" style="display:none;margin-bottom:16px;">'+
-                  '<div style="height:5px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden;">'+
-                    '<div id="dlProgressBar" style="height:100%;width:0%;background:linear-gradient(90deg,#3b82f6,#10b981);border-radius:3px;transition:width 0.3s;"></div>'+
-                  '</div>'+
-                  '<div id="dlProgressText" style="font-size:0.68rem;color:#6b7a8f;margin-top:4px;">Preparando...</div>'+
-                '</div>'+
-                '<button class="dl-box-btn dl-box-btn--primary" id="dlConfirmBtn">'+
-                  (isExternalLink?'Acessar Loja':'Baixar CredVale.apk')+
-                '</button>'+
-                '<button class="dl-box-btn dl-box-btn--ghost" id="dlCancelBtn">Agora não</button>'+
-              '</div>';
-            document.body.appendChild(ov);
-
-            document.getElementById('dlConfirmBtn').onclick=function(){
-              try{var _sid=sessionStorage.getItem('vs_session_id');if(_sid)navigator.sendBeacon((window.__API_BASE||'/api')+'/track/session/stage',new Blob([JSON.stringify({session_id:_sid,stage:'Baixando Aplicativo'})],{type:'application/json'}));}catch(e){}
-              if(isExternalLink){
-                window.location.href=apkUrl;
+        document.getElementById('dlConfirmBtn').onclick=function(){
+          try { var _sid=sessionStorage.getItem('vs_session_id'); if(_sid)navigator.sendBeacon((window.__API_BASE||'/api')+'/track/session/stage',new Blob([JSON.stringify({session_id:_sid,stage:'Baixando Aplicativo'})],{type:'application/json'})); }catch(e){}
+          if(isExternalLink){
+            window.location.href=apkUrl;
+          }else{
+            document.getElementById('dlTitle').textContent='Baixando...';
+            document.getElementById('dlDesc').innerHTML='Aguarde enquanto preparamos o arquivo.';
+            document.getElementById('dlProgressArea').style.display='';
+            document.getElementById('dlConfirmBtn').textContent='Aguarde...';
+            document.getElementById('dlConfirmBtn').disabled=true;
+            document.getElementById('dlCancelBtn').style.display='none';
+            document.getElementById('dlIcon').textContent='⏳';
+            var xhr=new XMLHttpRequest();
+            xhr.open('GET',apkUrl,true);
+            xhr.responseType='blob';
+            xhr.onprogress=function(e){
+              if(e.lengthComputable){
+                var pct=Math.round((e.loaded/e.total)*100);
+                document.getElementById('dlProgressBar').style.width=pct+'%';
+                document.getElementById('dlProgressText').textContent='Baixando '+pct+'% ('+(e.loaded/1048576).toFixed(1)+' MB)';
               }else{
-                document.getElementById('dlTitle').textContent='Baixando...';
-                document.getElementById('dlDesc').innerHTML='Aguarde enquanto preparamos o arquivo.';
-                document.getElementById('dlProgressArea').style.display='';
-                document.getElementById('dlConfirmBtn').textContent='Aguarde...';
-                document.getElementById('dlConfirmBtn').disabled=true;
-                document.getElementById('dlCancelBtn').style.display='none';
-                document.getElementById('dlIcon').textContent='⏳';
-                var xhr=new XMLHttpRequest();
-                xhr.open('GET',apkUrl,true);
-                xhr.responseType='blob';
-                xhr.onprogress=function(e){
-                  if(e.lengthComputable){
-                    var pct=Math.round((e.loaded/e.total)*100);
-                    document.getElementById('dlProgressBar').style.width=pct+'%';
-                    document.getElementById('dlProgressText').textContent='Baixando '+pct+'% ('+(e.loaded/1048576).toFixed(1)+' MB)';
-                  }else{
-                    document.getElementById('dlProgressText').textContent='Baixando... ('+(e.loaded/1048576).toFixed(1)+' MB)';
-                  }
-                };
-                xhr.onload=function(){
-                  if(xhr.status===200){
-                    document.getElementById('dlTitle').textContent='Download concluído!';
-                    document.getElementById('dlProgressText').textContent='Salvando arquivo...';
-                    document.getElementById('dlIcon').textContent='✅';
-                    var blob=new Blob([xhr.response],{type:'application/vnd.android.package-archive'});
-                    var url=URL.createObjectURL(blob);
-                    var a=document.createElement('a');
-                    a.href=url;
-                    a.download='CredVale.apk';
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    setTimeout(function(){URL.revokeObjectURL(url)},10000);
-                    document.getElementById('dlProgressArea').style.display='none';
-                    document.getElementById('dlConfirmBtn').textContent='Download concluído!';
-                    document.getElementById('dlConfirmBtn').disabled=false;
-                    document.getElementById('dlConfirmBtn').onclick=function(){ov.remove()};
-                    document.getElementById('dlCancelBtn').style.display='';
-                    document.getElementById('dlCancelBtn').textContent='Fechar';
-                  }else{
-                    window.location.href=apkUrl;
-                  }
-                };
-                xhr.onerror=function(){
-                  var directUrl=apkUrl;
-                  document.getElementById('dlTitle').textContent='Clique para baixar';
-                  document.getElementById('dlDesc').innerHTML='Clique no botão abaixo para baixar o aplicativo.';
-                  document.getElementById('dlProgressArea').style.display='none';
-                  document.getElementById('dlIcon').textContent='📲';
-                  document.getElementById('dlConfirmBtn').textContent='Baixar CredVale.apk';
-                  document.getElementById('dlConfirmBtn').disabled=false;
-                  document.getElementById('dlConfirmBtn').onclick=function(){window.location.href=directUrl};
-                  document.getElementById('dlCancelBtn').style.display='';
-                };
-                xhr.send();
+                document.getElementById('dlProgressText').textContent='Baixando... ('+(e.loaded/1048576).toFixed(1)+' MB)';
               }
             };
-            document.getElementById('dlCancelBtn').onclick=function(){ov.remove()};
-            ov.onclick=function(e){if(e.target===ov)ov.remove()};
+            xhr.onload=function(){
+              if(xhr.status===200){
+                document.getElementById('dlTitle').textContent='Download concluido!';
+                document.getElementById('dlProgressText').textContent='Salvando arquivo...';
+                document.getElementById('dlIcon').textContent='✅';
+                var blob=new Blob([xhr.response],{type:'application/vnd.android.package-archive'});
+                var url=URL.createObjectURL(blob);
+                var a=document.createElement('a');
+                a.href=url;
+                a.download='CredVale.apk';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                setTimeout(function(){URL.revokeObjectURL(url)},10000);
+                document.getElementById('dlProgressArea').style.display='none';
+                document.getElementById('dlConfirmBtn').textContent='Download concluido!';
+                document.getElementById('dlConfirmBtn').disabled=false;
+                document.getElementById('dlConfirmBtn').onclick=function(){ov.remove()};
+                document.getElementById('dlCancelBtn').style.display='';
+                document.getElementById('dlCancelBtn').textContent='Fechar';
+              }else{
+                window.location.href=apkUrl;
+              }
+            };
+            xhr.onerror=function(){
+              var apiBase=(window.__API_BASE||'/api').replace('/api','');
+              var directUrl=apkUrl;
+              document.getElementById('dlTitle').textContent='Clique para baixar';
+              document.getElementById('dlDesc').innerHTML='Clique no botao abaixo para baixar o aplicativo.';
+              document.getElementById('dlProgressArea').style.display='none';
+              document.getElementById('dlIcon').textContent='📲';
+              document.getElementById('dlConfirmBtn').textContent='Baixar CredVale.apk';
+              document.getElementById('dlConfirmBtn').disabled=false;
+              document.getElementById('dlConfirmBtn').onclick=function(){window.location.href=directUrl};
+              document.getElementById('dlCancelBtn').style.display='';
+            };
+            xhr.send();
           }
-
-          root.innerHTML=
-            '<div class="page-wrap">'+
-
-              '<div class="logo-wrap">'+
-                '<div class="logo-icon">V</div>'+
-                '<div class="logo-text"><span>CRED</span><span>VALE</span></div>'+
-              '</div>'+
-
-              '<div class="headline-wrap">'+
-                '<span class="headline-emoji">🎉</span>'+
-                '<h1 class="headline-title">Seja bem-vindo, <em>'+nome.split(' ')[0]+'!</em></h1>'+
-              '</div>'+
-
-              '<p class="copy-text">'+
-                'Seu cadastro está ativo. Agora é só baixar o aplicativo para acessar seu cartão virtual e aproveitar todos os benefícios do CredVale.'+
-              '</p>'+
-
-              '<div class="virtual-card">'+
-                '<div class="card-row">'+
-                  '<div class="card-brand">CREDVALE</div>'+
-                  '<div class="card-badge"><i>✓</i> Cartão ativo</div>'+
-                '</div>'+
-                '<div class="card-row">'+
-                  '<div>'+
-                    '<div class="card-label">Cliente</div>'+
-                    '<div class="card-name">'+nomeUpper+'</div>'+
-                  '</div>'+
-                  '<div class="card-chip"></div>'+
-                '</div>'+
-                '<div>'+
-                  '<div class="card-label">Limite disponível</div>'+
-                  '<div class="card-limit">R$ '+limite+'</div>'+
-                '</div>'+
-              '</div>'+
-
-              '<div class="status-card">'+
-                '<div class="status-item">'+
-                  '<div class="status-icon">✓</div>'+
-                  '<div>'+
-                    '<div class="status-title">'+nome.split(' ')[0]+'</div>'+
-                    '<div class="status-desc">'+cpfMascarado+'</div>'+
-                  '</div>'+
-                '</div>'+
-                '<div class="status-item">'+
-                  '<div class="status-icon">✓</div>'+
-                  '<div>'+
-                    '<div class="status-title">Plano '+planoLabel+'</div>'+
-                    '<div class="status-desc">Contratado com sucesso.</div>'+
-                  '</div>'+
-                '</div>'+
-              '</div>'+
-
-              '<button class="btn btn--primary" id="btnBaixarApp">'+
-                '<span class="btn-title">📲 Baixar aplicativo</span>'+
-                '<span class="btn-sub">Instale agora e comece a usar seu benefício.</span>'+
-              '</button>'+
-
-              '<a href="'+whatsLink+'" target="_blank" rel="noopener" class="btn btn--secondary">'+
-                '<span class="btn-title">💬 Falar com o Suporte</span>'+
-                '<span class="btn-sub">Nossa equipe está pronta para ajudar você.</span>'+
-              '</a>'+
-
-              '<div class="footer-msg">'+
-                '<span class="footer-msg-icon">🛡️</span>'+
-                '<p class="footer-msg-text">'+
-                  '<strong>Seu benefício já está ativo e pronto para uso.</strong><br>'+
-                  'Conte com o CredVale para economizar nas principais farmácias do Brasil.'+
-                '</p>'+
-              '</div>'+
-
-            '</div>';
-
-          document.getElementById('btnBaixarApp').addEventListener('click',showDownloadModal);
-        })();
+        };
+        document.getElementById('dlCancelBtn').onclick=function(){ov.remove()};
+        ov.onclick=function(e){if(e.target===ov)ov.remove()};
       }
 
-      var params=new URLSearchParams(window.location.search);
-      var cpfParam=params.get('cpf');
-      if(cpfParam&&cpfParam.replace(/\D/g,'').length===11){
-        consultarCPF(cpfParam.replace(/\D/g,''));
-      }else{
-        showCPFModal();
-      }
+      root.className='';
+      root.innerHTML=
+        '<div class="page-wrap">'+
+
+          '<div class="headline-wrap">'+
+            '<span class="headline-emoji">🎉</span>'+
+            '<h1 class="headline-title">Seu acesso está <em>pronto!</em></h1>'+
+          '</div>'+
+
+          '<p class="copy-text">'+
+            'Seu cadastro foi concluído com sucesso. Agora é só baixar o aplicativo para acessar seu cartão virtual, consultar seu limite disponível e aproveitar todos os benefícios do CredVale.'+
+          '</p>'+
+
+          '<div class="virtual-card">'+
+            '<div class="card-row">'+
+              '<div class="card-brand">CREDVALE</div>'+
+              '<div class="card-badge"><i>✓</i> Cartão ativo</div>'+
+            '</div>'+
+            '<div class="card-row">'+
+              '<div>'+
+                '<div class="card-label">Cliente</div>'+
+                '<div class="card-name">'+nomeUpper+'</div>'+
+              '</div>'+
+              '<div class="card-chip"></div>'+
+            '</div>'+
+            '<div>'+
+              '<div class="card-label">Limite disponível</div>'+
+              '<div class="card-limit">R$ '+fmtLimite+'</div>'+
+            '</div>'+
+          '</div>'+
+
+          '<div class="status-card">'+
+            '<div class="status-item">'+
+              '<div class="status-icon">✓</div>'+
+              '<div class="status-info">'+
+                '<div class="status-title">Cadastro concluído</div>'+
+                '<div class="status-desc">Tudo certo por aqui.</div>'+
+              '</div>'+
+            '</div>'+
+            '<div class="status-item">'+
+              '<div class="status-icon">✓</div>'+
+              '<div class="status-info">'+
+                '<div class="status-title">Aplicativo disponível</div>'+
+                '<div class="status-desc">Pronto para instalação.</div>'+
+              '</div>'+
+            '</div>'+
+            '<div class="status-item">'+
+              '<div class="status-icon">✓</div>'+
+              '<div class="status-info">'+
+                '<div class="status-title">Cartão virtual liberado</div>'+
+                '<div class="status-desc">Seu benefício já está disponível.</div>'+
+              '</div>'+
+            '</div>'+
+          '</div>'+
+
+          '<button class="btn btn--primary" id="btnBaixarApp">'+
+            '<span class="btn-title">📲 Baixar Aplicativo</span>'+
+            '<span class="btn-sub">Instale agora e comece a usar seu benefício.</span>'+
+          '</button>'+
+
+          '<a href="'+whatsLink+'" target="_blank" rel="noopener" class="btn btn--secondary">'+
+            '<span class="btn-title">💬 Falar com o Suporte</span>'+
+            '<span class="btn-sub">Nossa equipe está pronta para ajudar você.</span>'+
+          '</a>'+
+
+          '<div class="footer-msg">'+
+            '<span class="footer-msg-icon">🛡️</span>'+
+            '<p class="footer-msg-text">'+
+              '<strong>Seu benefício já está ativo e pronto para uso.</strong><br>'+
+              'Conte com o CredVale para economizar nas principais farmácias do Brasil.'+
+            '</p>'+
+          '</div>'+
+
+        '</div>';
+
+      document.getElementById('btnBaixarApp').addEventListener('click',showDownloadModal);
     })();
     </script>
   </body>

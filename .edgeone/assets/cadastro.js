@@ -17,12 +17,13 @@
   const pageFooter  = document.querySelector('.footer');
 
   /* ---- State ---- */
-  const steps = ['Início','CPF','Dados','Endereço','Contato','Perfil','Docs','Análise','Plano','Adesão'];
+  const steps = ['Início','CPF','Dados','Endereço','Contato','Perfil','Análise','Plano','Adesão'];
   let currentStep = -1;
   let waitingInput = false;
   let currentResolve = null;
   let flowState = 'idle';
   let popupEl = null;
+  let stepHistory = [];
 
   const user = {
     cpf: '', nome: '', nascimento: '', sexo: '',
@@ -399,6 +400,19 @@
     }
   };
 
+  /* ---- Checkpoint para Voltar ---- */
+  let _cpMsgCount = 0;
+  function setCheckpoint() { _cpMsgCount = chatMsg.children.length; }
+  function voltarAoCheckpoint(fn) {
+    if (stepHistory.length < 2) return;
+    stepHistory.pop();
+    while (chatMsg.children.length > _cpMsgCount) chatMsg.lastChild.remove();
+    chatInputArea.hidden = stepHistory[stepHistory.length-1].inputHidden;
+    flowState = stepHistory[stepHistory.length-1].flowState;
+    scrollDown();
+    if (fn) setTimeout(fn, 100);
+  }
+
   /* ============================================================
      FLUXO CONVERSACIONAL V2
      ============================================================ */
@@ -591,46 +605,23 @@
       var p = await waitUserInput();
       p = p.replace(/\D/g,'');
       if (p.length<10) { addMsg('Número inválido.', 'bot'); setInput('(11) 99999-9999','phone'); continue; }
-      user.whatsapp = p; addMsg('WhatsApp: <strong>'+formatarTelefone(p)+'</strong>', 'user'); break;
+      user.whatsapp = p;
+      var phoneFmt = formatarTelefone(p);
+      var confirmed = await new Promise(function(resolve) {
+        var popHtml =
+          '<div style="font-size:2.5rem;margin-bottom:8px;">\uD83D\uDCAC</div>'+
+          '<div class="popup-title">Seu WhatsApp est\u00E1 correto?</div>'+
+          '<div class="wa-confirm-number" style="font-size:1.4rem;font-weight:900;padding:16px 0;margin:8px 0;letter-spacing:1px;">'+phoneFmt+'</div>'+
+          '<div style="display:flex;gap:10px;margin-top:16px;">'+
+            '<button class="chat-option chat-option--primary" id="waConfirmYes" style="flex:1;padding:14px;font-size:0.9rem;">\u2705 Sim, est\u00E1 correto</button>'+
+            '<button class="chat-option chat-option--danger" id="waConfirmEdit" style="padding:14px;font-size:0.9rem;">\u270F\uFE0F Editar</button>'+
+          '</div>';
+        showPopup(popHtml);
+        document.getElementById('waConfirmYes').onclick = function() { closePopup(); resolve(true); };
+        document.getElementById('waConfirmEdit').onclick = function() { closePopup(); resolve(false); };
+      });
+      if (confirmed) { addMsg('WhatsApp: <strong>'+phoneFmt+'</strong>', 'user'); break; }
     }
-
-    // Modal de confirmação do WhatsApp
-    hideInput();
-    await sleep(200);
-    await new Promise(function(resolve) {
-      var phoneFmt = formatarTelefone(user.whatsapp);
-      showPopup(
-        '<div style="text-align:center;">'+
-          '<div style="font-size:2rem;margin-bottom:6px;">💬</div>'+
-          '<div class="popup-title">Confirme seu WhatsApp</div>'+
-          '<div style="font-size:0.82rem;color:#94a3b0;margin-bottom:4px;">WhatsApp informado:</div>'+
-          '<div style="font-size:1.3rem;font-weight:900;color:#e2e8f0;padding:10px 0 16px;">'+phoneFmt+'</div>'+
-          '<div style="display:flex;gap:10px;">'+
-            '<button class="chat-option chat-option--primary" id="waContactConfirm" style="flex:1;padding:14px;font-size:0.9rem;">✅ Confirmar</button>'+
-            '<button class="chat-option chat-option--danger" id="waContactEdit" style="padding:14px;font-size:0.9rem;">✏️ Editar</button>'+
-          '</div>'+
-        '</div>'
-      );
-      document.getElementById('waContactConfirm').onclick = function() {
-        closePopup();
-        resolve();
-      };
-      document.getElementById('waContactEdit').onclick = function() {
-        closePopup();
-        addMsg('Digite o <strong>número correto</strong> do WhatsApp:');
-        setInput('(11) 99999-9999','phone');
-        (async function() {
-          while (true) {
-            var p2 = await waitUserInput();
-            p2 = p2.replace(/\D/g,'');
-            if (p2.length<10) { addMsg('Número inválido.', 'bot'); setInput('(11) 99999-9999','phone'); continue; }
-            user.whatsapp = p2; addMsg('WhatsApp: <strong>'+formatarTelefone(p2)+'</strong>', 'user');
-            resolve();
-            break;
-          }
-        })();
-      };
-    });
 
     await sleep(200);
     addMsg('E o <strong>e-mail</strong> para confirmarmos:');
@@ -793,6 +784,8 @@
 
   /* ---- POPUP DE INTRODUÇÃO DA ANÁLISE ---- */
   async function etapaIntroAnalise() {
+    setCheckpoint();
+    stepHistory.push({inputHidden:true,flowState:'analise'});
     var nome = (user.nome||'').split(' ')[0] || 'Cliente';
     var frases = [
       'Iniciando análise das informações para verificar sua solicitação do CredVale.',
@@ -862,7 +855,7 @@
   /* ---- ANÁLISE AUTOMÁTICA + POPUP APROVAÇÃO ---- */
   async function etapaAnalisePopup() {
     trackStage('Analisando Crédito');
-    updateProgress(7);
+    updateProgress(6);
     var clientId = 'CLI-'+Date.now().toString(36).toUpperCase();
     var limite = (function() {
       var base = 1800;
@@ -959,7 +952,7 @@
             '<div style="font-size:1.25rem;font-weight:800;color:#e2e8f0;">Parabéns, <span style="background:linear-gradient(135deg,#4CC8A4,#3B82F6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">'+nomePrimeiro+'</span>!</div>'+
           '</div>'+
           '<div style="background:linear-gradient(160deg,rgba(76,200,164,0.06),rgba(59,130,246,0.04));border:1px solid rgba(76,200,164,0.12);border-radius:16px;padding:14px 16px;margin-bottom:12px;">'+
-            '<div style="font-size:0.6rem;color:#6b7a8f;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px;">Seu limite liberado</div>'+
+            '<div style="font-size:0.6rem;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px;">Seu limite liberado</div>'+
             '<div style="font-size:2rem;font-weight:900;background:linear-gradient(135deg,#4CC8A4,#3B82F6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-family:Space Grotesk,sans-serif;line-height:1.2;">R$ '+limFmt+'</div>'+
           '</div>'+
           '<div style="text-align:left;">'+
@@ -985,11 +978,14 @@
 
     hideInput();
     await sleep(200);
+    setCheckpoint();
     etapaCardChoice(clientId, limite);
   }
 
   /* ---- ETAPA 8: Escolha do Plano ---- */
   async function etapaCardChoice(clientId, limite) {
+    setCheckpoint();
+    stepHistory.push({inputHidden:true,flowState:'card-choice'});
     updateProgress(8);
     flowState = 'card-choice';
     hideInput();
@@ -1002,7 +998,7 @@
     var cardHtml =
       '<div style="text-align:center;margin-bottom:10px;">'+
         '<div style="font-size:1.15rem;font-weight:900;color:#4CC8A4;margin-bottom:1px;">🎉 '+nome+'!</div>'+
-        '<div style="font-size:0.75rem;font-weight:500;color:#6b7a8f;">Escolha o plano ideal para voc\u00ea.</div>'+
+        '<div style="font-size:0.75rem;font-weight:500;color:#94a3b8;">Escolha o plano ideal para voc\u00ea.</div>'+
       '</div>'+
 
       '<div style="display:flex;flex-direction:column;gap:10px;">'+
@@ -1010,7 +1006,7 @@
         /* Standard */
         '<div style="border-radius:14px;border:1px solid rgba(255,255,255,0.08);background:linear-gradient(160deg,rgba(255,255,255,0.04),rgba(255,255,255,0.01));padding:14px 14px 10px;position:relative;">'+
           '<div style="font-size:1rem;font-weight:800;background:linear-gradient(135deg,#e2e8f0,#94a3b8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:1px;font-family:Space Grotesk,sans-serif;">Standard</div>'+
-          '<div style="font-size:0.6rem;color:#6b7a8f;margin-bottom:6px;">Cart\u00e3o virtual \u00b7 Taxa \u00fanica: <strong style="color:#4CC8A4;">'+taxaStd+'</strong></div>'+
+          '<div style="font-size:0.6rem;color:#94a3b8;margin-bottom:6px;">Cart\u00e3o virtual \u00b7 Taxa \u00fanica: <strong style="color:#4CC8A4;">'+taxaStd+'</strong></div>'+
           '<ul style="list-style:none;padding:0;margin:0 0 4px;display:flex;flex-direction:column;gap:3px;">'+
             '<li style="font-size:0.68rem;color:#94a3b0;display:flex;align-items:center;gap:6px;"><span style="width:14px;height:14px;border-radius:50%;background:rgba(76,200,164,0.12);color:#4CC8A4;display:flex;align-items:center;justify-content:center;font-size:0.5rem;flex-shrink:0;">\u2713</span> Cart\u00e3o Virtual</li>'+
             '<li style="font-size:0.68rem;color:#94a3b0;display:flex;align-items:center;gap:6px;"><span style="width:14px;height:14px;border-radius:50%;background:rgba(76,200,164,0.12);color:#4CC8A4;display:flex;align-items:center;justify-content:center;font-size:0.5rem;flex-shrink:0;">\u2713</span> At\u00e9 55% OFF em medicamentos</li>'+
@@ -1018,7 +1014,7 @@
           '</ul>'+
           '<div style="display:flex;align-items:baseline;gap:3px;padding:5px 0;border-top:1px solid rgba(255,255,255,0.04);margin-bottom:6px;">'+
             '<span style="font-size:1.1rem;font-weight:900;color:#e2e8f0;font-family:Space Grotesk,sans-serif;">Gr\u00e1tis</span>'+
-            '<span style="font-size:0.55rem;color:#6b7a8f;margin-left:2px;">/m\u00eas</span>'+
+            '<span style="font-size:0.55rem;color:#94a3b8;margin-left:2px;">/m\u00eas</span>'+
           '</div>'+
           '<button class="chat-option chat-option--secondary" id="btnPlanoStandard" style="width:100%;padding:10px;border-radius:10px;font-size:0.75rem;font-weight:700;cursor:pointer;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.04);color:#c8d0dc;">Continuar com Standard</button>'+
         '</div>'+
@@ -1029,7 +1025,7 @@
             '<span style="font-size:0.45rem;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:#fff;">\u2b50 Mais escolhido</span>'+
           '</div>'+
           '<div style="font-size:1rem;font-weight:800;background:linear-gradient(135deg,#4CC8A4,#e2e8f0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin:8px 0 1px;font-family:Space Grotesk,sans-serif;">Plus Sa\u00fade</div>'+
-          '<div style="font-size:0.6rem;color:#6b7a8f;margin-bottom:6px;">Cart\u00e3o f\u00edsico + digital \u00b7 Taxa \u00fanica: <strong style="color:#4CC8A4;">'+taxaPlus+'</strong></div>'+
+          '<div style="font-size:0.6rem;color:#94a3b8;margin-bottom:6px;">Cart\u00e3o f\u00edsico + digital \u00b7 Taxa \u00fanica: <strong style="color:#4CC8A4;">'+taxaPlus+'</strong></div>'+
           '<ul style="list-style:none;padding:0;margin:0 0 4px;display:flex;flex-direction:column;gap:3px;">'+
             '<li style="font-size:0.68rem;color:#94a3b0;display:flex;align-items:center;gap:6px;"><span style="width:14px;height:14px;border-radius:50%;background:rgba(76,200,164,0.12);color:#4CC8A4;display:flex;align-items:center;justify-content:center;font-size:0.5rem;flex-shrink:0;">\u2713</span> Cart\u00e3o F\u00edsico + Virtual</li>'+
             '<li style="font-size:0.68rem;color:#94a3b0;display:flex;align-items:center;gap:6px;"><span style="width:14px;height:14px;border-radius:50%;background:rgba(76,200,164,0.12);color:#4CC8A4;display:flex;align-items:center;justify-content:center;font-size:0.5rem;flex-shrink:0;">\u2713</span> At\u00e9 75% OFF em medicamentos</li>'+
@@ -1037,9 +1033,9 @@
             '<li style="font-size:0.68rem;color:#94a3b0;display:flex;align-items:center;gap:6px;"><span style="width:14px;height:14px;border-radius:50%;background:rgba(76,200,164,0.12);color:#4CC8A4;display:flex;align-items:center;justify-content:center;font-size:0.5rem;flex-shrink:0;">\u2713</span> 2% Cashback + Teleconsulta</li>'+
           '</ul>'+
           '<div style="display:flex;align-items:baseline;gap:3px;padding:5px 0;border-top:1px solid rgba(255,255,255,0.04);margin-bottom:6px;">'+
-            '<span style="font-size:0.55rem;color:#6b7a8f;">R$</span>'+
+            '<span style="font-size:0.55rem;color:#94a3b8;">R$</span>'+
             '<span style="font-size:1.1rem;font-weight:900;color:#e2e8f0;font-family:Space Grotesk,sans-serif;">14,90</span>'+
-            '<span style="font-size:0.55rem;color:#6b7a8f;">/m\u00eas</span>'+
+            '<span style="font-size:0.55rem;color:#94a3b8;">/m\u00eas</span>'+
           '</div>'+
           '<button class="chat-option chat-option--primary" id="btnPlanoPlus" style="width:100%;padding:10px;border-radius:10px;font-size:0.75rem;font-weight:700;cursor:pointer;border:none;background:linear-gradient(135deg,#059669,#10B981);color:#fff;box-shadow:0 3px 12px rgba(16,185,129,0.2);">Continuar com Plus</button>'+
         '</div>'+
@@ -1107,13 +1103,13 @@
       '<div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:16px;margin-bottom:4px;">'+
         '<div style="font-size:0.85rem;font-weight:700;color:#e2e8f0;margin-bottom:10px;text-align:center;">📋 Revise seus dados</div>'+
         '<div style="display:flex;flex-direction:column;gap:4px;">'+
-          '<div style="display:flex;justify-content:space-between;font-size:0.72rem;padding:5px 8px;border-radius:6px;background:rgba(255,255,255,0.02);"><span style="color:#6b7a8f;">Nome</span><span style="color:#e2e8f0;font-weight:600;text-align:right;">'+user.nome+'</span></div>'+
-          '<div style="display:flex;justify-content:space-between;font-size:0.72rem;padding:5px 8px;border-radius:6px;"><span style="color:#6b7a8f;">CPF</span><span style="color:#e2e8f0;font-weight:600;text-align:right;">'+cpfFmt+'</span></div>'+
-          '<div style="display:flex;justify-content:space-between;font-size:0.72rem;padding:5px 8px;border-radius:6px;background:rgba(255,255,255,0.02);"><span style="color:#6b7a8f;">Nascimento</span><span style="color:#e2e8f0;font-weight:600;text-align:right;">'+nascFmt+' · '+sexoLabel+'</span></div>'+
-          '<div style="display:flex;justify-content:space-between;font-size:0.72rem;padding:5px 8px;border-radius:6px;"><span style="color:#6b7a8f;">Endereço</span><span style="color:#e2e8f0;font-weight:600;text-align:right;">'+enderecoFmt+'</span></div>'+
-          '<div style="display:flex;justify-content:space-between;font-size:0.72rem;padding:5px 8px;border-radius:6px;background:rgba(255,255,255,0.02);"><span style="color:#6b7a8f;">WhatsApp</span><span style="color:#e2e8f0;font-weight:600;text-align:right;">'+phoneFmt+'</span></div>'+
-          '<div style="display:flex;justify-content:space-between;font-size:0.72rem;padding:5px 8px;border-radius:6px;"><span style="color:#6b7a8f;">E-mail</span><span style="color:#e2e8f0;font-weight:600;text-align:right;">'+(user.email||'—')+'</span></div>'+
-          '<div style="display:flex;justify-content:space-between;font-size:0.72rem;padding:5px 8px;border-radius:6px;background:rgba(255,255,255,0.02);"><span style="color:#6b7a8f;">Plano</span><span style="color:#4CC8A4;font-weight:700;text-align:right;">'+nomePlano+'</span></div>'+
+          '<div style="display:flex;justify-content:space-between;font-size:0.72rem;padding:5px 8px;border-radius:6px;background:rgba(255,255,255,0.02);"><span style="color:#94a3b8;">Nome</span><span style="color:#e2e8f0;font-weight:600;text-align:right;">'+user.nome+'</span></div>'+
+          '<div style="display:flex;justify-content:space-between;font-size:0.72rem;padding:5px 8px;border-radius:6px;"><span style="color:#94a3b8;">CPF</span><span style="color:#e2e8f0;font-weight:600;text-align:right;">'+cpfFmt+'</span></div>'+
+          '<div style="display:flex;justify-content:space-between;font-size:0.72rem;padding:5px 8px;border-radius:6px;background:rgba(255,255,255,0.02);"><span style="color:#94a3b8;">Nascimento</span><span style="color:#e2e8f0;font-weight:600;text-align:right;">'+nascFmt+' · '+sexoLabel+'</span></div>'+
+          '<div style="display:flex;justify-content:space-between;font-size:0.72rem;padding:5px 8px;border-radius:6px;"><span style="color:#94a3b8;">Endereço</span><span style="color:#e2e8f0;font-weight:600;text-align:right;">'+enderecoFmt+'</span></div>'+
+          '<div style="display:flex;justify-content:space-between;font-size:0.72rem;padding:5px 8px;border-radius:6px;background:rgba(255,255,255,0.02);"><span style="color:#94a3b8;">WhatsApp</span><span style="color:#e2e8f0;font-weight:600;text-align:right;">'+phoneFmt+'</span></div>'+
+          '<div style="display:flex;justify-content:space-between;font-size:0.72rem;padding:5px 8px;border-radius:6px;"><span style="color:#94a3b8;">E-mail</span><span style="color:#e2e8f0;font-weight:600;text-align:right;">'+(user.email||'—')+'</span></div>'+
+          '<div style="display:flex;justify-content:space-between;font-size:0.72rem;padding:5px 8px;border-radius:6px;background:rgba(255,255,255,0.02);"><span style="color:#94a3b8;">Plano</span><span style="color:#4CC8A4;font-weight:700;text-align:right;">'+nomePlano+'</span></div>'+
         '</div>'+
       '</div>',
       'bot'
@@ -1141,105 +1137,47 @@
 
       addMsg(
         '<div style="font-size:0.78rem;color:#94a3b0;line-height:1.5;text-align:center;padding:2px 0;">'+
-          'Agora escolha abaixo a forma de pagamento da <strong style="color:#e2e8f0;">taxa de ades\u00e3o <span style="color:#4CC8A4;">'+taxa+'</span></strong> para ativar seu <strong style="color:#e2e8f0;">PLANO '+nomePlano+'</strong>.'+
+          'Agora escolha abaixo a forma de pagamento da <strong style="color:#e2e8f0;">taxa de ades\u00e3o <span style="color:#4CC8A4;">'+taxa+'</span></strong> do <strong style="color:#e2e8f0;">'+nomePlano+'</strong> para ativar seu cart\u00e3o.'+
+        '</div>',
+        'bot'
+      );
+      addMsg(
+        '<div style="font-size:0.72rem;color:#94a3b8;text-align:center;padding:0 0 2px;margin-top:-4px;">'+
+          '📸 Documento e selfie poderão ser enviados pelo app após a ativação.'+
         '</div>',
         'bot'
       );
 
-      mostrarOpcaoPagamento(clientId, limite, taxa, nomePlano);
-    };
-  }
-
-  /* ---- Escolha: Pagar agora ou Pagar depois ---- */
-  function mostrarOpcaoPagamento(clientId, limite, taxa, nomePlano) {
-    updateProgress(9);
-
-    var btns = document.createElement('div');
-    btns.className = 'chat-msg chat-msg--bot';
-    btns.innerHTML =
-      '<div style="display:flex;gap:10px;margin-top:4px;">'+
-        '<button class="chat-option chat-option--primary" id="btnPagarAgora" style="flex:1;padding:14px;font-size:0.85rem;font-weight:700;">💳 Pagar agora</button>'+
-        '<button class="chat-option chat-option--secondary" id="btnPagarDepois" style="flex:1;padding:14px;font-size:0.85rem;font-weight:700;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);">⏰ Pagar depois</button>'+
-      '</div>';
-    chatMsg.appendChild(btns);
-    scrollDown();
-
-    document.getElementById('btnPagarAgora').onclick = function() {
-      btns.remove();
       mostrarBotoesPagamento(clientId, limite, taxa);
     };
-
-    document.getElementById('btnPagarDepois').onclick = function() {
-      btns.remove();
-      addMsg(
-        '<div style="text-align:center;padding:4px 0;">'+
-          '<div style="font-size:0.85rem;color:#94a3b0;line-height:1.5;">Sem problemas! Você poderá concluir o pagamento da taxa de adesão posteriormente pelo <strong style="color:#e2e8f0;">aplicativo CREDVALE</strong>.</div>'+
-        '</div>',
-        'bot'
-      );
-      var btnApp = document.createElement('div');
-      btnApp.className = 'chat-msg chat-msg--bot';
-      btnApp.innerHTML =
-        '<button class="chat-option chat-option--primary" id="btnBaixarApp" style="width:100%;padding:14px;font-size:0.9rem;font-weight:700;">📲 Baixar aplicativo</button>';
-      chatMsg.appendChild(btnApp);
-      scrollDown();
-      document.getElementById('btnBaixarApp').onclick = function() {
-        var p = new URLSearchParams({ cpf: user.cpf });
-        window.location.href = 'app.html?' + p.toString();
-      };
-    };
   }
 
-  /* ---- Botões de pagamento (exibido após clicar "Pagar agora") ---- */
+  /* ---- Botões de pagamento persistentes na conversa ---- */
   function mostrarBotoesPagamento(clientId, limite, taxa) {
-    // Buscar métodos habilitados no admin
-    try {
-      var stored = sessionStorage.getItem('vs_settings_raw');
-      if (!stored) {
-        fetch((window.__API_BASE||'/api')+'/admin/settings').then(function(r){return r.json()}).then(function(d){
-          sessionStorage.setItem('vs_settings_raw', JSON.stringify(d));
-          exibirBotoesPagamento(clientId, limite, taxa, d);
-        }).catch(function(){ exibirBotoesPagamento(clientId, limite, taxa, null); });
-      } else {
-        var d = JSON.parse(stored);
-        exibirBotoesPagamento(clientId, limite, taxa, d);
-      }
-    } catch(e) {
-      exibirBotoesPagamento(clientId, limite, taxa, null);
-    }
-  }
+    updateProgress(8);
+    // Botão PIX
+    var btnPix = document.createElement('div');
+    btnPix.className = 'chat-msg chat-msg--bot';
+    btnPix.innerHTML =
+      '<button class="chat-option chat-option--primary" id="btnPagarPix" style="width:100%;padding:14px;font-size:0.9rem;font-weight:700;">💳 Pagar taxa de adesão com PIX</button>';
+    chatMsg.appendChild(btnPix);
+    scrollDown();
 
-  function exibirBotoesPagamento(clientId, limite, taxa, settingsData) {
-    var methods = ['pix','card'];
-    if (settingsData && settingsData.settings && settingsData.settings.payment_methods) {
-      try { var m = JSON.parse(settingsData.settings.payment_methods); if (Array.isArray(m) && m.length) methods = m; } catch(e) {}
-    }
+    document.getElementById('btnPagarPix').onclick = function() {
+      modalPix(clientId, limite);
+    };
 
-    // Botão PIX (se habilitado)
-    if (methods.indexOf('pix') !== -1) {
-      var btnPix = document.createElement('div');
-      btnPix.className = 'chat-msg chat-msg--bot';
-      btnPix.innerHTML =
-        '<button class="chat-option chat-option--primary" id="btnPagarPix" style="width:100%;padding:14px;font-size:0.9rem;font-weight:700;">💳 Pagar taxa de adesão com PIX</button>';
-      chatMsg.appendChild(btnPix);
-      scrollDown();
-      document.getElementById('btnPagarPix').onclick = function() {
-        modalPix(clientId, limite);
-      };
-    }
+    // Botão Cartão
+    var btnCard = document.createElement('div');
+    btnCard.className = 'chat-msg chat-msg--bot';
+    btnCard.innerHTML =
+      '<button class="chat-option chat-option--primary" id="btnPagarCartao" style="width:100%;padding:14px;font-size:0.9rem;font-weight:700;">💳 Pagar com Cartão de Crédito</button>';
+    chatMsg.appendChild(btnCard);
+    scrollDown();
 
-    // Botão Cartão (se habilitado)
-    if (methods.indexOf('card') !== -1) {
-      var btnCard = document.createElement('div');
-      btnCard.className = 'chat-msg chat-msg--bot';
-      btnCard.innerHTML =
-        '<button class="chat-option chat-option--primary" id="btnPagarCartao" style="width:100%;padding:14px;font-size:0.9rem;font-weight:700;">💳 Pagar com Cartão de Crédito</button>';
-      chatMsg.appendChild(btnCard);
-      scrollDown();
-      document.getElementById('btnPagarCartao').onclick = function() {
-        modalCartao(clientId, limite);
-      };
-    }
+    document.getElementById('btnPagarCartao').onclick = function() {
+      modalCartao(clientId, limite);
+    };
 
     // Botão Confirmar pagamento (sempre disponível)
     var btnConfirmar = document.createElement('div');
@@ -1257,6 +1195,12 @@
       var cpfLimpo = user.cpf||'00000000000';
       abrirWhatsAppVerificacao(clientId, limite, taxa, nome, cpfLimpo);
     };
+
+    var voltarMsg = document.createElement('div');
+    voltarMsg.className = 'chat-msg chat-msg--bot';
+    voltarMsg.innerHTML = '<div style="text-align:center;margin-top:8px;"><button class="chat-option chat-option--danger" onclick="voltarAoCheckpoint()" style="font-size:0.72rem;padding:8px 20px;border-radius:20px;">← Voltar</button></div>';
+    chatMsg.appendChild(voltarMsg);
+    scrollDown();
   }
 
   /* ---- ETAPA 8B: Confirma Endereço (Cartão Físico) ---- */
@@ -1283,7 +1227,7 @@
 
     document.getElementById('addrConfirmYes').onclick = function() {
       closePopup();
-      setTimeout(function() { etapaConfirmacaoWhatsApp(clientId, limite); }, 300);
+      setTimeout(function() { modalPix(clientId, limite); }, 300);
     };
 
     document.getElementById('addrConfirmEdit').onclick = function() {
@@ -1303,7 +1247,7 @@
             }
             addMsg('Número?'); setInput('Número', 'number'); return waitUserInput();
           }).then(function(num){ user.numero=num; addMsg('Complemento? (ou —)'); setInput('Complemento ou —'); return waitUserInput(); })
-          .then(function(c){ user.complemento=(c==='—'||c==='-')?'':c; etapaConfirmacaoWhatsApp(clientId, limite); });
+          .then(function(c){ user.complemento=(c==='—'||c==='-')?'':c; modalPix(clientId, limite); });
         }
       });
     };
@@ -1367,7 +1311,7 @@
       '<div style="text-align:center;padding:20px 0;">'+
         '<div style="width:52px;height:52px;margin:0 auto 16px;border:4px solid rgba(255,255,255,0.06);border-top-color:#4CC8A4;border-radius:50%;animation:spin 1s linear infinite;"></div>'+
         '<div style="font-weight:700;font-size:1rem;color:#e2e8f0;margin-bottom:4px;">Preparando pagamento...</div>'+
-        '<div style="font-size:0.8rem;color:#6b7a8f;">Aguarde um momento</div>'+
+        '<div style="font-size:0.8rem;color:#94a3b8;">Aguarde um momento</div>'+
       '</div>'
     );
 
@@ -1407,7 +1351,7 @@
       '<div style="text-align:center;padding:8px 0;">'+
         '<div style="font-size:2rem;margin-bottom:4px;">🔗</div>'+
         '<div class="popup-title" style="font-size:1rem;">Pagamento PushinPay</div>'+
-        '<div style="font-size:0.75rem;color:#6b7a8f;margin-bottom:14px;">Você será redirecionado para o checkout seguro</div>'+
+        '<div style="font-size:0.75rem;color:#94a3b8;margin-bottom:14px;">Você será redirecionado para o checkout seguro</div>'+
         '<button class="chat-option chat-option--primary" id="pushinpayIr" style="width:100%;padding:14px;font-size:0.9rem;font-weight:700;">💚 Ir para o pagamento</button>'+
         '<div style="margin-top:10px;">'+
           '<button class="chat-option" id="pushinpayJaPaguei" style="width:100%;padding:10px;font-size:0.8rem;">✅ Já paguei — confirmar</button>'+
@@ -1436,7 +1380,7 @@
       '<div style="text-align:center;margin-bottom:8px;">'+
         '<div style="font-size:1.6rem;margin-bottom:2px;">💚</div>'+
         '<div class="popup-title" style="font-size:1rem;">Pagamento via PIX</div>'+
-        '<div style="font-size:0.75rem;color:#6b7a8f;margin-bottom:4px;">Valor: <strong style="color:#4CC8A4;">'+taxa+'</strong></div>'+
+        '<div style="font-size:0.75rem;color:#94a3b8;margin-bottom:4px;">Valor: <strong style="color:#4CC8A4;">'+taxa+'</strong></div>'+
         '<div style="font-size:0.7rem;color:#94a3b0;">Escaneie o QR Code abaixo ou copie o código PIX</div>'+
       '</div>'+
 
@@ -1447,7 +1391,7 @@
       '</div>'+
 
       '<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:10px;margin-bottom:8px;">'+
-        '<div style="font-size:0.65rem;color:#6b7a8f;margin-bottom:3px;">Código PIX Copia e Cola:</div>'+
+        '<div style="font-size:0.65rem;color:#94a3b8;margin-bottom:3px;">Código PIX Copia e Cola:</div>'+
         '<div style="background:rgba(0,0,0,0.3);border-radius:8px;padding:8px;font-size:0.65rem;color:#c8d0dc;word-break:break-all;font-family:monospace;text-align:center;margin-bottom:6px;border:1px solid rgba(255,255,255,0.04);max-height:60px;overflow-y:auto;">'+copiaCola+'</div>'+
         '<button class="chat-option chat-option--primary" id="pixCopiarChave" style="width:100%;padding:9px;font-size:0.8rem;">📋 Copiar código PIX</button>'+
       '</div>'+
@@ -1509,7 +1453,7 @@
       '<div style="text-align:center;margin-bottom:14px;">'+
         '<div style="font-size:2rem;margin-bottom:4px;">💳</div>'+
         '<div class="popup-title">Cartão de Crédito</div>'+
-        '<div style="font-size:0.85rem;color:#6b7a8f;">Taxa de emissão: <strong style="color:#4CC8A4;">'+taxa+'</strong></div>'+
+        '<div style="font-size:0.85rem;color:#94a3b8;">Taxa de emissão: <strong style="color:#4CC8A4;">'+taxa+'</strong></div>'+
       '</div>'+
       '<div style="display:flex;flex-direction:column;gap:12px;">'+
         '<input placeholder="Número do cartão" class="pix-input" id="cardNumero" maxlength="19" style="padding:14px;border-radius:12px;border:1.5px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.04);color:#fff;font-size:0.9rem;font-family:inherit;outline:none;">'+
@@ -1582,7 +1526,7 @@
         showOptions([]);
         await new Promise(function(resolve) {
           document.getElementById('btnBaixarApp').onclick = function() {
-            var p = new URLSearchParams({ cpf: user.cpf, nome: nome, limite: limite, id: client.id });
+            var p = new URLSearchParams({ nome: nome, limite: limite, id: client.id });
             window.location.href = 'app.html?' + p.toString();
             resolve();
           };
