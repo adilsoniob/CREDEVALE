@@ -29,8 +29,7 @@
     cpf: '', nome: '', nascimento: '', sexo: '',
     cep: '', rua: '', bairro: '', cidade: '', uf: '',
     numero: '', complemento: '',
-    whatsapp: '', email: '',
-    documento: null, selfie: null
+    whatsapp: '', email: ''
   };
 
   let chosenCard = 'virtual'; // 'virtual' | 'fisico'
@@ -283,49 +282,7 @@
     scrollDown();
   }
 
-  var _reuseFileInput = null;
-  function _getFileInput() {
-    if (!_reuseFileInput) {
-      _reuseFileInput = document.createElement('input');
-      _reuseFileInput.type = 'file';
-      _reuseFileInput.accept = 'image/*';
-      _reuseFileInput.style.cssText = 'position:fixed;top:-999px;left:-999px;opacity:0;pointer-events:none;';
-      document.body.appendChild(_reuseFileInput);
-    }
-    return _reuseFileInput;
-  }
-
-  function showMediaBtns(captureLabel, uploadLabel, onCapture, onUpload) {
-    var area = document.createElement('div');
-    area.className = 'chat-media-area';
-    area.id = 'chatMediaArea';
-    area.innerHTML =
-      '<button class="chat-media-btn" id="chatMediaCapture"><span class="chat-media-btn__icon">📷</span>'+captureLabel+'</button>'+
-      '<button class="chat-media-btn" id="chatMediaUpload"><span class="chat-media-btn__icon">📁</span>'+uploadLabel+'</button>';
-    chatMsg.appendChild(area);
-    scrollDown();
-    document.getElementById('chatMediaCapture').onclick = function() {
-      var inp = _getFileInput();
-      inp.removeAttribute('capture');
-      inp.setAttribute('capture', 'environment');
-      inp.value = '';
-      inp.onchange = function(e) {
-        var f = e.target.files[0];
-        if (f) { area.remove(); inp.onchange = null; setTimeout(function(){ onCapture(f); }, 50); }
-      };
-      inp.click();
-    };
-    document.getElementById('chatMediaUpload').onclick = function() {
-      var inp = _getFileInput();
-      inp.removeAttribute('capture');
-      inp.value = '';
-      inp.onchange = function(e) {
-        var f = e.target.files[0];
-        if (f) { area.remove(); inp.onchange = null; setTimeout(function(){ onUpload(f); }, 50); }
-      };
-      inp.click();
-    };
-  }
+  
 
   function updateProgress(step) {
     currentStep = step;
@@ -638,91 +595,7 @@
     etapaQuestionario();
   }
 
-  /* ---- ETAPA 4: Documentos ---- */
-  async function etapaDocs() {
-    flowState = 'docs';
-    updateProgress(6);
-    await sleep(200);
-    addTyping(); await sleep(600); removeTyping();
-
-    addMsg('📋 <strong>Perfeito!</strong> Agora precisamos validar sua identidade.<br><br>Tenha em mãos:<br>• 🆔 Documento oficial com foto (RG ou CNH)<br>• ☀️ Um ambiente iluminado para selfie');
-
-    showOptions([
-      { label:'📷 Vamos lá!', primary:true, action:function(){
-        addMsg('Envie uma <strong>foto do seu documento</strong> (RG ou CNH):');
-        showMediaBtns('📷 Fotografar','📁 Enviar arquivo',
-          function(f){ etapaConfirmarFoto(f, 'documento', function(){ etapaSelfie(); }); },
-          function(f){ etapaConfirmarFoto(f, 'documento', function(){ etapaSelfie(); }); }
-        );
-      }}
-    ]);
-  }
-
-  async function etapaSelfie() {
-    flowState = 'selfie';
-    await sleep(300);
-    addTyping(); await sleep(500); removeTyping();
-
-    addMsg('Agora uma <strong>selfie</strong> 😊<br><br>• Olhe para a câmera<br>• Sem óculos escuros ou boné<br>• Boa iluminação');
-
-    showMediaBtns('🤳 Tirar selfie','📁 Enviar foto',
-      function(f){ etapaConfirmarFoto(f, 'selfie', function(){ etapaIntroAnalise(); }); },
-      function(f){ etapaConfirmarFoto(f, 'selfie', function(){ etapaIntroAnalise(); }); }
-    );
-  }
-
-  /* ---- Preview + Confirmação de Foto ---- */
-  function etapaConfirmarFoto(file, tipo, callback) {
-    var label = tipo==='documento' ? 'Documento' : 'Selfie';
-    var icon = tipo==='documento' ? '\uD83D\uDCC4' : '\uD83E\uDD33';
-    try {
-      var imgUrl = URL.createObjectURL(file);
-      var imgMsg = addMsg('<div style="text-align:center;"><img class="chat-media-preview" src="'+imgUrl+'" style="max-width:240px;max-height:260px;display:block;margin:0 auto;border-radius:12px;"></div>', 'user');
-      addMsg('📸 <strong>'+label+' capturado!</strong> A foto ficou boa?', 'bot');
-      showOptions([
-        { label:'✅ Sim, usar esta', primary:true, action:function(){
-          if (tipo==='documento') user.documento = file;
-          else user.selfie = file;
-          URL.revokeObjectURL(imgUrl);
-          imgMsg.innerHTML = '<div style="text-align:center;padding:6px 0;font-size:0.85rem;color:#4CC8A4;font-weight:600;">'+icon+' '+label+' enviado \u2713</div>';
-          addMsg('✅ '+label+' confirmado!','bot');
-          setTimeout(callback, 400);
-        }},
-        { label:'🔄 Tirar novamente', danger:true, action:function(){
-          URL.revokeObjectURL(imgUrl);
-          addMsg('OK, vamos tentar novamente:','bot');
-          if (tipo==='documento') {
-            showMediaBtns('📷 Fotografar','📁 Enviar arquivo',
-              function(f2){ etapaConfirmarFoto(f2, 'documento', callback); },
-              function(f2){ etapaConfirmarFoto(f2, 'documento', callback); }
-            );
-          } else {
-            showMediaBtns('🤳 Tirar selfie','📁 Enviar foto',
-              function(f2){ etapaConfirmarFoto(f2, 'selfie', callback); },
-              function(f2){ etapaConfirmarFoto(f2, 'selfie', callback); }
-            );
-          }
-        }}
-      ]);
-    } catch(e) {
-      addMsg('❌ Erro ao carregar a foto. Tente novamente.','bot');
-      setTimeout(function(){
-        if (tipo==='documento') {
-          showMediaBtns('📷 Fotografar','📁 Enviar arquivo',
-            function(f2){ etapaConfirmarFoto(f2, 'documento', callback); },
-            function(f2){ etapaConfirmarFoto(f2, 'documento', callback); }
-          );
-        } else {
-          showMediaBtns('🤳 Tirar selfie','📁 Enviar foto',
-            function(f2){ etapaConfirmarFoto(f2, 'selfie', callback); },
-            function(f2){ etapaConfirmarFoto(f2, 'selfie', callback); }
-          );
-        }
-      }, 400);
-    }
-  }
-
-  /* ---- (dead code removed) ---- */
+  
 
   /* ---- ETAPA 4B: Questionário de Perfil ---- */
   async function etapaQuestionario() {
@@ -777,7 +650,7 @@
       { label:'✅ Aceito e continuar', primary:true, action:function(){
         if (!document.getElementById('chkTermos')?.checked) { addMsg('Marque a caixa para aceitar os termos.','bot'); return; }
         document.getElementById('chatTermos')?.remove();
-        trackStage('Preenchendo Cadastro'); etapaDocs();
+        trackStage('Preenchendo Cadastro'); etapaIntroAnalise();
       }}
     ]);
   }
@@ -873,9 +746,7 @@
     hideInput();
 
     var steps = [
-      { label:'Validando documentos', done:false },
-      { label:'Conferindo selfie', done:false },
-      { label:'Analisando questionário', done:false },
+      { label:'Analisando seus dados', done:false },
       { label:'Consultando cadastro', done:false },
       { label:'Calculando limite', done:false },
       { label:'Preparando proposta', done:false }
@@ -1143,8 +1014,8 @@
       );
       addMsg(
         '<div style="background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.2);border-radius:12px;padding:12px;text-align:center;">'+
-          '<div style="font-size:0.78rem;color:#FBBF24;font-weight:600;">⚠️ Documento e selfie</div>'+
-          '<div style="font-size:0.72rem;color:#94a3b8;margin-top:2px;">Poderão ser enviados pelo app após a ativação.</div>'+
+          '<div style="font-size:0.78rem;color:#FBBF24;font-weight:600;">⚠️ Ao acessar o app, tenha em mãos</div>'+
+          '<div style="font-size:0.72rem;color:#94a3b8;margin-top:2px;">Será necessário enviar <strong style="color:#e2e8f0;">selfie</strong> e <strong style="color:#e2e8f0;">foto do documento</strong> para habilitar seu dispositivo.</div>'+
         '</div>',
         'bot'
       );
