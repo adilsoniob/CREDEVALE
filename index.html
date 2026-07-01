@@ -439,30 +439,32 @@
         var row=nav.querySelector('.flex.items-center.justify-between');
         if(!row)return false;
         if(document.querySelector('.usi-h'))return true;
+
+        // Esconde os links de navegação do desktop (Cartões, Planos, Avaliações)
+        var desktopNav=row.querySelector('[class*="hidden"][class*="lg:flex"]');
+        if(desktopNav)desktopNav.style.display='none';
+
+        // Botão Acessar App visível apenas no mobile
         var hm=row.lastElementChild;
         var link=document.createElement('a');
         link.href='#';link.className='usi-h';
         link.textContent='Acessar App';
-        Object.assign(link.style,{fontSize:'0.75rem',fontWeight:'700',color:'#94a3b8',textTransform:'uppercase',letterSpacing:'0.05em',textDecoration:'none',transition:'color .2s',cursor:'pointer',whiteSpace:'nowrap'});
-        link.onmouseenter=function(){this.style.color='#10b981'};
-        link.onmouseleave=function(){this.style.color='#94a3b8'};
+        Object.assign(link.style,{display:'none',fontSize:'0.75rem',fontWeight:'700',color:'#10b981',textTransform:'uppercase',letterSpacing:'0.05em',textDecoration:'none',transition:'color .2s',cursor:'pointer',whiteSpace:'nowrap'});
+        link.onmouseenter=function(){this.style.color='#34d399'};
+        link.onmouseleave=function(){this.style.color='#10b981'};
         link.onclick=function(e){e.preventDefault();abrir()};
         row.insertBefore(link,hm);
 
-        var all=document.querySelectorAll('a[href="#planos"]');
-        for(var i=0;i<all.length;i++){
-          var p=all[i].parentNode;
-          if(p&&p!==row&&!p.querySelector('.usi-m')){
-            var ml=document.createElement('a');
-            ml.href='#';ml.className='usi-m';
-            ml.textContent='Acessar App';
-            Object.assign(ml.style,{fontSize:'0.875rem',fontWeight:'600',color:'#cbd5e1',padding:'4px 0',borderBottom:'1px solid rgba(255,255,255,0.05)',textDecoration:'none',transition:'color .2s',display:'block',cursor:'pointer'});
-            ml.onmouseenter=function(){this.style.color='#10b981'};
-            ml.onmouseleave=function(){this.style.color='#cbd5e1'};
-            ml.onclick=function(e){e.preventDefault();abrir()};
-            p.appendChild(ml);
-          }
+        // CSS: mostra o botão apenas no mobile, esconde os links do dropdown
+        if(!document.getElementById('usi-css')){
+          var st=document.createElement('style');
+          st.id='usi-css';
+          st.textContent=
+            '@media(max-width:1023px){.usi-h{display:inline-block!important}}'+
+            '.lg\\:hidden a[href="#planos"],.lg\\:hidden a[href="#cartoes"],.lg\\:hidden a[href="#avaliacoes"]{display:none!important}';
+          document.head.appendChild(st);
         }
+
         return true;
       }
 
