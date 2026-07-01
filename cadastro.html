@@ -6,8 +6,11 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="theme-color" content="#0e171f">
+  <meta name="theme-color" content="#0b1319">
   <title>Cadastro - CREDVALE</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css?v=3.2">
   <link rel="stylesheet" href="cadastro.css?v=3.2">
   <link rel="stylesheet" href="cadastro-chat.css?v=1.0">
@@ -15,10 +18,44 @@
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><rect width=%2232%22 height=%2232%22 rx=%228%22 fill=%22url(%23g)%22/><defs><linearGradient id=%22g%22 x1=%220%22 y1=%220%22 x2=%221%22 y2=%221%22><stop offset=%220%25%22 stop-color=%22%233B82F6%22/><stop offset=%22100%25%22 stop-color=%22%234CC8A4%22/></linearGradient></defs><text x=%2216%22 y=%2223%22 font-family=%22system-ui%22 font-size=%2218%22 fill=%22%23fff%22 text-anchor=%22middle%22 font-weight=%22800%22>V</text></svg>">
   <script src="frontend/js/api.js?v=3.1"></script>
   <style>
-    body { background: #0e171f; }
+    body { background: #0b1319; margin: 0; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+    .cad-header {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      padding: 6px 12px;
+      background: rgba(11,19,25,0.85); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .cad-header__brand {
+      display: flex; align-items: center; gap: 6px; text-decoration: none;
+    }
+    .cad-header__icon {
+      width: 28px; height: 28px; border-radius: 8px;
+      background: linear-gradient(135deg,#3b82f6,#10b981);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Space Grotesk', sans-serif; font-size: 13px; font-weight: 800; color: #fff; flex-shrink: 0;
+    }
+    .cad-header__name {
+      font-family: 'Space Grotesk', sans-serif; font-weight: 800; font-size: 15px;
+    }
+    .cad-header__name span:first-child { color: #fff; }
+    .cad-header__name span:last-child { color: #10b981; }
+    .cad-header__link {
+      font-size: 0.7rem; font-weight: 800; color: #10b981;
+      text-transform: uppercase; letter-spacing: 0.05em; text-decoration: none;
+      background: rgba(16,185,129,0.1); border-radius: 8px; border: 1px solid rgba(16,185,129,0.2);
+      padding: 4px 10px; white-space: nowrap;
+    }
   </style>
 </head>
-<body style="background:#0e171f;margin:0;">
+<body style="background:#0b1319;margin:0;">
+
+  <header class="cad-header">
+    <a href="/" class="cad-header__brand">
+      <span class="cad-header__icon">V</span>
+      <span class="cad-header__name"><span>CRED</span><span>VALE</span></span>
+    </a>
+    <a href="/" class="cad-header__link">Sair</a>
+  </header>
 
   <!-- CHAT CONVERSACIONAL -->
   <div id="chatModal" class="chat-modal" hidden>

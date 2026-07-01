@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="theme-color" content="#020617" />
+    <meta name="theme-color" content="#0b1319" />
     <title>CredVale — Seu Acesso Está Pronto</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,7 +18,7 @@
       html,body{height:100%}
       body{
         font-family:'Plus Jakarta Sans',system-ui,-apple-system,sans-serif;
-        background:#020617;
+        background:#0b1319;
         color:#e2e8f0;
         -webkit-font-smoothing:antialiased;
         -moz-osx-font-smoothing:grayscale;
@@ -28,7 +28,6 @@
         max-width:420px;
         padding:56px 20px 24px;
         margin:0 auto;
-        padding:20px 20px 24px;
         min-height:100vh;
         display:flex;
         flex-direction:column;
@@ -373,18 +372,13 @@
     </style>
   </head>
   <body>
-    <header style="position:fixed;top:0;left:0;right:0;z-index:100;padding:6px 8px;background:rgba(22,41,61,0.85);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-radius:0 0 16px 16px;">
-      <div style="display:flex;width:100%;gap:4px;align-items:center;">
-        <a href="/" style="flex:0 0 auto;padding:4px 8px;display:flex;align-items:center;gap:6px;text-decoration:none;min-width:0;">
+    <header style="position:fixed;top:0;left:0;right:0;z-index:100;padding:6px 8px;background:rgba(11,19,25,0.85);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-radius:0 0 16px 16px;">
+      <div style="display:flex;width:100%;gap:4px;align-items:center;justify-content:space-between;">
+        <a href="/" style="display:flex;align-items:center;gap:6px;text-decoration:none;">
           <span style="width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#3b82f6,#10b981);display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:800;color:#fff;flex-shrink:0;">V</span>
-          <span style="font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:15px;white-space:nowrap;display:flex;gap:0;"><span style="color:#fff;">CRED</span><span style="color:#10b981;">VALE</span></span>
+          <span style="font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:15px;display:flex;gap:0;"><span style="color:#fff;">CRED</span><span style="color:#10b981;">VALE</span></span>
         </a>
-        <nav style="display:flex;flex:1;gap:4px;align-items:center;">
-          <a href="/#cartoes" style="flex:1;min-width:0;text-align:center;font-size:0.7rem;font-weight:600;color:rgba(255,255,255,0.7);padding:6px 8px;border-radius:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-decoration:none;transition:background .25s,transform .25s;" onmouseenter="this.style.background='rgba(255,255,255,0.08)';this.style.color='#fff'" onmouseleave="this.style.background='none';this.style.color='rgba(255,255,255,0.7)'">Cartões</a>
-          <a href="/#planos" style="flex:1;min-width:0;text-align:center;font-size:0.7rem;font-weight:600;color:rgba(255,255,255,0.7);padding:6px 8px;border-radius:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-decoration:none;transition:background .25s,transform .25s;" onmouseenter="this.style.background='rgba(255,255,255,0.08)';this.style.color='#fff'" onmouseleave="this.style.background='none';this.style.color='rgba(255,255,255,0.7)'">Planos</a>
-          <a href="/#avaliacoes" style="flex:1;min-width:0;text-align:center;font-size:0.7rem;font-weight:600;color:rgba(255,255,255,0.7);padding:6px 8px;border-radius:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-decoration:none;transition:background .25s,transform .25s;" onmouseenter="this.style.background='rgba(255,255,255,0.08)';this.style.color='#fff'" onmouseleave="this.style.background='none';this.style.color='rgba(255,255,255,0.7)'">Avaliações</a>
-        </nav>
-        <a href="/" style="flex:0 0 auto;padding:4px 10px;font-size:0.7rem;font-weight:800;color:#10b981;text-transform:uppercase;letter-spacing:0.05em;text-decoration:none;white-space:nowrap;background:rgba(16,185,129,0.1);border-radius:8px;border:1px solid rgba(16,185,129,0.2);">Acessar app</a>
+        <a href="/" style="font-size:0.7rem;font-weight:800;color:#10b981;text-transform:uppercase;letter-spacing:0.05em;text-decoration:none;white-space:nowrap;background:rgba(16,185,129,0.1);border-radius:8px;border:1px solid rgba(16,185,129,0.2);padding:4px 10px;">Voltar ao início</a>
       </div>
     </header>
     <div id="appRoot" class="app-loading">
