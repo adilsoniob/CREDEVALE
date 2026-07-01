@@ -364,6 +364,16 @@
   border-color: transparent;
 }
 
+.chat-option--secondary {
+  background: rgba(255,255,255,0.06);
+  color: #c8d0dc;
+  border: 1px solid rgba(255,255,255,0.12);
+}
+.chat-option--secondary:hover {
+  background: rgba(255,255,255,0.1);
+  border-color: rgba(255,255,255,0.2);
+}
+
 .chat-option--danger {
   border-color: rgba(239,68,68,0.2);
   color: #f87171;

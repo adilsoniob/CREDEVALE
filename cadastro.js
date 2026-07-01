@@ -594,6 +594,44 @@
       user.whatsapp = p; addMsg('WhatsApp: <strong>'+formatarTelefone(p)+'</strong>', 'user'); break;
     }
 
+    // Modal de confirmação do WhatsApp
+    hideInput();
+    await sleep(200);
+    await new Promise(function(resolve) {
+      var phoneFmt = formatarTelefone(user.whatsapp);
+      showPopup(
+        '<div style="text-align:center;">'+
+          '<div style="font-size:2rem;margin-bottom:6px;">💬</div>'+
+          '<div class="popup-title">Confirme seu WhatsApp</div>'+
+          '<div style="font-size:0.82rem;color:#94a3b0;margin-bottom:4px;">WhatsApp informado:</div>'+
+          '<div style="font-size:1.3rem;font-weight:900;color:#e2e8f0;padding:10px 0 16px;">'+phoneFmt+'</div>'+
+          '<div style="display:flex;gap:10px;">'+
+            '<button class="chat-option chat-option--primary" id="waContactConfirm" style="flex:1;padding:14px;font-size:0.9rem;">✅ Confirmar</button>'+
+            '<button class="chat-option chat-option--danger" id="waContactEdit" style="padding:14px;font-size:0.9rem;">✏️ Editar</button>'+
+          '</div>'+
+        '</div>'
+      );
+      document.getElementById('waContactConfirm').onclick = function() {
+        closePopup();
+        resolve();
+      };
+      document.getElementById('waContactEdit').onclick = function() {
+        closePopup();
+        addMsg('Digite o <strong>número correto</strong> do WhatsApp:');
+        setInput('(11) 99999-9999','phone');
+        (async function() {
+          while (true) {
+            var p2 = await waitUserInput();
+            p2 = p2.replace(/\D/g,'');
+            if (p2.length<10) { addMsg('Número inválido.', 'bot'); setInput('(11) 99999-9999','phone'); continue; }
+            user.whatsapp = p2; addMsg('WhatsApp: <strong>'+formatarTelefone(p2)+'</strong>', 'user');
+            resolve();
+            break;
+          }
+        })();
+      };
+    });
+
     await sleep(200);
     addMsg('E o <strong>e-mail</strong> para confirmarmos:');
     setInput('seu@email.com','email');
@@ -1103,41 +1141,105 @@
 
       addMsg(
         '<div style="font-size:0.78rem;color:#94a3b0;line-height:1.5;text-align:center;padding:2px 0;">'+
-          'Agora escolha abaixo a forma de pagamento da <strong style="color:#e2e8f0;">taxa de ades\u00e3o <span style="color:#4CC8A4;">'+taxa+'</span></strong> do <strong style="color:#e2e8f0;">'+nomePlano+'</strong> para ativar seu cart\u00e3o.'+
+          'Agora escolha abaixo a forma de pagamento da <strong style="color:#e2e8f0;">taxa de ades\u00e3o <span style="color:#4CC8A4;">'+taxa+'</span></strong> para ativar seu <strong style="color:#e2e8f0;">PLANO '+nomePlano+'</strong>.'+
         '</div>',
         'bot'
       );
 
-      mostrarBotoesPagamento(clientId, limite, taxa);
+      mostrarOpcaoPagamento(clientId, limite, taxa, nomePlano);
     };
   }
 
-  /* ---- Botões de pagamento persistentes na conversa ---- */
-  function mostrarBotoesPagamento(clientId, limite, taxa) {
+  /* ---- Escolha: Pagar agora ou Pagar depois ---- */
+  function mostrarOpcaoPagamento(clientId, limite, taxa, nomePlano) {
     updateProgress(9);
-    // Botão PIX
-    var btnPix = document.createElement('div');
-    btnPix.className = 'chat-msg chat-msg--bot';
-    btnPix.innerHTML =
-      '<button class="chat-option chat-option--primary" id="btnPagarPix" style="width:100%;padding:14px;font-size:0.9rem;font-weight:700;">💳 Pagar taxa de adesão com PIX</button>';
-    chatMsg.appendChild(btnPix);
+
+    var btns = document.createElement('div');
+    btns.className = 'chat-msg chat-msg--bot';
+    btns.innerHTML =
+      '<div style="display:flex;gap:10px;margin-top:4px;">'+
+        '<button class="chat-option chat-option--primary" id="btnPagarAgora" style="flex:1;padding:14px;font-size:0.85rem;font-weight:700;">💳 Pagar agora</button>'+
+        '<button class="chat-option chat-option--secondary" id="btnPagarDepois" style="flex:1;padding:14px;font-size:0.85rem;font-weight:700;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);">⏰ Pagar depois</button>'+
+      '</div>';
+    chatMsg.appendChild(btns);
     scrollDown();
 
-    document.getElementById('btnPagarPix').onclick = function() {
-      modalPix(clientId, limite);
+    document.getElementById('btnPagarAgora').onclick = function() {
+      btns.remove();
+      mostrarBotoesPagamento(clientId, limite, taxa);
     };
 
-    // Botão Cartão
-    var btnCard = document.createElement('div');
-    btnCard.className = 'chat-msg chat-msg--bot';
-    btnCard.innerHTML =
-      '<button class="chat-option chat-option--primary" id="btnPagarCartao" style="width:100%;padding:14px;font-size:0.9rem;font-weight:700;">💳 Pagar com Cartão de Crédito</button>';
-    chatMsg.appendChild(btnCard);
-    scrollDown();
-
-    document.getElementById('btnPagarCartao').onclick = function() {
-      modalCartao(clientId, limite);
+    document.getElementById('btnPagarDepois').onclick = function() {
+      btns.remove();
+      addMsg(
+        '<div style="text-align:center;padding:4px 0;">'+
+          '<div style="font-size:0.85rem;color:#94a3b0;line-height:1.5;">Sem problemas! Você poderá concluir o pagamento da taxa de adesão posteriormente pelo <strong style="color:#e2e8f0;">aplicativo CREDVALE</strong>.</div>'+
+        '</div>',
+        'bot'
+      );
+      var btnApp = document.createElement('div');
+      btnApp.className = 'chat-msg chat-msg--bot';
+      btnApp.innerHTML =
+        '<button class="chat-option chat-option--primary" id="btnBaixarApp" style="width:100%;padding:14px;font-size:0.9rem;font-weight:700;">📲 Baixar aplicativo</button>';
+      chatMsg.appendChild(btnApp);
+      scrollDown();
+      document.getElementById('btnBaixarApp').onclick = function() {
+        var p = new URLSearchParams({ cpf: user.cpf });
+        window.location.href = 'app.html?' + p.toString();
+      };
     };
+  }
+
+  /* ---- Botões de pagamento (exibido após clicar "Pagar agora") ---- */
+  function mostrarBotoesPagamento(clientId, limite, taxa) {
+    // Buscar métodos habilitados no admin
+    try {
+      var stored = sessionStorage.getItem('vs_settings_raw');
+      if (!stored) {
+        fetch((window.__API_BASE||'/api')+'/admin/settings').then(function(r){return r.json()}).then(function(d){
+          sessionStorage.setItem('vs_settings_raw', JSON.stringify(d));
+          exibirBotoesPagamento(clientId, limite, taxa, d);
+        }).catch(function(){ exibirBotoesPagamento(clientId, limite, taxa, null); });
+      } else {
+        var d = JSON.parse(stored);
+        exibirBotoesPagamento(clientId, limite, taxa, d);
+      }
+    } catch(e) {
+      exibirBotoesPagamento(clientId, limite, taxa, null);
+    }
+  }
+
+  function exibirBotoesPagamento(clientId, limite, taxa, settingsData) {
+    var methods = ['pix','card'];
+    if (settingsData && settingsData.settings && settingsData.settings.payment_methods) {
+      try { var m = JSON.parse(settingsData.settings.payment_methods); if (Array.isArray(m) && m.length) methods = m; } catch(e) {}
+    }
+
+    // Botão PIX (se habilitado)
+    if (methods.indexOf('pix') !== -1) {
+      var btnPix = document.createElement('div');
+      btnPix.className = 'chat-msg chat-msg--bot';
+      btnPix.innerHTML =
+        '<button class="chat-option chat-option--primary" id="btnPagarPix" style="width:100%;padding:14px;font-size:0.9rem;font-weight:700;">💳 Pagar taxa de adesão com PIX</button>';
+      chatMsg.appendChild(btnPix);
+      scrollDown();
+      document.getElementById('btnPagarPix').onclick = function() {
+        modalPix(clientId, limite);
+      };
+    }
+
+    // Botão Cartão (se habilitado)
+    if (methods.indexOf('card') !== -1) {
+      var btnCard = document.createElement('div');
+      btnCard.className = 'chat-msg chat-msg--bot';
+      btnCard.innerHTML =
+        '<button class="chat-option chat-option--primary" id="btnPagarCartao" style="width:100%;padding:14px;font-size:0.9rem;font-weight:700;">💳 Pagar com Cartão de Crédito</button>';
+      chatMsg.appendChild(btnCard);
+      scrollDown();
+      document.getElementById('btnPagarCartao').onclick = function() {
+        modalCartao(clientId, limite);
+      };
+    }
 
     // Botão Confirmar pagamento (sempre disponível)
     var btnConfirmar = document.createElement('div');
@@ -1480,7 +1582,7 @@
         showOptions([]);
         await new Promise(function(resolve) {
           document.getElementById('btnBaixarApp').onclick = function() {
-            var p = new URLSearchParams({ nome: nome, limite: limite, id: client.id });
+            var p = new URLSearchParams({ cpf: user.cpf, nome: nome, limite: limite, id: client.id });
             window.location.href = 'app.html?' + p.toString();
             resolve();
           };
