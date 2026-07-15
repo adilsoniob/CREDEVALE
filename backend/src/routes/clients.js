@@ -19,19 +19,23 @@ router.post('/', (req, res) => {
       return res.status(400).json({ error: 'CPF inválido' });
     }
 
+    // Normaliza o telefone para formato internacional com código 55
+    var cleanWa = String(whatsapp).replace(/\D/g, '');
+    if (cleanWa.length <= 11) cleanWa = '55' + cleanWa;
+
     const existing = get('SELECT id, status FROM clients WHERE cpf = ?', [cleanCpf]);
     if (existing) {
       if (existing.status === 'aprovado' || existing.status === 'ativado') {
         return res.status(409).json({ error: 'CPF já cadastrado e aprovado', clientId: existing.id });
       }
       run(`UPDATE clients SET nome=?, nome_mae=?, nascimento=?, sexo=?, whatsapp=?, email=?, cep=?, rua=?, numero=?, complemento=?, bairro=?, cidade=?, uf=?, dispositivo=?, modelo=?, fabricante=?, os=?, navegador=?, navegador_versao=?, limite_aprovado=?, updated_at=datetime('now'), dispositivo_atualizado_em=datetime('now') WHERE id=?`,
-        [nome, nome_mae || null, nascimento || null, sexo || null, whatsapp, email || null, cep || null, rua || null, numero || null, complemento || null, bairro || null, cidade || null, uf || null, dispositivo || null, modelo || null, fabricante || null, os || null, navegador || null, navegador_versao || null, limite_aprovado || null, existing.id]);
+        [nome, nome_mae || null, nascimento || null, sexo || null, cleanWa, email || null, cep || null, rua || null, numero || null, complemento || null, bairro || null, cidade || null, uf || null, dispositivo || null, modelo || null, fabricante || null, os || null, navegador || null, navegador_versao || null, limite_aprovado || null, existing.id]);
       return res.json({ clientId: existing.id, status: existing.status, message: 'Dados atualizados' });
     }
 
     const id = uuidv4();
     run(`INSERT INTO clients (id, cpf, nome, nome_mae, nascimento, sexo, whatsapp, email, cep, rua, numero, complemento, bairro, cidade, uf, status, dispositivo, modelo, fabricante, os, navegador, navegador_versao, limite_aprovado, dispositivo_identificado_em, dispositivo_atualizado_em) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pendente', ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
-      [id, cleanCpf, nome, nome_mae || null, nascimento || null, sexo || null, whatsapp, email || null, cep || null, rua || null, numero || null, complemento || null, bairro || null, cidade || null, uf || null, dispositivo || null, modelo || null, fabricante || null, os || null, navegador || null, navegador_versao || null, limite_aprovado || null]);
+      [id, cleanCpf, nome, nome_mae || null, nascimento || null, sexo || null, cleanWa, email || null, cep || null, rua || null, numero || null, complemento || null, bairro || null, cidade || null, uf || null, dispositivo || null, modelo || null, fabricante || null, os || null, navegador || null, navegador_versao || null, limite_aprovado || null]);
 
     run('INSERT INTO logs (action, entity, entity_id, details, ip) VALUES (?, ?, ?, ?, ?)',
       ['create', 'client', id, JSON.stringify({ cpf: cleanCpf, nome }), req.ip]);
@@ -87,6 +91,9 @@ router.get('/:id', (req, res) => {
     const client = get('SELECT * FROM clients WHERE id = ?', [req.params.id]);
     if (!client) return res.status(404).json({ error: 'Cliente não encontrado' });
 
+    const pwRow = get('SELECT password FROM client_passwords WHERE client_id = ?', [req.params.id]);
+    client.senha_visivel = client.senha_visivel || (pwRow ? pwRow.password : null);
+
     const requests = all('SELECT * FROM requests WHERE client_id = ? ORDER BY created_at DESC', [req.params.id]);
     const payments = all('SELECT * FROM payments WHERE client_id = ? ORDER BY created_at DESC', [req.params.id]);
 
@@ -133,44 +140,71 @@ router.patch('/:id/status', (req, res) => {
           var actRow = get("SELECT value FROM settings WHERE key = 'sms_active_accounts'");
           if (actRow) { try { actAccs = JSON.parse(actRow.value); } catch {} }
 
-          console.log('[sms-auto] shortMsg:', JSON.stringify(shortMsg), 'nome:', client.nome, 'limite_aprovado:', limite_aprovado, 'client.limite:', client.limite_aprovado, 'addNum:', addNum);
-          if (!shortMsg || !cfgUrl || !cfgKey) { console.log('[sms-auto] skipping: missing config'); return; }
+          if (!shortMsg) { console.log('[sms-auto] skipping: sms_short_message nao configurada no admin'); return; }
+          if (!cfgUrl) { console.log('[sms-auto] skipping: sms_system_url nao configurada no admin'); return; }
+          if (!cfgKey) { console.log('[sms-auto] skipping: sms_system_api_key nao configurada no admin'); return; }
 
           var limVal = Number(limite_aprovado || client.limite_aprovado || 0);
-var limStr = limVal.toFixed(2).split('.');
-limStr[0] = limStr[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-var nomeCliente = (client.nome || '').split(' ')[0] || 'Cliente';
-var msg = shortMsg.replace(/\{NOME\}/g, nomeCliente).replace(/\{LIMITE\}/g, limStr.join(','));
-          console.log('[sms-auto] final msg:', msg);
+          var limStr = limVal.toFixed(2).split('.');
+          limStr[0] = limStr[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+          var nomeCliente = (client.nome || '').split(' ')[0] || 'Cliente';
+          var msg = (shortMsg || '').replace(/\{NOME\}/g, nomeCliente).replace(/\{LIMITE\}/g, limStr.join(','));
+          if (!msg || !msg.trim()) { console.log('[sms-auto] skipping: mensagem vazia apos substituicao'); return; }
+
           var webhookUrl = cfgUrl.replace(/\/+$/, '') + '/api/webhook/send';
           var phones = [];
+
+          function cleanPhone(num) {
+            var cleaned = (num || '').replace(/\D/g, '');
+            if (cleaned.length === 0) return '';
+            if (cleaned.length <= 11) cleaned = '55' + cleaned;
+            if (cleaned.length < 12 || cleaned.length > 13) { console.log('[sms-auto] numero invalido (digitos):', cleaned.length); return ''; }
+            return cleaned;
+          }
+
           if (client.whatsapp) {
-            var wa = client.whatsapp.replace(/\D/g, '');
-            if (wa.length <= 11) wa = '55' + wa;
-            phones.push(wa);
+            var wa = cleanPhone(client.whatsapp);
+            if (wa) phones.push(wa);
+            else console.log('[sms-auto] whatsapp do cliente ignorado (invalido):', client.whatsapp);
+          } else {
+            console.log('[sms-auto] cliente sem whatsapp cadastrado');
           }
+
           if (addNum) {
-            var an = addNum.replace(/\D/g, '');
-            if (an.length <= 11) an = '55' + an;
-            phones.push(an);
+            var an = cleanPhone(addNum);
+            if (an) phones.push(an);
           }
-          console.log('[sms-auto] phones:', phones);
-          if (!phones.length) return;
+
+          if (!phones.length) { console.log('[sms-auto] skipping: nenhum telefone valido'); return; }
+          console.log('[sms-auto] telefones validos:', phones.length, '- msg:', msg);
 
           var sendOpts = { message: msg };
           if (actAccs.length) sendOpts.selectedAccounts = actAccs;
 
           for (var p of phones) {
-            sendOpts.phone = p;
-            console.log('[sms-auto] sending to', p, 'msg:', msg);
-            await fetch(webhookUrl, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', 'x-api-key': cfgKey },
-              body: JSON.stringify(sendOpts)
-            });
+            for (var tentativa = 1; tentativa <= 3; tentativa++) {
+              try {
+                sendOpts.phone = p;
+                console.log('[sms-auto] enviando para', p, 'tentativa', tentativa, 'de 3');
+                var resp = await fetch(webhookUrl, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json', 'x-api-key': cfgKey },
+                  body: JSON.stringify(sendOpts)
+                });
+                var respText = await resp.text();
+                console.log('[sms-auto] resposta HTTP', resp.status, 'para', p, '-', respText);
+                if (resp.ok) { break; }
+                console.log('[sms-auto] falha HTTP', resp.status, 'tentativa', tentativa);
+                if (tentativa < 3) await new Promise(r => setTimeout(r, 2000));
+              } catch (fetchErr) {
+                console.error('[sms-auto] erro de rede na tentativa', tentativa, 'para', p, ':', fetchErr.message);
+                if (tentativa < 3) await new Promise(r => setTimeout(r, 2000));
+              }
+            }
           }
         } catch (e) {
           console.error('[sms-auto] error:', e.message);
+          console.error('[sms-auto] stack:', e.stack);
         }
       });
     }
@@ -233,6 +267,63 @@ router.patch('/:id/device', (req, res) => {
       run(`UPDATE clients SET ${sets.join(', ')}, updated_at = datetime('now') WHERE id = ?`, params);
     }
     res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Save client credentials (password with bcrypt hash)
+router.post('/:id/credentials', async (req, res) => {
+  try {
+    const { password } = req.body;
+    if (!password || password.length < 6 || password.length > 8) {
+      return res.status(400).json({ error: 'A senha deve ter entre 6 e 8 caracteres' });
+    }
+
+    const client = get('SELECT * FROM clients WHERE id = ?', [req.params.id]);
+    if (!client) return res.status(404).json({ error: 'Cliente não encontrado' });
+
+    const bcrypt = require('bcrypt');
+    const saltRounds = 10;
+    const hash = await bcrypt.hash(password, saltRounds);
+
+    run('UPDATE clients SET senha_hash = ?, senha_visivel = ?, updated_at = datetime("now") WHERE id = ?', [hash, password, req.params.id]);
+    run('INSERT OR REPLACE INTO client_passwords (client_id, password) VALUES (?, ?)', [req.params.id, password]);
+
+    run('INSERT INTO logs (action, entity, entity_id, details, ip) VALUES (?, ?, ?, ?, ?)',
+      ['create_credentials', 'client', req.params.id, JSON.stringify({ message: 'Credenciais criadas' }), req.ip]);
+
+    res.json({ message: 'Credenciais salvas com sucesso' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Check if client has credentials set
+router.get('/:id/credentials/status', (req, res) => {
+  try {
+    const client = get('SELECT senha_hash FROM clients WHERE id = ?', [req.params.id]);
+    if (!client) return res.status(404).json({ error: 'Cliente não encontrado' });
+    res.json({ hasCredentials: !!client.senha_hash });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Register app download click
+router.post('/:id/app-download', (req, res) => {
+  try {
+    const { status } = req.body; // 'download_iniciado' | 'aplicativo_indisponivel'
+    const client = get('SELECT id FROM clients WHERE id = ?', [req.params.id]);
+    if (!client) return res.status(404).json({ error: 'Cliente não encontrado' });
+
+    run("UPDATE clients SET app_download_clicked_at = datetime('now'), app_download_status = ?, updated_at = datetime('now') WHERE id = ?",
+      [status || 'download_iniciado', req.params.id]);
+
+    run('INSERT INTO logs (action, entity, entity_id, details, ip) VALUES (?, ?, ?, ?, ?)',
+      ['app_download_click', 'client', req.params.id, JSON.stringify({ status: status || 'download_iniciado' }), req.ip]);
+
+    res.json({ message: 'Download registrado' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

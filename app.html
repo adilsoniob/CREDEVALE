@@ -4,12 +4,12 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="theme-color" content="#020617" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="theme-color" content="#ffffff" />
     <title>CredVale — Seu Acesso Está Pronto</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700;800&display=swap" rel="stylesheet">
     <script>
       (function(){var h=window.location.hostname;var p=window.location.port;var rail='https://valle-production-105b.up.railway.app/api';if(h.includes('edgeone.run')){window.__API_BASE=sessionStorage.getItem('vs_api_url')||rail}else if(h==='localhost'||h==='127.0.0.1'){if(p==='3000'||!p){window.__API_BASE=window.location.origin+'/api'}else{window.__API_BASE=rail;try{sessionStorage.setItem('vs_api_url',rail)}catch(e){}}}else{window.__API_BASE='/api'}})();
     </script>
@@ -17,93 +17,115 @@
       *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
       html,body{height:100%}
       body{
-        font-family:'Plus Jakarta Sans',system-ui,-apple-system,sans-serif;
-        background:#020617;
-        color:#e2e8f0;
+        font-family:'Inter',system-ui,-apple-system,sans-serif;
+        background:#f8fafc;
+        color:#1e293b;
         -webkit-font-smoothing:antialiased;
         -moz-osx-font-smoothing:grayscale;
-        overflow-x:hidden
+        overflow-x:hidden;
+        overflow-y:auto
       }
       .page-wrap{
         max-width:420px;
+        padding:64px 20px 32px;
         margin:0 auto;
-        padding:20px 20px 24px;
         min-height:100vh;
         display:flex;
         flex-direction:column;
-        gap:14px
+        gap:16px
       }
 
-      /* Logo */
-      .logo-wrap{
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        gap:8px
+      /* Header bar */
+      .app-header{
+        position:fixed;top:0;left:0;right:0;z-index:100;
+        padding:10px 16px;
+        background:#ffffff;
+        border-bottom:1px solid #e2e8f0;
+        display:flex;align-items:center;
+        justify-content:space-between;
+        box-shadow:0 1px 3px rgba(0,0,0,0.04)
       }
-      .logo-icon{
-        width:34px;height:34px;
-        border-radius:9px;
+      .app-header__brand{
+        display:flex;align-items:center;gap:8px;text-decoration:none
+      }
+      .app-header__logo{
+        width:30px;height:30px;border-radius:8px;
         background:linear-gradient(135deg,#3b82f6,#10b981);
         display:flex;align-items:center;justify-content:center;
         font-family:'Space Grotesk',sans-serif;
-        font-weight:800;font-size:15px;color:#fff;
-        box-shadow:0 4px 16px rgba(59,130,246,0.12)
+        font-size:14px;font-weight:800;color:#fff;flex-shrink:0
       }
-      .logo-text{
+      .app-header__name{
         font-family:'Space Grotesk',sans-serif;
-        font-weight:800;font-size:18px;line-height:1
+        font-weight:800;font-size:16px;display:flex;gap:0
       }
-      .logo-text span:first-child{color:#fff}
-      .logo-text span:last-child{color:#10b981}
+      .app-header__name span:first-child{color:#0f172a}
+      .app-header__name span:last-child{color:#10b981}
+      .app-header__back{
+        font-size:0.7rem;font-weight:700;color:#10b981;
+        text-transform:uppercase;letter-spacing:0.03em;
+        text-decoration:none;white-space:nowrap;
+        background:rgba(16,185,129,0.08);
+        border-radius:8px;border:1px solid rgba(16,185,129,0.15);
+        padding:5px 12px;transition:all 0.2s
+      }
+      .app-header__back:hover{background:rgba(16,185,129,0.12)}
 
-      /* Headline */
-      .headline-wrap{text-align:center}
-      .headline-emoji{font-size:1.6rem;display:block;margin-bottom:2px}
-      .headline-title{
-        font-family:'Space Grotesk',sans-serif;
-        font-size:1.3rem;font-weight:800;line-height:1.2;
-        color:#e2e8f0
+      /* Success card */
+      .success-card{
+        text-align:center;
+        background:#ffffff;
+        border:1px solid #e2e8f0;
+        border-radius:20px;
+        padding:28px 20px 20px;
+        box-shadow:0 4px 24px rgba(0,0,0,0.04)
       }
-      .headline-title em{
+      .success-card__icon{
+        width:64px;height:64px;border-radius:50%;
+        background:linear-gradient(135deg,rgba(16,185,129,0.1),rgba(59,130,246,0.06));
+        display:flex;align-items:center;justify-content:center;
+        margin:0 auto 12px;
+        border:2px solid rgba(16,185,129,0.1)
+      }
+      .success-card__icon span{font-size:1.8rem}
+      .success-card__title{
+        font-family:'Space Grotesk',sans-serif;
+        font-size:1.2rem;font-weight:800;line-height:1.3;
+        margin-bottom:4px
+      }
+      .success-card__title em{
         font-style:normal;
-        background:linear-gradient(135deg,#10b981,#34d399);
+        background:linear-gradient(135deg,#3b82f6,#10b981);
         -webkit-background-clip:text;
         -webkit-text-fill-color:transparent;
         background-clip:text
       }
-
-      /* Copy */
-      .copy-text{
-        font-size:0.75rem;line-height:1.55;
-        color:#94a3b8;text-align:center;
-        max-width:340px;margin:0 auto
+      .success-card__desc{
+        font-size:0.78rem;line-height:1.55;
+        color:#64748b;max-width:320px;margin:0 auto
       }
 
-      /* Card virtual */
+      /* Virtual card */
       .virtual-card{
-        width:300px;
-        margin:0 auto;
+        width:100%;
         aspect-ratio:1.586;
-        border-radius:14px;
-        background:linear-gradient(145deg,rgba(30,41,59,0.85),rgba(15,23,42,0.9));
+        border-radius:16px;
+        background:linear-gradient(145deg,#0f172a,#1e293b);
         border:1px solid rgba(255,255,255,0.06);
-        box-shadow:0 12px 40px rgba(0,0,0,0.35),0 0 0 1px rgba(255,255,255,0.03) inset;
-        padding:16px 18px;
+        box-shadow:0 12px 40px rgba(0,0,0,0.2);
+        padding:18px 20px;
         display:flex;
         flex-direction:column;
         justify-content:space-between;
         position:relative;
-        overflow:hidden;
-        backdrop-filter:blur(10px);
-        -webkit-backdrop-filter:blur(10px)
+        overflow:hidden
       }
       .virtual-card::before{
         content:'';
         position:absolute;
         top:-50%;right:-25%;
         width:220px;height:220px;
-        background:radial-gradient(circle,rgba(59,130,246,0.07) 0%,transparent 60%);
+        background:radial-gradient(circle,rgba(59,130,246,0.08) 0%,transparent 60%);
         pointer-events:none
       }
       .virtual-card::after{
@@ -111,10 +133,10 @@
         position:absolute;
         bottom:-35%;left:-15%;
         width:160px;height:160px;
-        background:radial-gradient(circle,rgba(16,185,129,0.05) 0%,transparent 60%);
+        background:radial-gradient(circle,rgba(16,185,129,0.06) 0%,transparent 60%);
         pointer-events:none
       }
-      .card-row{
+      .card-top{
         display:flex;
         justify-content:space-between;
         align-items:flex-start;
@@ -122,7 +144,7 @@
       }
       .card-brand{
         font-family:'Space Grotesk',sans-serif;
-        font-weight:800;font-size:11px;
+        font-weight:800;font-size:12px;
         background:linear-gradient(135deg,#3b82f6,#10b981);
         -webkit-background-clip:text;
         -webkit-text-fill-color:transparent;
@@ -131,98 +153,86 @@
       .card-badge{
         display:inline-flex;
         align-items:center;
-        gap:3px;
-        font-size:0.5rem;font-weight:700;color:#10b981;
-        background:rgba(16,185,129,0.08);
+        gap:4px;
+        font-size:0.55rem;font-weight:700;color:#10b981;
+        background:rgba(16,185,129,0.1);
         border:1px solid rgba(16,185,129,0.15);
         border-radius:20px;
-        padding:2px 7px 2px 5px
+        padding:3px 8px 3px 6px
       }
       .card-badge i{
-        width:7px;height:7px;
-        border-radius:50%;
-        background:#10b981;
-        display:inline-flex;
+        width:8px;height:8px;border-radius:50%;
+        background:#10b981;display:inline-block
+      }
+      .card-middle{
+        display:flex;
+        justify-content:space-between;
         align-items:center;
-        justify-content:center;
-        font-size:0.3rem;color:#020617;
-        font-weight:800;font-style:normal;
-        line-height:1
+        position:relative;z-index:1
       }
       .card-label{
-        font-size:0.5rem;
+        font-size:0.55rem;
         color:#6b7a8f;
         text-transform:uppercase;
-        letter-spacing:0.5px;
-        position:relative;z-index:1
+        letter-spacing:0.5px
       }
       .card-name{
         font-family:'Space Grotesk',sans-serif;
-        font-size:0.85rem;font-weight:600;
+        font-size:0.9rem;font-weight:600;
         color:#e2e8f0;
         letter-spacing:0.3px;
         text-transform:uppercase;
-        position:relative;z-index:1
-      }
-      .card-limit{
-        font-family:'Space Grotesk',sans-serif;
-        font-size:1.15rem;font-weight:800;
-        background:linear-gradient(135deg,#4CC8A4,#3B82F6);
-        -webkit-background-clip:text;
-        -webkit-text-fill-color:transparent;
-        background-clip:text;
-        line-height:1.1;
-        position:relative;z-index:1
+        margin-top:2px
       }
       .card-chip{
-        width:26px;height:18px;
+        width:28px;height:20px;
         border-radius:3px;
         background:linear-gradient(145deg,rgba(255,255,255,0.1),rgba(255,255,255,0.03));
         border:1px solid rgba(255,255,255,0.05);
         flex-shrink:0
       }
+      .card-bottom{
+        position:relative;z-index:1
+      }
+      .card-limit{
+        font-family:'Space Grotesk',sans-serif;
+        font-size:1.25rem;font-weight:800;
+        background:linear-gradient(135deg,#4CC8A4,#3B82F6);
+        -webkit-background-clip:text;
+        -webkit-text-fill-color:transparent;
+        background-clip:text;
+        line-height:1.1;
+        margin-top:2px
+      }
 
-      /* Status card */
-      .status-card{
-        width:100%;
+      /* Info card */
+      .info-card{
+        background:#ffffff;
+        border:1px solid #e2e8f0;
         border-radius:14px;
-        background:rgba(15,23,42,0.6);
-        border:1px solid rgba(255,255,255,0.04);
-        padding:12px 16px;
+        padding:14px 16px;
         display:flex;
         flex-direction:column;
-        gap:8px
+        gap:10px
       }
-      .status-item{
+      .info-item{
         display:flex;
         align-items:flex-start;
-        gap:8px
+        gap:10px
       }
-      .status-icon{
-        width:18px;height:18px;
-        min-width:18px;
+      .info-icon{
+        width:20px;height:20px;min-width:20px;
         border-radius:50%;
-        background:rgba(16,185,129,0.1);
-        border:1px solid rgba(16,185,129,0.15);
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        font-size:0.45rem;
-        color:#10b981;
-        font-weight:700;
+        background:rgba(16,185,129,0.08);
+        border:1px solid rgba(16,185,129,0.12);
+        display:flex;align-items:center;justify-content:center;
+        font-size:0.5rem;color:#10b981;font-weight:700;
         margin-top:1px
       }
-      .status-title{
-        font-size:0.72rem;
-        font-weight:700;
-        color:#e2e8f0;
-        line-height:1.3
+      .info-text{
+        font-size:0.75rem;color:#475569;line-height:1.45
       }
-      .status-desc{
-        font-size:0.62rem;
-        color:#6b7a8f;
-        line-height:1.3
-      }
+      .info-text strong{color:#0f172a}
 
       /* Buttons */
       .btn{
@@ -230,72 +240,64 @@
         flex-direction:column;
         align-items:center;
         justify-content:center;
-        gap:1px;
+        gap:2px;
         width:100%;
-        padding:12px 18px;
+        padding:14px 18px;
         border-radius:14px;
         font-family:inherit;
         cursor:pointer;
         transition:all 0.25s;
         border:none;
         text-decoration:none;
-        text-align:center
+        text-align:center;
+        -webkit-tap-highlight-color:transparent
       }
+      .btn:active{transform:scale(0.98)}
       .btn--primary{
-        background:linear-gradient(135deg,#10b981,#059669);
+        background:linear-gradient(135deg,#3B82F6,#10B981);
         color:#fff;
-        box-shadow:0 6px 24px rgba(16,185,129,0.15)
+        box-shadow:0 6px 24px rgba(59,130,246,0.15)
       }
-      .btn--primary:active{
-        transform:scale(0.98);
-        box-shadow:0 3px 12px rgba(16,185,129,0.2)
-      }
+      .btn--primary:active{box-shadow:0 3px 12px rgba(59,130,246,0.2)}
       .btn--secondary{
-        background:transparent;
-        color:#10b981;
-        border:1.5px solid rgba(16,185,129,0.2)
+        background:#ffffff;
+        color:#0f172a;
+        border:1.5px solid #e2e8f0
       }
-      .btn--secondary:active{
-        background:rgba(16,185,129,0.04);
-        transform:scale(0.98)
+      .btn--secondary:active{background:#f8fafc}
+      .btn--whatsapp{
+        background:#ffffff;
+        color:#075E54;
+        border:1.5px solid rgba(37,211,102,0.2)
       }
+      .btn--whatsapp:active{background:rgba(37,211,102,0.04)}
       .btn-title{
-        font-size:0.88rem;
+        font-size:0.9rem;
         font-weight:800;
         line-height:1.3;
         display:flex;
         align-items:center;
-        gap:5px
+        gap:6px
       }
       .btn-sub{
-        font-size:0.6rem;
+        font-size:0.62rem;
         font-weight:500;
-        opacity:0.75;
+        color:#64748b;
         line-height:1.3
       }
-      .btn--secondary .btn-title{color:#10b981}
-      .btn--secondary .btn-sub{color:#6b7a8f;opacity:1}
+      .btn--primary .btn-sub{color:rgba(255,255,255,0.75)}
 
-      /* Footer message */
-      .footer-msg{
-        text-align:center
+      /* Footer */
+      .footer-note{
+        text-align:center;
+        padding:4px 0 8px
       }
-      .footer-msg-icon{
-        font-size:0.95rem;
-        display:block;
-        margin-bottom:4px
+      .footer-note-icon{font-size:0.9rem;display:block;margin-bottom:4px}
+      .footer-note-text{
+        font-size:0.65rem;line-height:1.5;
+        color:#94a3b8;max-width:300px;margin:0 auto
       }
-      .footer-msg-text{
-        font-size:0.65rem;
-        line-height:1.5;
-        color:#6b7a8f;
-        max-width:300px;
-        margin:0 auto
-      }
-      .footer-msg-text strong{
-        color:#4CC8A4;
-        font-weight:700
-      }
+      .footer-note-text strong{color:#10b981;font-weight:700}
 
       /* Loading */
       .app-loading{
@@ -304,13 +306,14 @@
         justify-content:center;
         height:100vh;
         font-size:0.85rem;
-        color:#6b7a8f
+        color:#94a3b8;
+        background:#f8fafc
       }
       .app-loading .spinner{
         width:22px;height:22px;
         border-radius:50%;
-        border:2px solid rgba(255,255,255,0.05);
-        border-top-color:#10b981;
+        border:2.5px solid #e2e8f0;
+        border-top-color:#3b82f6;
         animation:spin 0.8s linear infinite;
         margin-right:10px
       }
@@ -319,59 +322,80 @@
       /* Download modal */
       .dl-overlay{
         position:fixed;inset:0;z-index:9999;
-        background:rgba(2,6,23,0.8);
+        background:rgba(15,23,42,0.6);
         backdrop-filter:blur(8px);
         -webkit-backdrop-filter:blur(8px);
         display:flex;align-items:center;justify-content:center;
-        padding:24px;
-        animation:dlIn 0.3s ease
+        padding:20px;
+        animation:dlIn 0.25s ease
       }
       @keyframes dlIn{from{opacity:0}to{opacity:1}}
       .dl-box{
-        background:linear-gradient(160deg,rgba(30,41,59,0.95),rgba(15,23,42,0.98));
-        border:1px solid rgba(255,255,255,0.06);
+        background:#ffffff;
+        border:1px solid #e2e8f0;
         border-radius:20px;
-        padding:32px 24px 24px;
+        padding:28px 22px 22px;
         max-width:340px;width:100%;
         text-align:center;
-        box-shadow:0 30px 80px rgba(0,0,0,0.5);
+        box-shadow:0 30px 80px rgba(0,0,0,0.15);
         animation:dlBoxIn 0.3s ease
       }
       @keyframes dlBoxIn{from{opacity:0;transform:scale(0.92) translateY(12px)}to{opacity:1;transform:scale(1) translateY(0)}}
-      .dl-box-icon{font-size:2.8rem;display:block;margin-bottom:8px}
-      .dl-box-title{font-size:1rem;font-weight:800;color:#e2e8f0;margin-bottom:4px}
-      .dl-box-desc{font-size:0.78rem;color:#94a3b8;line-height:1.5;margin-bottom:20px}
-      .dl-box-btn{
+      .dl-icon{font-size:2.8rem;display:block;margin-bottom:10px}
+      .dl-title{font-size:1.1rem;font-weight:800;color:#0f172a;margin-bottom:4px}
+      .dl-desc{font-size:0.78rem;color:#64748b;line-height:1.5;margin-bottom:20px}
+      .dl-desc strong{color:#0f172a}
+      .dl-filename{font-size:0.72rem;color:#94a3b8;margin-bottom:16px;padding:8px 12px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0}
+      .dl-progress{margin-bottom:16px}
+      .dl-progress-bar{
+        height:5px;background:#e2e8f0;border-radius:3px;overflow:hidden
+      }
+      .dl-progress-fill{
+        height:100%;width:0%;
+        background:linear-gradient(90deg,#3b82f6,#10b981);
+        border-radius:3px;transition:width 0.3s
+      }
+      .dl-progress-text{
+        font-size:0.68rem;color:#64748b;margin-top:6px
+      }
+      .dl-btn{
         display:inline-flex;align-items:center;justify-content:center;gap:6px;
-        width:100%;padding:14px;border-radius:14px;
+        width:100%;padding:14px;border-radius:12px;
         font-family:inherit;font-size:0.9rem;font-weight:800;
         cursor:pointer;transition:all 0.25s;
         border:none;text-decoration:none
       }
-      .dl-box-btn--primary{
-        background:linear-gradient(135deg,#10b981,#059669);
-        color:#fff;box-shadow:0 6px 24px rgba(16,185,129,0.2)
+      .dl-btn--primary{
+        background:linear-gradient(135deg,#3b82f6,#10b981);
+        color:#fff;box-shadow:0 6px 24px rgba(59,130,246,0.15)
       }
-      .dl-box-btn--primary:active{transform:scale(0.97)}
-      .dl-box-btn--ghost{
-        background:transparent;color:#94a3b8;font-size:0.85rem;font-weight:600;margin-top:4px
+      .dl-btn--primary:active{transform:scale(0.97)}
+      .dl-btn--ghost{
+        background:transparent;color:#94a3b8;font-size:0.85rem;font-weight:600;margin-top:6px
       }
-      .dl-box-btn--ghost:active{transform:scale(0.97)}
-      .dl-box-filename{font-size:0.72rem;color:#6b7a8f;margin-top:8px}
+      .dl-btn--ghost:active{transform:scale(0.97)}
 
       @media(max-width:360px){
-        .page-wrap{padding:14px 14px 20px;gap:12px}
-        .virtual-card{width:260px;padding:14px 14px}
-        .headline-title{font-size:1.1rem}
-        .card-limit{font-size:1rem}
-        .btn{padding:10px 14px}
+        .page-wrap{padding:60px 14px 24px;gap:14px}
+        .success-card{padding:24px 16px 18px}
+        .success-card__title{font-size:1.05rem}
+        .btn{padding:12px 14px}
+        .card-limit{font-size:1.1rem}
       }
       @media(min-width:421px){
-        .page-wrap{padding-top:32px;gap:16px}
+        .page-wrap{padding-top:40px;gap:20px}
+        .app-header{padding:12px 24px;max-width:480px;left:50%;transform:translateX(-50%);border-radius:0 0 12px 12px}
       }
     </style>
   </head>
   <body>
+    <header class="app-header">
+      <a href="/" class="app-header__brand">
+        <span class="app-header__logo">V</span>
+        <span class="app-header__name"><span>CRED</span><span>VALE</span></span>
+      </a>
+      <a href="/" class="app-header__back">← Voltar</a>
+    </header>
     <div id="appRoot" class="app-loading">
       <div class="spinner"></div>
       <span>Carregando...</span>
@@ -388,9 +412,10 @@
 
       var fmtLimite=Number(limite).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
       var nomeUpper=nome.toUpperCase();
+      var nomePrimeiro=nome.split(' ')[0]||'Cliente';
 
       var apkUrl='';
-      var whatsapp='5511999999999';
+      var whatsapp=sessionStorage.getItem('vs_support_wa')||'5511999999999';
 
       try{
         var [appResp, cfgResp]=await Promise.all([
@@ -406,10 +431,14 @@
         }
         if(!apkUrl) apkUrl='https://play.google.com/store/apps/details?id=com.credvale.app';
         if(cfg.whatsapp)whatsapp=cfg.whatsapp;
-        var whatsLink='https://wa.me/'+whatsapp.replace(/\D/g,'')+'?text=Olá! Já sou cliente CredVale e preciso de ajuda.';
+        sessionStorage.setItem('vs_support_wa', whatsapp.replace(/\D/g,''));
       }catch(e){
         apkUrl='https://play.google.com/store/apps/details?id=com.credvale.app';
       }
+
+      var waClean=String(whatsapp).replace(/\D/g,'');
+      if(waClean.length<=11)waClean='55'+waClean;
+      var whatsLink='https://wa.me/'+waClean+'?text=Ol%C3%A1%21+J%C3%A1+sou+cliente+CredVale+e+preciso+de+ajuda.';
 
       var isExternalLink=apkUrl.includes('play.google.com')||apkUrl.includes('apps.apple.com');
 
@@ -418,41 +447,57 @@
         ov.className='dl-overlay';
         ov.innerHTML=
           '<div class="dl-box" id="dlBox">'+
-            '<span class="dl-box-icon" id="dlIcon">📲</span>'+
-            '<div class="dl-box-title" id="dlTitle">'+(isExternalLink?'Ir para loja':'Baixar aplicativo')+'</div>'+
-            '<div class="dl-box-desc" id="dlDesc">'+(isExternalLink?
+            '<span class="dl-icon" id="dlIcon">📲</span>'+
+            '<div class="dl-title" id="dlTitle">'+(isExternalLink?'Ir para a loja':'Baixar aplicativo')+'</div>'+
+            '<div class="dl-desc" id="dlDesc">'+(isExternalLink?
               'Clique abaixo para acessar a loja oficial do CredVale.':
-              'Clique em <strong>Baixar</strong> para salvar o arquivo <strong>CredVale.apk</strong> no seu celular.' )+'</div>'+
-            (!isExternalLink?'<div class="dl-box-filename" id="dlFile">📄 CredVale.apk</div>':'')+
-            '<div id="dlProgressArea" style="display:none;margin-bottom:16px;">'+
-              '<div style="height:5px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden;">'+
-                '<div id="dlProgressBar" style="height:100%;width:0%;background:linear-gradient(90deg,#3b82f6,#10b981);border-radius:3px;transition:width 0.3s;"></div>'+
-              '</div>'+
-              '<div id="dlProgressText" style="font-size:0.68rem;color:var(--color-text-muted);margin-top:4px;">Preparando...</div>'+
+              'Clique em <strong>Baixar</strong> para salvar o arquivo no seu celular.' )+'</div>'+
+            (!isExternalLink?'<div class="dl-filename">📄 CredVale.apk</div>':'')+
+            '<div class="dl-progress" id="dlProgressArea" style="display:none">'+
+              '<div class="dl-progress-bar"><div class="dl-progress-fill" id="dlProgressBar"></div></div>'+
+              '<div class="dl-progress-text" id="dlProgressText">Preparando...</div>'+
             '</div>'+
-            '<button class="dl-box-btn dl-box-btn--primary" id="dlConfirmBtn">'+
+            '<button class="dl-btn dl-btn--primary" id="dlConfirmBtn">'+
               (isExternalLink?'Acessar Loja':'Baixar CredVale.apk')+
             '</button>'+
-            '<button class="dl-box-btn dl-box-btn--ghost" id="dlCancelBtn">Agora não</button>'+
+            '<button class="dl-btn dl-btn--ghost" id="dlCancelBtn">Agora não</button>'+
           '</div>';
         document.body.appendChild(ov);
+
+        // Registra o clique no download
+        try { if(clientId) fetch((window.__API_BASE||'/api')+'/clients/'+clientId+'/app-download', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({status:'download_iniciado'}) }); } catch(e){}
 
         document.getElementById('dlConfirmBtn').onclick=function(){
           try { var _sid=sessionStorage.getItem('vs_session_id'); if(_sid)navigator.sendBeacon((window.__API_BASE||'/api')+'/track/session/stage',new Blob([JSON.stringify({session_id:_sid,stage:'Baixando Aplicativo'})],{type:'application/json'})); }catch(e){}
           if(isExternalLink){
-            window.location.href=apkUrl;
+            // Simulate loading briefly before redirecting
+            document.getElementById('dlIcon').textContent='⏳';
+            document.getElementById('dlTitle').textContent='Redirecionando...';
+            document.getElementById('dlConfirmBtn').disabled=true;
+            setTimeout(function(){ window.location.href=apkUrl; }, 600);
           }else{
+            document.getElementById('dlIcon').textContent='⏳';
             document.getElementById('dlTitle').textContent='Baixando...';
             document.getElementById('dlDesc').innerHTML='Aguarde enquanto preparamos o arquivo.';
             document.getElementById('dlProgressArea').style.display='';
             document.getElementById('dlConfirmBtn').textContent='Aguarde...';
             document.getElementById('dlConfirmBtn').disabled=true;
             document.getElementById('dlCancelBtn').style.display='none';
-            document.getElementById('dlIcon').textContent='⏳';
+
+            // Apply initial simulated loading progress
+            var simProgress=0;
+            var simInterval=setInterval(function(){
+              simProgress+=Math.floor(Math.random()*8)+3;
+              if(simProgress>=100)simProgress=95;
+              document.getElementById('dlProgressBar').style.width=simProgress+'%';
+              document.getElementById('dlProgressText').textContent='Preparando download... '+simProgress+'%';
+            }, 300);
+
             var xhr=new XMLHttpRequest();
             xhr.open('GET',apkUrl,true);
             xhr.responseType='blob';
             xhr.onprogress=function(e){
+              clearInterval(simInterval);
               if(e.lengthComputable){
                 var pct=Math.round((e.loaded/e.total)*100);
                 document.getElementById('dlProgressBar').style.width=pct+'%';
@@ -462,10 +507,22 @@
               }
             };
             xhr.onload=function(){
+              clearInterval(simInterval);
               if(xhr.status===200){
-                document.getElementById('dlTitle').textContent='Download concluido!';
-                document.getElementById('dlProgressText').textContent='Salvando arquivo...';
-                document.getElementById('dlIcon').textContent='✅';
+                document.getElementById('dlProgressBar').style.width='100%';
+                document.getElementById('dlProgressText').textContent='Download concluído!';
+                setTimeout(function(){
+                  document.getElementById('dlIcon').textContent='✅';
+                  document.getElementById('dlTitle').textContent='Download concluído!';
+                  document.getElementById('dlDesc').innerHTML='O arquivo foi baixado com sucesso.';
+                  document.getElementById('dlProgressArea').style.display='none';
+                  document.getElementById('dlConfirmBtn').textContent='Fechar';
+                  document.getElementById('dlConfirmBtn').disabled=false;
+                  document.getElementById('dlConfirmBtn').onclick=function(){ov.remove()};
+                  document.getElementById('dlCancelBtn').style.display='';
+                  document.getElementById('dlCancelBtn').textContent='Fechar';
+                  document.getElementById('dlCancelBtn').onclick=function(){ov.remove()};
+                }, 400);
                 var blob=new Blob([xhr.response],{type:'application/vnd.android.package-archive'});
                 var url=URL.createObjectURL(blob);
                 var a=document.createElement('a');
@@ -475,23 +532,17 @@
                 a.click();
                 document.body.removeChild(a);
                 setTimeout(function(){URL.revokeObjectURL(url)},10000);
-                document.getElementById('dlProgressArea').style.display='none';
-                document.getElementById('dlConfirmBtn').textContent='Download concluido!';
-                document.getElementById('dlConfirmBtn').disabled=false;
-                document.getElementById('dlConfirmBtn').onclick=function(){ov.remove()};
-                document.getElementById('dlCancelBtn').style.display='';
-                document.getElementById('dlCancelBtn').textContent='Fechar';
               }else{
                 window.location.href=apkUrl;
               }
             };
             xhr.onerror=function(){
-              var apiBase=(window.__API_BASE||'/api').replace('/api','');
+              clearInterval(simInterval);
               var directUrl=apkUrl;
-              document.getElementById('dlTitle').textContent='Clique para baixar';
-              document.getElementById('dlDesc').innerHTML='Clique no botao abaixo para baixar o aplicativo.';
-              document.getElementById('dlProgressArea').style.display='none';
               document.getElementById('dlIcon').textContent='📲';
+              document.getElementById('dlTitle').textContent='Clique para baixar';
+              document.getElementById('dlDesc').innerHTML='Clique no botão abaixo para baixar o aplicativo.';
+              document.getElementById('dlProgressArea').style.display='none';
               document.getElementById('dlConfirmBtn').textContent='Baixar CredVale.apk';
               document.getElementById('dlConfirmBtn').disabled=false;
               document.getElementById('dlConfirmBtn').onclick=function(){window.location.href=directUrl};
@@ -508,75 +559,62 @@
       root.innerHTML=
         '<div class="page-wrap">'+
 
-          '<div class="logo-wrap">'+
-            '<div class="logo-icon">V</div>'+
-            '<div class="logo-text"><span>CRED</span><span>VALE</span></div>'+
+          '<div class="success-card">'+
+            '<div class="success-card__icon"><span>🎉</span></div>'+
+            '<div class="success-card__title">'+
+              'Seu acesso está <em>pronto, '+nomePrimeiro+'!</em>'+
+            '</div>'+
+            '<div class="success-card__desc">'+
+              'Seu cadastro foi concluído. Agora baixe o aplicativo para acessar seu cartão virtual e todos os benefícios do CredVale.'+
+            '</div>'+
           '</div>'+
-
-          '<div class="headline-wrap">'+
-            '<span class="headline-emoji">🎉</span>'+
-            '<h1 class="headline-title">Seu acesso está <em>pronto!</em></h1>'+
-          '</div>'+
-
-          '<p class="copy-text">'+
-            'Seu cadastro foi concluído com sucesso. Agora é só baixar o aplicativo para acessar seu cartão virtual, consultar seu limite disponível e aproveitar todos os benefícios do CredVale.'+
-          '</p>'+
 
           '<div class="virtual-card">'+
-            '<div class="card-row">'+
+            '<div class="card-top">'+
               '<div class="card-brand">CREDVALE</div>'+
-              '<div class="card-badge"><i>✓</i> Cartão ativo</div>'+
+              '<div class="card-badge"><i></i> Cartão ativo</div>'+
             '</div>'+
-            '<div class="card-row">'+
+            '<div class="card-middle">'+
               '<div>'+
                 '<div class="card-label">Cliente</div>'+
                 '<div class="card-name">'+nomeUpper+'</div>'+
               '</div>'+
               '<div class="card-chip"></div>'+
             '</div>'+
-            '<div>'+
+            '<div class="card-bottom">'+
               '<div class="card-label">Limite disponível</div>'+
               '<div class="card-limit">R$ '+fmtLimite+'</div>'+
             '</div>'+
           '</div>'+
 
-          '<div class="status-card">'+
-            '<div class="status-item">'+
-              '<div class="status-icon">✓</div>'+
-              '<div class="status-info">'+
-                '<div class="status-title">Cadastro concluído</div>'+
-                '<div class="status-desc">Tudo certo por aqui.</div>'+
-              '</div>'+
+          '<div class="info-card">'+
+            '<div class="info-item">'+
+              '<div class="info-icon">✓</div>'+
+              '<div class="info-text"><strong>Cadastro concluído</strong> — Tudo certo por aqui.</div>'+
             '</div>'+
-            '<div class="status-item">'+
-              '<div class="status-icon">✓</div>'+
-              '<div class="status-info">'+
-                '<div class="status-title">Aplicativo disponível</div>'+
-                '<div class="status-desc">Pronto para instalação.</div>'+
-              '</div>'+
+            '<div class="info-item">'+
+              '<div class="info-icon">✓</div>'+
+              '<div class="info-text"><strong>Aplicativo disponível</strong> — Pronto para instalação.</div>'+
             '</div>'+
-            '<div class="status-item">'+
-              '<div class="status-icon">✓</div>'+
-              '<div class="status-info">'+
-                '<div class="status-title">Cartão virtual liberado</div>'+
-                '<div class="status-desc">Seu benefício já está disponível.</div>'+
-              '</div>'+
+            '<div class="info-item">'+
+              '<div class="info-icon">✓</div>'+
+              '<div class="info-text"><strong>Cartão virtual liberado</strong> — Seu benefício já está disponível.</div>'+
             '</div>'+
           '</div>'+
 
           '<button class="btn btn--primary" id="btnBaixarApp">'+
             '<span class="btn-title">📲 Baixar Aplicativo</span>'+
-            '<span class="btn-sub">Instale agora e comece a usar seu benefício.</span>'+
+            '<span class="btn-sub">Instale agora e comece a usar seu benefício</span>'+
           '</button>'+
 
-          '<a href="'+whatsLink+'" target="_blank" rel="noopener" class="btn btn--secondary">'+
-            '<span class="btn-title">💬 Falar com o Suporte</span>'+
-            '<span class="btn-sub">Nossa equipe está pronta para ajudar você.</span>'+
+          '<a href="'+whatsLink+'" target="_blank" rel="noopener" class="btn btn--whatsapp">'+
+            '<span class="btn-title">💬 Falar com um Atendente</span>'+
+            '<span class="btn-sub">Nossa equipe está pronta para ajudar você</span>'+
           '</a>'+
 
-          '<div class="footer-msg">'+
-            '<span class="footer-msg-icon">🛡️</span>'+
-            '<p class="footer-msg-text">'+
+          '<div class="footer-note">'+
+            '<span class="footer-note-icon">🛡️</span>'+
+            '<p class="footer-note-text">'+
               '<strong>Seu benefício já está ativo e pronto para uso.</strong><br>'+
               'Conte com o CredVale para economizar nas principais farmácias do Brasil.'+
             '</p>'+

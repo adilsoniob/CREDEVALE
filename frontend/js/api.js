@@ -77,6 +77,7 @@ const API = (() => {
     updateClientStatus: (id, status, limite_aprovado) => request('PATCH', `/clients/${id}/status`, { status, limite_aprovado }),
     updateClientDevice: (id, device) => request('PATCH', `/clients/${id}/device`, device),
     deleteClient: (id) => request('DELETE', `/clients/${id}`),
+    registerAppDownload: (id, status) => request('POST', `/clients/${id}/app-download`, { status }),
 
     // Products
     getProducts: () => request('GET', '/products'),
@@ -106,6 +107,10 @@ const API = (() => {
     markNotificationRead: (id) => request('PATCH', `/admin/notifications/${id}/read`),
     getUsers: () => request('GET', '/admin/users'),
     createUser: (data) => request('POST', '/admin/users', data),
+    updateUser: (id, data) => request('PUT', '/admin/users/' + id, data),
+    deleteUser: (id) => request('DELETE', '/admin/users/' + id),
+    changeUserPassword: (id, newPassword) => request('POST', '/admin/users/' + id + '/change-password', { newPassword }),
+    toggleUserActive: (id) => request('POST', '/admin/users/' + id + '/toggle-active'),
     getSettings: () => request('GET', '/admin/settings'),
     saveSettings: (settings) => request('PUT', '/admin/settings', { settings }),
     cpfKeysStatus: () => request('GET', '/cpf/keys-status'),
