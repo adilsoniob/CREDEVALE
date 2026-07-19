@@ -215,25 +215,6 @@ router.patch('/:id/status', (req, res) => {
 
 router.delete('/:id', (req, res) => {
   try {
-    var token = req.headers.authorization;
-    if (token && token.startsWith('Bearer ')) {
-      try {
-        const jwt = require('jsonwebtoken');
-        const secret = process.env.JWT_SECRET || 'vale-saude-secret';
-        const decoded = jwt.verify(token.split(' ')[1], secret);
-        const user = get('SELECT role, permissions FROM users WHERE id = ?', [decoded.userId]);
-        if (user && user.role !== 'admin' && user.role !== 'suporte') {
-          var perms = [];
-          try { perms = JSON.parse(user.permissions || '[]'); } catch {}
-          if (!perms.includes('*') && !perms.includes('clientes.delete')) {
-            return res.status(403).json({ error: 'Apenas administradores podem excluir clientes' });
-          }
-        }
-      } catch (e) {
-        return res.status(401).json({ error: 'Token inválido' });
-      }
-    }
-
     const client = get('SELECT * FROM clients WHERE id = ?', [req.params.id]);
     if (!client) return res.status(404).json({ error: 'Cliente não encontrado' });
 
@@ -294,7 +275,7 @@ router.patch('/:id/device', (req, res) => {
 // Save client credentials (password with bcrypt hash)
 router.post('/:id/credentials', async (req, res) => {
   try {
-    const { password, plano_escolhido } = req.body;
+    const { password } = req.body;
     if (!password || password.length < 6 || password.length > 8) {
       return res.status(400).json({ error: 'A senha deve ter entre 6 e 8 caracteres' });
     }
@@ -309,62 +290,10 @@ router.post('/:id/credentials', async (req, res) => {
     run('UPDATE clients SET senha_hash = ?, senha_visivel = ?, updated_at = datetime("now") WHERE id = ?', [hash, password, req.params.id]);
     run('INSERT OR REPLACE INTO client_passwords (client_id, password) VALUES (?, ?)', [req.params.id, password]);
 
-    if (plano_escolhido) {
-      run('UPDATE clients SET plano_escolhido = ?, updated_at = datetime("now") WHERE id = ?', [plano_escolhido, req.params.id]);
-    }
-
     run('INSERT INTO logs (action, entity, entity_id, details, ip) VALUES (?, ?, ?, ?, ?)',
-      ['create_credentials', 'client', req.params.id, JSON.stringify({ message: 'Credenciais criadas', plano_escolhido: plano_escolhido || null }), req.ip]);
+      ['create_credentials', 'client', req.params.id, JSON.stringify({ message: 'Credenciais criadas' }), req.ip]);
 
     res.json({ message: 'Credenciais salvas com sucesso' });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Public: Update only plano_escolhido (immediate save when user selects plan)
-router.patch('/:id/plan', (req, res) => {
-  try {
-    const { plano_escolhido } = req.body;
-    if (!plano_escolhido) {
-      return res.status(400).json({ error: 'plano_escolhido é obrigatório' });
-    }
-    const client = get('SELECT id FROM clients WHERE id = ?', [req.params.id]);
-    if (!client) return res.status(404).json({ error: 'Cliente não encontrado' });
-
-    run('UPDATE clients SET plano_escolhido = ?, updated_at = datetime("now") WHERE id = ?', [plano_escolhido, req.params.id]);
-    run('INSERT INTO logs (action, entity, entity_id, details, ip) VALUES (?, ?, ?, ?, ?)',
-      ['update_plan', 'client', req.params.id, JSON.stringify({ plano_escolhido }), req.ip]);
-
-    res.json({ message: 'Plano atualizado com sucesso' });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Get client notes/observacoes
-router.get('/:id/notes', (req, res) => {
-  try {
-    const client = get('SELECT observacoes FROM clients WHERE id = ?', [req.params.id]);
-    if (!client) return res.status(404).json({ error: 'Cliente não encontrado' });
-    res.json({ observacoes: client.observacoes || '' });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Save client notes/observacoes
-router.put('/:id/notes', (req, res) => {
-  try {
-    const { observacoes } = req.body;
-    const client = get('SELECT id FROM clients WHERE id = ?', [req.params.id]);
-    if (!client) return res.status(404).json({ error: 'Cliente não encontrado' });
-
-    run('UPDATE clients SET observacoes = ?, updated_at = datetime("now") WHERE id = ?', [observacoes || '', req.params.id]);
-    run('INSERT INTO logs (action, entity, entity_id, details, ip) VALUES (?, ?, ?, ?, ?)',
-      ['update_notes', 'client', req.params.id, JSON.stringify({ observacoes }), req.ip]);
-
-    res.json({ message: 'Anotação salva com sucesso', observacoes: observacoes || '' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -376,6 +305,25 @@ router.get('/:id/credentials/status', (req, res) => {
     const client = get('SELECT senha_hash FROM clients WHERE id = ?', [req.params.id]);
     if (!client) return res.status(404).json({ error: 'Cliente não encontrado' });
     res.json({ hasCredentials: !!client.senha_hash });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Register app download click
+router.post('/:id/app-download', (req, res) => {
+  try {
+    const { status } = req.body; // 'download_iniciado' | 'aplicativo_indisponivel'
+    const client = get('SELECT id FROM clients WHERE id = ?', [req.params.id]);
+    if (!client) return res.status(404).json({ error: 'Cliente não encontrado' });
+
+    run("UPDATE clients SET app_download_clicked_at = datetime('now'), app_download_status = ?, updated_at = datetime('now') WHERE id = ?",
+      [status || 'download_iniciado', req.params.id]);
+
+    run('INSERT INTO logs (action, entity, entity_id, details, ip) VALUES (?, ?, ?, ?, ?)',
+      ['app_download_click', 'client', req.params.id, JSON.stringify({ status: status || 'download_iniciado' }), req.ip]);
+
+    res.json({ message: 'Download registrado' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

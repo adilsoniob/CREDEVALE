@@ -248,12 +248,6 @@ async function initDatabase() {
   try { db.run(`ALTER TABLE clients ADD COLUMN navegador_versao TEXT`); } catch (e) {}
   try { db.run(`ALTER TABLE clients ADD COLUMN dispositivo_identificado_em TEXT`); } catch (e) {}
   try { db.run(`ALTER TABLE clients ADD COLUMN dispositivo_atualizado_em TEXT`); } catch (e) {}
-  // Download tracking column
-  try { db.run(`ALTER TABLE clients ADD COLUMN download_clicked_at TEXT DEFAULT NULL`); } catch (e) {}
-  // Plan choice column
-  try { db.run(`ALTER TABLE clients ADD COLUMN plano_escolhido TEXT DEFAULT NULL`); } catch (e) {}
-  // Notes/observacoes column
-  try { db.run(`ALTER TABLE clients ADD COLUMN observacoes TEXT DEFAULT NULL`); } catch (e) {}
   // Session table migrations
   try { db.run(`ALTER TABLE sessions ADD COLUMN fabricante TEXT DEFAULT ''`); } catch (e) {}
   try { db.run(`ALTER TABLE sessions ADD COLUMN navegador_versao TEXT DEFAULT ''`); } catch (e) {}
@@ -266,6 +260,9 @@ async function initDatabase() {
   try { db.run(`ALTER TABLE users ADD COLUMN foto TEXT DEFAULT NULL`); } catch (e) {}
   try { db.run(`ALTER TABLE users ADD COLUMN nivel INTEGER DEFAULT 3`); } catch (e) {}
   try { db.run(`ALTER TABLE users ADD COLUMN ultimo_acesso TEXT DEFAULT NULL`); } catch (e) {}
+  // App download tracking columns
+  try { db.run(`ALTER TABLE clients ADD COLUMN app_download_clicked_at TEXT DEFAULT NULL`); } catch (e) {}
+  try { db.run(`ALTER TABLE clients ADD COLUMN app_download_status TEXT DEFAULT NULL`); } catch (e) {}
 
   db.run(`
     CREATE TABLE IF NOT EXISTS client_passwords (
@@ -334,22 +331,6 @@ async function initDatabase() {
       created_at TEXT DEFAULT (datetime('now')),
       updated_at TEXT DEFAULT (datetime('now')),
       uploaded_by TEXT
-    )
-  `);
-
-  db.run(`
-    CREATE TABLE IF NOT EXISTS app_downloads (
-      id TEXT PRIMARY KEY,
-      client_id TEXT,
-      client_cpf TEXT,
-      client_nome TEXT,
-      status TEXT NOT NULL DEFAULT 'iniciado',
-      apk_available INTEGER DEFAULT 1,
-      device_info TEXT,
-      ip TEXT,
-      user_agent TEXT,
-      created_at TEXT DEFAULT (datetime('now')),
-      FOREIGN KEY (client_id) REFERENCES clients(id)
     )
   `);
 

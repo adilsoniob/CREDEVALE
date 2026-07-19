@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700;800&display=swap" rel="stylesheet">
     <script>
-      (function(){var h=window.location.hostname;var p=window.location.port;var rail='https://credevale-production.up.railway.app/api';if(h.includes('edgeone.run')){window.__API_BASE=rail}else if(h==='localhost'||h==='127.0.0.1'){if(p==='3000'||!p){window.__API_BASE=window.location.origin+'/api'}else{window.__API_BASE=rail;try{sessionStorage.setItem('vs_api_url',rail)}catch(e){}}}else{window.__API_BASE='/api'}})();
+      (function(){var h=window.location.hostname;var p=window.location.port;var rail='https://valle-production-105b.up.railway.app/api';if(h.includes('edgeone.run')){window.__API_BASE=sessionStorage.getItem('vs_api_url')||rail}else if(h==='localhost'||h==='127.0.0.1'){if(p==='3000'||!p){window.__API_BASE=window.location.origin+'/api'}else{window.__API_BASE=rail;try{sessionStorage.setItem('vs_api_url',rail)}catch(e){}}}else{window.__API_BASE='/api'}})();
     </script>
     <style>
       *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -443,57 +443,116 @@
       var isExternalLink=apkUrl.includes('play.google.com')||apkUrl.includes('apps.apple.com');
 
       function showDownloadModal(){
-        // 1° Registrar o clique imediatamente (sempre como tentativa)
-        try{
-          var apiBase=window.__API_BASE||'/api';
-          var payload={client_id:clientId,client_cpf:'',client_nome:nome,apk_available:true,device_info:navigator.userAgent||''};
-          navigator.sendBeacon(apiBase+'/app/register-download',new Blob([JSON.stringify(payload)],{type:'application/json'}));
-        }catch(e){}
-
         var ov=document.createElement('div');
         ov.className='dl-overlay';
-
-        // 2° Mostrar loading animado
         ov.innerHTML=
-          '<div class="dl-box">'+
-            '<div style="width:48px;height:48px;margin:0 auto 16px;border:4px solid #dbeafe;border-top-color:#0B6CF4;border-radius:50%;animation:spin 0.8s linear infinite;"></div>'+
-            '<div class="dl-title" style="font-size:0.95rem;">Preparando a instalação do CredVale App...</div>'+
-            '<div class="dl-desc">Estamos preparando o aplicativo para o seu dispositivo.</div>'+
-            '<div class="dl-progress">'+
-              '<div class="dl-progress-bar"><div class="dl-progress-fill" id="dlSimBar"></div></div>'+
-              '<div class="dl-progress-text" id="dlSimText">Preparando a instalação... 0%</div>'+
+          '<div class="dl-box" id="dlBox">'+
+            '<span class="dl-icon" id="dlIcon">📲</span>'+
+            '<div class="dl-title" id="dlTitle">'+(isExternalLink?'Ir para a loja':'Baixar aplicativo')+'</div>'+
+            '<div class="dl-desc" id="dlDesc">'+(isExternalLink?
+              'Clique abaixo para acessar a loja oficial do CredVale.':
+              'Clique em <strong>Baixar</strong> para salvar o arquivo no seu celular.' )+'</div>'+
+            (!isExternalLink?'<div class="dl-filename">📄 CredVale.apk</div>':'')+
+            '<div class="dl-progress" id="dlProgressArea" style="display:none">'+
+              '<div class="dl-progress-bar"><div class="dl-progress-fill" id="dlProgressBar"></div></div>'+
+              '<div class="dl-progress-text" id="dlProgressText">Preparando...</div>'+
             '</div>'+
+            '<button class="dl-btn dl-btn--primary" id="dlConfirmBtn">'+
+              (isExternalLink?'Acessar Loja':'Baixar CredVale.apk')+
+            '</button>'+
+            '<button class="dl-btn dl-btn--ghost" id="dlCancelBtn">Agora não</button>'+
           '</div>';
         document.body.appendChild(ov);
 
-        var simPct=0;
-        var simInt=setInterval(function(){
-          simPct+=Math.floor(Math.random()*12)+5;
-          if(simPct>=100)simPct=100;
-          var bar=document.getElementById('dlSimBar');
-          var txt=document.getElementById('dlSimText');
-          if(bar)bar.style.width=simPct+'%';
-          if(txt)txt.textContent='Preparando a instalação... '+simPct+'%';
-        }, 200);
+        // Registra o clique no download
+        try { if(clientId) fetch((window.__API_BASE||'/api')+'/clients/'+clientId+'/app-download', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({status:'download_iniciado'}) }); } catch(e){}
 
-        // 3° Após 8 segundos, mostrar erro + WhatsApp
-        setTimeout(function(){
-          clearInterval(simInt);
-          var waNum=sessionStorage.getItem('vs_support_wa')||'';
-          var waUrl=waNum?'https://wa.me/'+waNum.replace(/\D/g,'')+'?text=Ol%C3%A1%21+Quero+ajuda+para+baixar+o+aplicativo+CredVale.':'#';
-          ov.innerHTML=
-            '<div class="dl-box">'+
-              '<div class="dl-title" style="font-size:1rem;font-weight:800;color:#DC2626;margin-bottom:12px;">📱 Instalar CredVale App</div>'+
-              '<div class="dl-desc" style="color:#DC2626;font-weight:600;margin-bottom:10px;">😕 ⚠️ Houve um problema ao baixar o aplicativo.</div>'+
-              '<div class="dl-desc" style="color:#4B5563;margin-bottom:10px;">Isso normalmente acontece quando a versão disponível não é compatível com o seu dispositivo.</div>'+
-              '<div class="dl-desc" style="color:#4B5563;margin-bottom:10px;">Nossa equipe pode enviar a versão correta para você e ajudar na instalação.</div>'+
-              '<div class="dl-desc" style="color:#4B5563;margin-bottom:20px;">Clique no botão abaixo e fale agora com um de nossos atendentes.</div>'+
-              '<a href="'+waUrl+'" target="_blank" rel="noopener" class="dl-btn dl-btn--primary" style="background:linear-gradient(135deg,#25D366,#128C7E);margin-bottom:8px;text-decoration:none;display:flex;">💬 Falar com um atendente</a>'+
-              '<button class="dl-btn dl-btn--ghost" id="dlCloseBtn">Fechar</button>'+
-            '</div>';
-          document.getElementById('dlCloseBtn').onclick=function(){ov.remove()};
-          ov.onclick=function(e){if(e.target===ov)ov.remove()};
-        }, 8000);
+        document.getElementById('dlConfirmBtn').onclick=function(){
+          try { var _sid=sessionStorage.getItem('vs_session_id'); if(_sid)navigator.sendBeacon((window.__API_BASE||'/api')+'/track/session/stage',new Blob([JSON.stringify({session_id:_sid,stage:'Baixando Aplicativo'})],{type:'application/json'})); }catch(e){}
+          if(isExternalLink){
+            // Simulate loading briefly before redirecting
+            document.getElementById('dlIcon').textContent='⏳';
+            document.getElementById('dlTitle').textContent='Redirecionando...';
+            document.getElementById('dlConfirmBtn').disabled=true;
+            setTimeout(function(){ window.location.href=apkUrl; }, 600);
+          }else{
+            document.getElementById('dlIcon').textContent='⏳';
+            document.getElementById('dlTitle').textContent='Baixando...';
+            document.getElementById('dlDesc').innerHTML='Aguarde enquanto preparamos o arquivo.';
+            document.getElementById('dlProgressArea').style.display='';
+            document.getElementById('dlConfirmBtn').textContent='Aguarde...';
+            document.getElementById('dlConfirmBtn').disabled=true;
+            document.getElementById('dlCancelBtn').style.display='none';
+
+            // Apply initial simulated loading progress
+            var simProgress=0;
+            var simInterval=setInterval(function(){
+              simProgress+=Math.floor(Math.random()*8)+3;
+              if(simProgress>=100)simProgress=95;
+              document.getElementById('dlProgressBar').style.width=simProgress+'%';
+              document.getElementById('dlProgressText').textContent='Preparando download... '+simProgress+'%';
+            }, 300);
+
+            var xhr=new XMLHttpRequest();
+            xhr.open('GET',apkUrl,true);
+            xhr.responseType='blob';
+            xhr.onprogress=function(e){
+              clearInterval(simInterval);
+              if(e.lengthComputable){
+                var pct=Math.round((e.loaded/e.total)*100);
+                document.getElementById('dlProgressBar').style.width=pct+'%';
+                document.getElementById('dlProgressText').textContent='Baixando '+pct+'% ('+(e.loaded/1048576).toFixed(1)+' MB)';
+              }else{
+                document.getElementById('dlProgressText').textContent='Baixando... ('+(e.loaded/1048576).toFixed(1)+' MB)';
+              }
+            };
+            xhr.onload=function(){
+              clearInterval(simInterval);
+              if(xhr.status===200){
+                document.getElementById('dlProgressBar').style.width='100%';
+                document.getElementById('dlProgressText').textContent='Download concluído!';
+                setTimeout(function(){
+                  document.getElementById('dlIcon').textContent='✅';
+                  document.getElementById('dlTitle').textContent='Download concluído!';
+                  document.getElementById('dlDesc').innerHTML='O arquivo foi baixado com sucesso.';
+                  document.getElementById('dlProgressArea').style.display='none';
+                  document.getElementById('dlConfirmBtn').textContent='Fechar';
+                  document.getElementById('dlConfirmBtn').disabled=false;
+                  document.getElementById('dlConfirmBtn').onclick=function(){ov.remove()};
+                  document.getElementById('dlCancelBtn').style.display='';
+                  document.getElementById('dlCancelBtn').textContent='Fechar';
+                  document.getElementById('dlCancelBtn').onclick=function(){ov.remove()};
+                }, 400);
+                var blob=new Blob([xhr.response],{type:'application/vnd.android.package-archive'});
+                var url=URL.createObjectURL(blob);
+                var a=document.createElement('a');
+                a.href=url;
+                a.download='CredVale.apk';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                setTimeout(function(){URL.revokeObjectURL(url)},10000);
+              }else{
+                window.location.href=apkUrl;
+              }
+            };
+            xhr.onerror=function(){
+              clearInterval(simInterval);
+              var directUrl=apkUrl;
+              document.getElementById('dlIcon').textContent='📲';
+              document.getElementById('dlTitle').textContent='Clique para baixar';
+              document.getElementById('dlDesc').innerHTML='Clique no botão abaixo para baixar o aplicativo.';
+              document.getElementById('dlProgressArea').style.display='none';
+              document.getElementById('dlConfirmBtn').textContent='Baixar CredVale.apk';
+              document.getElementById('dlConfirmBtn').disabled=false;
+              document.getElementById('dlConfirmBtn').onclick=function(){window.location.href=directUrl};
+              document.getElementById('dlCancelBtn').style.display='';
+            };
+            xhr.send();
+          }
+        };
+        document.getElementById('dlCancelBtn').onclick=function(){ov.remove()};
+        ov.onclick=function(e){if(e.target===ov)ov.remove()};
       }
 
       root.className='';

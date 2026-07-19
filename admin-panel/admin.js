@@ -82,7 +82,7 @@
     if (old) old.remove();
     const el = document.createElement('div');
     el.id = 'adminToast';
-    el.style.cssText = `position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:9999;padding:14px 24px;border-radius:12px;font-size:0.875rem;font-weight:600;color:#fff;background:${type === 'success' ? '#16C65B' : '#DC2626'};box-shadow:0 8px 32px rgba(0,0,0,0.2);animation:toastIn 0.3s ease;max-width:90%;text-align:center;backdrop-filter:blur(8px);`;
+    el.style.cssText = `position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:9999;padding:14px 24px;border-radius:12px;font-size:0.875rem;font-weight:600;color:#fff;background:${type === 'success' ? '#10B981' : '#DC2626'};box-shadow:0 8px 32px rgba(0,0,0,0.3);animation:toastIn 0.3s ease;max-width:90%;text-align:center;`;
     el.textContent = msg;
     document.body.appendChild(el);
     setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity 0.3s'; setTimeout(() => el.remove(), 300); }, 3000);
@@ -137,12 +137,7 @@
 
   function showSmsModal(msg, waNum, onSendSms) {
     var isSending = false;
-    
-    // Remove modais SMS anteriores para evitar empilhamento
-    document.querySelectorAll('.sms-modal-overlay').forEach(function(el){ el.remove(); });
-    
     const overlay = document.createElement('div');
-    overlay.className = 'sms-modal-overlay';
     overlay.style.cssText = 'position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:16px;';
     overlay.innerHTML = `
       <div style="background:#203A57;border-radius:24px;padding:28px 20px;max-width:440px;width:100%;border:1px solid rgba(255,255,255,0.08);box-shadow:0 30px 80px rgba(0,0,0,0.45);">
@@ -163,15 +158,14 @@
     var txtMsg = overlay.querySelector('.s-msg');
     var statusEl = overlay.querySelector('.s-status');
 
-    // Fecha com 1 clique no X ou no fundo
     var close = function(){ overlay.remove(); };
     overlay.addEventListener('click', function(e) { if (e.target === overlay) close(); });
-    overlay.querySelector('.s-close').onclick = function() { close(); };
+    overlay.querySelector('.s-close').addEventListener('click', function(e) { e.stopPropagation(); close(); });
 
     overlay.querySelector('.s-wa').addEventListener('click', function(e) {
       e.stopPropagation();
       var texto = txtMsg ? txtMsg.value : msg;
-      var waLink = 'https://wa.me/' + waNum + '?text=' + encodeURIComponent(texto);
+      var waLink = 'https://wa.me/55' + waNum + '?text=' + encodeURIComponent(texto);
       window.open(waLink, '_blank');
       close();
     });
@@ -229,36 +223,32 @@
 
   function renderPagination(totalPages, current, onChange) {
     if (totalPages <= 1) return '';
-    let html = '<div class="pagination">';
-    html += `<button data-page="${current - 1}" ${current <= 1 ? 'disabled' : ''}>◀</button>`;
+    let html = '<div style="display:flex;gap:6px;align-items:center;justify-content:center;margin-top:16px;">';
+    html += `<button class="admin-btn-icon" data-page="${current - 1}" ${current <= 1 ? 'disabled style="opacity:0.3"' : ''}>◀</button>`;
     const start = Math.max(1, current - 2);
     const end = Math.min(totalPages, current + 2);
-    if (start > 1) html += `<button data-page="1">1</button>${start > 2 ? '<span style="color:var(--color-text-muted);font-size:0.78rem;">…</span>' : ''}`;
+    if (start > 1) html += `<button class="admin-btn-icon" data-page="1">1</button>${start > 2 ? '<span style="color:var(--color-text-muted);font-size:0.75rem;">...</span>' : ''}`;
     for (let i = start; i <= end; i++) {
-      html += `<button data-page="${i}" class="${i === current ? 'active' : ''}">${i}</button>`;
+      html += `<button class="admin-btn-icon" data-page="${i}" style="${i === current ? 'background:var(--color-primary);color:#fff;font-weight:700;' : ''}">${i}</button>`;
     }
-    if (end < totalPages) html += `${end < totalPages - 1 ? '<span style="color:var(--color-text-muted);font-size:0.78rem;">…</span>' : ''}<button data-page="${totalPages}">${totalPages}</button>`;
-    html += `<button data-page="${current + 1}" ${current >= totalPages ? 'disabled' : ''}>▶</button>`;
+    if (end < totalPages) html += `${end < totalPages - 1 ? '<span style="color:var(--color-text-muted);font-size:0.75rem;">...</span>' : ''}<button class="admin-btn-icon" data-page="${totalPages}">${totalPages}</button>`;
+    html += `<button class="admin-btn-icon" data-page="${current + 1}" ${current >= totalPages ? 'disabled style="opacity:0.3"' : ''}>▶</button>`;
     html += '</div>';
     return html;
   }
 
   function initApp() {
-    const isOperator = currentUser && currentUser.role === 'operador';
-
-    const navItems = isOperator ? [
-      { key: 'fichas', icon: '📋', label: 'Fichas CredVale' },
-      { key: 'online', icon: '🟢', label: 'Online' },
-    ] : [
+    const navItems = [
       { key: 'dashboard', icon: '📊', label: 'Dashboard' },
       { key: 'separator-geral', separator: true, label: 'GERENCIAR' },
       { key: 'configuracoes', icon: '⚙️', label: 'Configurações' },
       { key: 'aplicativo', icon: '📱', label: 'Aplicativo' },
       { key: 'pagamento-config', icon: '🟢', label: 'PIX' },
-
+      { key: 'popup-config', icon: '🪟', label: 'Pop-up' },
       { key: 'sms', icon: '📨', label: 'SMS' },
       { key: 'pagamentos', icon: '💳', label: 'Pagamentos' },
       { key: 'clients', icon: '👥', label: 'Clientes' },
+      { key: 'produtos', icon: '📦', label: 'Produtos' },
       { key: 'online', icon: '🟢', label: 'Online' },
       { key: 'separator-sistema', separator: true, label: 'SISTEMA' },
       { key: 'api', icon: '🔑', label: 'API CPF' },
@@ -268,13 +258,10 @@
       { key: 'trocar-senha', icon: '🔐', label: 'Trocar Senha' },
     ];
 
-    var brand = $('#adminSidebar .admin-sidebar__brand span');
-    if (brand && isOperator) brand.textContent = '📋 Fichas CredVale';
-
     const nav = $('#adminNav');
     nav.innerHTML = navItems
       .map(item => item.separator
-        ? `<div class="admin-nav__separator">${item.label}</div>`
+        ? `<div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--color-text-muted);padding:16px 12px 6px;font-weight:700;">${item.label}</div>`
         : `<a href="#" class="admin-nav__link" data-route="${item.key}"><span class="admin-nav__icon">${item.icon}</span>${item.label}</a>`)
       .join('');
 
@@ -302,8 +289,7 @@
       navigateTo(route);
     });
 
-    const defaultRoute = isOperator ? 'fichas' : 'dashboard';
-    const initialRoute = location.hash.replace('#', '') || defaultRoute;
+    const initialRoute = location.hash.replace('#', '') || 'dashboard';
     navigateTo(initialRoute);
   }
 
@@ -318,21 +304,18 @@
     const main = $('#adminMain');
     const authed = await checkAuth();
     if (!authed) return;
-    main.innerHTML = '<div class="loading-spinner">Carregando…</div>';
+    main.innerHTML = '<div style="text-align:center; padding:60px; color:var(--color-text-muted);">Carregando...</div>';
     try {
-      var isOp = currentUser && currentUser.role === 'operador';
-      if (isOp && route === 'fichas') { await renderFichas(main); return; }
-      if (isOp && route !== 'online') { await renderFichas(main); return; }
       switch (route) {
         case 'dashboard': await renderDashboard(main); break;
         case 'configuracoes': await renderConfiguracoes(main); break;
         case 'aplicativo': await renderAplicativo(main); break;
         case 'pagamento-config': await renderPagamentoConfig(main); break;
-
+        case 'popup-config': await renderPopupConfig(main); break;
         case 'sms': await renderSmsPage(main); break;
         case 'pagamentos': await renderPagamentos(main); break;
-        case 'clients': await renderClients(main, null, isOp); break;
-        case 'fichas':
+        case 'clients': await renderClients(main); break;
+        case 'produtos': await renderProdutos(main); break;
         case 'online': renderOnline(main); break;
         case 'api': await renderApiPage(main); break;
         case 'notificacoes': await renderNotificacoes(main); break;
@@ -367,7 +350,15 @@
           <div class="admin-card__value" style="font-size:2rem;color:#f59e0b;">${k.onlineSessions ?? 0}</div>
           <div style="font-size:0.65rem;color:var(--color-text-muted);margin-top:2px;">usuários ativos agora</div>
         </article>
-
+        <article class="admin-card" style="background:linear-gradient(135deg,rgba(239,68,68,0.12),rgba(239,68,68,0.05));border:1px solid rgba(239,68,68,0.2);">
+          <div class="admin-card__label">Cliques Totais</div>
+          <div class="admin-card__value" style="font-size:2rem;color:#ef4444;">${k.totalClicks ?? 0}</div>
+          <div style="font-size:0.65rem;color:var(--color-text-muted);margin-top:2px;">PIX + Push + Suporte</div>
+        </article>
+        <article class="admin-card" style="background:linear-gradient(135deg,rgba(251,146,60,0.12),rgba(251,146,60,0.05));border:1px solid rgba(251,146,60,0.2);">
+          <div class="admin-card__label">Push Clicado</div>
+          <div class="admin-card__value" style="font-size:2rem;color:var(--color-orange);">${k.totalPushinpayClicks ?? 0}</div>
+        </article>
         <article class="admin-card" style="background:linear-gradient(135deg,rgba(139,92,246,0.12),rgba(139,92,246,0.05));border:1px solid rgba(139,92,246,0.2);">
           <div class="admin-card__label">Visitantes na Tela</div>
           <div class="admin-card__value" style="font-size:2rem;color:#a78bfa;">${visitantes.length}</div>
@@ -397,7 +388,7 @@
               var modelo = c.modelo || '—';
               var fab = c.fabricante ? c.fabricante : '';
               return '<tr>' +
-                '<td>' + (isOnline ? '<span class="online-dot" style="margin-right:6px;vertical-align:middle;"></span>' : '') + c.nome + '</td>' +
+                '<td>' + (isOnline ? '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#10B981;margin-right:6px;vertical-align:middle;"></span>' : '') + c.nome + '</td>' +
                 '<td>' + formatCpf(c.cpf) + '</td>' +
                 '<td>' + (c.whatsapp || '—') + '</td>' +
                 '<td style="font-size:0.75rem;">' + disp + '</td>' +
@@ -455,7 +446,7 @@
             if (s.modelo && s.dispositivo !== 'iPhone') disp += ' · ' + s.modelo;
             var fab = s.fabricante ? s.fabricante + ' ' : '';
             return '<tr>' +
-              '<td><span style="display:inline-flex;align-items:center;gap:6px;color:#16C65B;font-weight:600;"><span class="online-dot"></span> Online</span></td>' +
+              '<td><span style="display:inline-flex;align-items:center;gap:4px;color:#10B981;font-weight:600;"><span style="width:8px;height:8px;border-radius:50%;background:#10B981;display:inline-block;animation:pulse 2s infinite;"></span> Online</span></td>' +
               '<td><strong>' + (s.nome || 'Visitante') + '</strong></td>' +
               '<td style="font-family:monospace;font-size:0.75rem;">' + (s.cpf || '—') + '</td>' +
               '<td><span class="badge badge--primary" style="font-size:0.7rem;">' + (s.stage || '—') + '</span></td>' +
@@ -517,7 +508,7 @@
       var devIcon = '💻';
       if (c.dispositivo === 'Android' || c.dispositivo === 'Celular') devIcon = '📱';
       else if (c.dispositivo === 'iPhone') devIcon = '📱';
-      var waLink = c.whatsapp ? 'https://wa.me/' + c.whatsapp.replace(/\D/g, '') : null;
+      var waLink = c.whatsapp ? 'https://wa.me/55' + c.whatsapp.replace(/\D/g, '') : null;
 
       var browserLabel = c.navegador || '—';
       if (c.navegador && c.navegador_versao) browserLabel += ' ' + c.navegador_versao;
@@ -540,8 +531,10 @@
               <div><strong>E-mail:</strong> ${c.email || '—'}</div>
               <div><strong>Status:</strong> <span class="badge badge--${statusColor(c.status)}">${c.status}</span></div>
               <div><strong>Limite:</strong> ${c.limite_aprovado ? fmtMoney(c.limite_aprovado) : '—'}</div>
-              <div><strong>Plano:</strong> ${c.plano_escolhido === 'plano_166' ? '<span style="color:#4CC8A4;font-weight:700;">✅ Com Plano (R$ 1,66/mês)</span>' : c.plano_escolhido === 'sem_plano' ? '<span style="color:#94a3b8;">Sem Plano</span>' : '<span style="color:#f59e0b;">⏳ Aguardando escolha</span>'}</div>
+              <div><strong>Produto:</strong> ${c.produto_escolhido || '—'}</div>
               <div><strong>Credencial:</strong> ${c.senha_visivel ? '<span style="color:#10B981;font-weight:600;">✅ ' + c.senha_visivel + '</span>' : c.senha_hash ? '<span style="color:#10B981;font-weight:600;">✅ Criada</span>' : '<span style="color:#94a3b8;">—</span>'}</div>
+              <div><strong>Download do aplicativo:</strong> ${c.app_download_clicked_at ? '<span style="color:#10B981;font-weight:600;">🟢 Sim</span>' : '<span style="color:#94a3b8;">⚪ Não</span>'}</div>
+              ${c.app_download_clicked_at ? '<div style="font-size:0.78rem;color:var(--color-text-muted);padding-left:16px;">Status: ' + (c.app_download_status === 'aplicativo_indisponivel' ? '<span style="color:#f59e0b;">Aplicativo indisponível</span>' : '<span style="color:#10B981;">Download iniciado</span>') + ' · Último clique: ' + fmtDateTime(c.app_download_clicked_at) + '</div>' : ''}
               <div><strong>Cadastro:</strong> ${fmtDateTime(c.created_at)}</div>
             </div>
           </section>
@@ -556,10 +549,6 @@
               <div><strong>Primeiro acesso:</strong> ${c.dispositivo_identificado_em ? fmtDateTime(c.dispositivo_identificado_em) : (c.created_at ? fmtDateTime(c.created_at) : '—')}</div>
               <div><strong>Última atividade:</strong> ${c.dispositivo_atualizado_em ? fmtDateTime(c.dispositivo_atualizado_em) : (c.updated_at ? fmtDateTime(c.updated_at) : '—')}</div>
               ${c.status === 'aprovado' && c.whatsapp ? `<div style="margin-top:10px;"><button class="btn btn--primary btn--sm" data-action="resend-shortcode" data-id="${c.id}" data-nome="${c.nome}" data-whatsapp="${c.whatsapp || ''}" title="Reenviar Short Code">📨 Reenviar Short Code</button></div>` : ''}
-              <div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.06);">
-                <div><strong>Tentou baixar o aplicativo:</strong></div>
-                <div style="margin-top:4px;">${c.download_clicked_at ? '<span style="color:#10B981;font-weight:600;">🟢 Sim</span><br><span style="font-size:0.75rem;color:var(--color-text-muted);">Último clique: ' + fmtDateTime(c.download_clicked_at) + '</span>' : '<span style="color:#94a3b8;">⚪ Não</span>'}</div>
-              </div>
             </div>
           </section>
           <section class="admin-card">
@@ -572,12 +561,12 @@
           </section>
         </div>
         <section class="admin-card" style="margin-top:16px;">
-          <h2 class="admin-form__section-title">📝 Anotações</h2>
-          <textarea id="clientNotes" style="width:100%;min-height:130px;background:#FFFFFF;border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:0.85rem;color:#000000;line-height:1.5;white-space:pre-wrap;word-break:break-word;text-align:left;resize:vertical;border:1px solid #D1D5DB;font-family:inherit;" placeholder="Digite aqui suas anotações sobre este cliente..."></textarea>
-          <div style="display:flex;align-items:center;gap:12px;">
-            <button id="btnSaveNotes" class="btn btn--primary">💾 Salvar</button>
-            <div id="notesStatus" style="font-size:0.8rem;color:#10B981;display:none;"></div>
-          </div>
+          <h2 class="admin-form__section-title">Pagamentos (${pays.length}) — Total: ${fmtMoney(pays.filter(p => p.status === 'pago').reduce((s, p) => s + (p.valor || 0), 0))}</h2>
+          ${!pays.length ? '<p style="color:var(--color-text-muted);">Nenhum pagamento</p>' : '<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Método</th><th>Detalhes</th><th>Valor</th><th>Status</th><th>Transação</th><th>Data</th></tr></thead><tbody>' + pays.map(p => {
+            const metodoLabel = p.metodo === 'pix' ? 'PIX' : p.metodo === 'pushinpay' ? 'PushinPay' : p.metodo === 'cartao' ? 'Cartão' : p.metodo;
+            const detalhes = p.metodo === 'cartao' ? (p.card_brand ? p.card_brand.toUpperCase() + ' ' : '') + '**** ' + (p.card_last_four || '----') + ' · ' + (p.parcelas || 1) + 'x' : p.metodo === 'pix' ? (p.pix_chave ? 'Payload gerado' : '') : '';
+            return '<tr><td>' + metodoLabel + '</td><td style="font-size:0.78rem;color:var(--color-text-muted);">' + detalhes + '</td><td>' + fmtMoney(p.valor) + '</td><td><span class="badge badge--' + statusColor(p.status) + '">' + p.status + '</span></td><td style="font-family:monospace;font-size:0.75rem;">' + (p.transaction_id || (p.id ? p.id.slice(0,8) : '') || '—') + '</td><td>' + fmtDate(p.paid_at || p.created_at) + '</td></tr>';
+          }).join('') + '</tbody></table></div>'}
         </section>
       `;
       var smsBtn = main.querySelector('[data-action="sms-from-client"]');
@@ -591,46 +580,6 @@
           var numero = c.whatsapp ? c.whatsapp.replace(/\D/g, '') : '';
           showSmsModal(msg, numero);
         });
-      }
-
-      // 📝 Carregar anotações
-      // Placeholder style
-      if (!document.getElementById('notesPlaceholderStyle')) {
-        var ps = document.createElement('style');
-        ps.id = 'notesPlaceholderStyle';
-        ps.textContent = '#clientNotes::placeholder{color:#6B7280;opacity:1}';
-        document.head.appendChild(ps);
-      }
-      var notesTextarea = document.getElementById('clientNotes');
-      if (notesTextarea) {
-        API.getClientNotes(id).then(function(notesData) {
-          notesTextarea.value = notesData.observacoes || '';
-        }).catch(function() {});
-
-        var saveBtn = document.getElementById('btnSaveNotes');
-        var notesStatus = document.getElementById('notesStatus');
-        if (saveBtn) {
-          saveBtn.addEventListener('click', async function() {
-            var texto = notesTextarea.value;
-            saveBtn.disabled = true;
-            saveBtn.textContent = '⏳ Salvando...';
-            notesStatus.style.display = 'none';
-            try {
-              await API.saveClientNotes(id, texto);
-              notesStatus.style.display = '';
-              notesStatus.textContent = '✅ Anotação salva com sucesso';
-              notesStatus.style.color = '#10B981';
-              setTimeout(function() { notesStatus.style.display = 'none'; }, 3000);
-            } catch (err) {
-              notesStatus.style.display = '';
-              notesStatus.textContent = '❌ Erro: ' + (err.message || 'Falha ao salvar');
-              notesStatus.style.color = '#EF4444';
-            } finally {
-              saveBtn.disabled = false;
-              saveBtn.textContent = '💾 Salvar';
-            }
-          });
-        }
       }
     } catch (e) {
       showToast('Erro ao carregar cliente: ' + e.message, 'error');
@@ -919,32 +868,6 @@
         </div>
         <button id="btnSaveSms" class="btn btn--primary" style="margin-top:var(--space-lg);">SALVAR SMS</button>
       </section>
-      <section class="admin-card admin-form" style="margin-top:var(--space-md);">
-        <h2 class="admin-form__section-title">👤 Área do Cliente</h2>
-        <p style="font-size:0.8rem;color:var(--color-text-muted);margin-bottom:12px;">Link usado no botão "Ativar Plano" e "Adquirir Plano" da Área do Cliente.</p>
-        <div class="form-grid">
-          <div class="form-group form-group--full">
-            <label>Link da Área do Cliente</label>
-            <input type="url" id="settClientAreaLink" value="${data.settings.client_area_link || ''}" placeholder="https://pagamento.exemplo.com/checkout">
-          </div>
-          <div class="form-group form-group--full">
-            <label>Link para Pagamento do Plano</label>
-            <input type="url" id="settPaymentLink" value="${data.settings.payment_link || ''}" placeholder="https://pagamento.exemplo.com/pagar-plano">
-            <span style="font-size:0.75rem;color:var(--color-text-muted);margin-top:4px;display:block;">Este link será usado no botão "Pagar Plano" da Área do Cliente.</span>
-          </div>
-        </div>
-        <button id="btnSaveClientAreaLink" class="btn btn--primary" style="margin-top:var(--space-lg);">SALVAR LINK</button>
-        <button id="btnSavePaymentLink" class="btn btn--primary" style="margin-top:var(--space-md);">SALVAR LINK DE PAGAMENTO</button>
-      </section>
-      <section class="admin-card admin-form" style="margin-top:var(--space-md);">
-        <h2 class="admin-form__section-title">🔒 Aviso Institucional</h2>
-        <p style="font-size:0.8rem;color:var(--color-text-muted);margin-bottom:12px;">Pop-up de segurança exibido automaticamente ao carregar a página inicial.</p>
-        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:12px 16px;background:rgba(59,130,246,0.06);border:1px solid rgba(59,130,246,0.15);border-radius:12px;">
-          <input type="checkbox" id="settSecurityPopupEnabled" ${data.settings.security_popup_enabled === 'true' ? 'checked' : ''} style="width:18px;height:18px;cursor:pointer;">
-          <span style="font-size:0.85rem;font-weight:600;color:var(--color-text-light);">Exibir pop-up institucional ao carregar a página</span>
-        </label>
-        <button id="btnSaveSecurityPopup" class="btn btn--primary" style="margin-top:var(--space-lg);">SALVAR</button>
-      </section>
     `;
     $('#btnSaveConfig').addEventListener('click', async () => {
       try {
@@ -974,30 +897,6 @@
       try {
         await API.saveSettings({ sms_app_link: $('#settSmsAppLink').value });
         showToast('Link SMS salvo!');
-      } catch (e) {
-        showToast('Erro ao salvar: ' + e.message, 'error');
-      }
-    });
-    $('#btnSaveClientAreaLink').addEventListener('click', async () => {
-      try {
-        await API.saveSettings({ client_area_link: $('#settClientAreaLink').value });
-        showToast('Link salvo!');
-      } catch (e) {
-        showToast('Erro: ' + e.message, 'error');
-      }
-    });
-    $('#btnSavePaymentLink').addEventListener('click', async () => {
-      try {
-        await API.saveSettings({ payment_link: $('#settPaymentLink').value });
-        showToast('Link de pagamento salvo!');
-      } catch (e) {
-        showToast('Erro: ' + e.message, 'error');
-      }
-    });
-    $('#btnSaveSecurityPopup').addEventListener('click', async () => {
-      try {
-        await API.saveSettings({ security_popup_enabled: $('#settSecurityPopupEnabled').checked ? 'true' : 'false' });
-        showToast('Configuração salva!');
       } catch (e) {
         showToast('Erro ao salvar: ' + e.message, 'error');
       }
@@ -1116,6 +1015,98 @@
     });
   }
 
+  async function renderPopupConfig(container) {
+    const data = await API.getSettings();
+    let popupConfig = {};
+    try { if (data.settings.popup_config) popupConfig = JSON.parse(data.settings.popup_config); } catch {}
+    container.innerHTML = `
+      <header class="admin-header">
+        <h1 class="admin-header__title">🪟 Pop-up Promocional</h1>
+      </header>
+      <section class="admin-card admin-form" id="popupConfigSection">
+        <p style="font-size:0.85rem;color:var(--color-text-muted);margin-bottom:20px;background:rgba(59,130,246,0.08);padding:14px;border-radius:8px;border:1px solid rgba(59,130,246,0.2);">
+          O pop-up aparece na <strong>página inicial</strong> ap\u00f3s <strong>700ms</strong>, com timer configur\u00e1vel e fecha automaticamente. O usu\u00e1rio v\u00ea apenas uma vez por sess\u00e3o.
+        </p>
+        <div class="form-grid" id="popupConfigForm">
+          <div class="form-group form-group--full">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+              <input type="checkbox" id="settPopupEnabled" ${data.settings.popup_enabled === 'true' ? 'checked' : ''} style="width:18px;height:18px;cursor:pointer;">
+              <span style="font-size:0.85rem;">Pop-up ativo</span>
+            </label>
+          </div>
+          <div class="form-group form-group--full">
+            <label>Título</label>
+            <input type="text" id="settPopupTitle" class="pc-preview-input" value="${(data.settings.popup_title || '').replace(/"/g,'&quot;')}" placeholder="Ex: Mais economia. Mais praticidade. Mais sa\u00fade.">
+          </div>
+          <div class="form-group form-group--full">
+            <label>Subtítulo / Texto de apoio</label>
+            <textarea id="settPopupMessage" class="pc-preview-input" rows="3" style="width:100%;font-family:monospace;font-size:0.8125rem;padding:10px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;color:#1e293b;" placeholder="Ex: Descontos de at\u00e9 75% em medicamentos...">${(data.settings.popup_message || '').replace(/"/g,'&quot;')}</textarea>
+          </div>
+          <div class="form-group form-group--half">
+            <label>Texto do CTA</label>
+            <input type="text" id="settPopupCtaText" class="pc-preview-input" value="${(data.settings.popup_cta_text || '').replace(/"/g,'&quot;')}" placeholder="Ex: Solicitar Vale Sa\u00fade">
+          </div>
+          <div class="form-group form-group--half">
+            <label>Link do CTA</label>
+            <input type="url" id="settPopupCtaLink" value="${(data.settings.popup_cta_link || '').replace(/"/g,'&quot;')}" placeholder="Ex: https://credvale.edgeone.run/cadastro">
+          </div>
+          <div class="form-group form-group--half">
+            <label>Fonte</label>
+            <select id="settPopupFont" class="pc-preview-input" style="padding:10px 12px;border:1px solid var(--color-gray-200);border-radius:var(--radius-sm);font-size:0.875rem;width:100%;">
+              ${function(){ var html='',fonts=['Inter','Roboto','Poppins','Open Sans','Montserrat','Nunito','Lato','Raleway'],cur=data.settings.popup_font||'Inter'; for(var i=0;i<fonts.length;i++){ html+='<option value="'+fonts[i]+'"'+(cur===fonts[i]?' selected':'')+'>'+fonts[i]+'</option>'; } return html; }()}
+            </select>
+          </div>
+          <div class="form-group form-group--half">
+            <label>Tempo na tela (segundos)</label>
+            <input type="number" id="settPopupDuration" class="pc-preview-input" value="${parseInt(data.settings.popup_duration) || 10}" min="3" max="60" style="padding:10px 12px;border:1px solid var(--color-gray-200);border-radius:var(--radius-sm);font-size:0.875rem;width:100%;">
+          </div>
+        </div>
+        <div style="margin-top:var(--space-lg);">
+          <h3 style="font-size:0.85rem;font-weight:700;color:#e2e8f0;margin-bottom:12px;">📱 Pr\u00e9via</h3>
+          <div id="popupPreview" style="background:rgba(15,23,42,0.95);border-radius:16px;padding:32px 24px;min-height:240px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;border:1px solid rgba(255,255,255,0.08);"></div>
+        </div>
+        <button id="btnSavePopupConfig" class="btn btn--primary" style="margin-top:var(--space-lg);">SALVAR POP-UP</button>
+      </section>
+    `;
+    function renderPopupPreview() {
+      var title = $('#settPopupTitle');
+      var msg = $('#settPopupMessage');
+      var ctaText = $('#settPopupCtaText');
+      var font = $('#settPopupFont');
+      var preview = $('#popupPreview');
+      if (!preview) return;
+      var t = title ? title.value : '';
+      var m = msg ? msg.value : '';
+      var c = ctaText ? ctaText.value : '';
+      var f = font ? font.value : 'Inter';
+      preview.style.fontFamily = f;
+      preview.innerHTML =
+        '<div style="background:#203A57;border-radius:20px;padding:28px 24px;max-width:320px;width:100%;text-align:center;border:1px solid rgba(255,255,255,0.08);box-shadow:0 20px 60px rgba(0,0,0,0.3);">' +
+          (t ? '<div style="font-size:1.15rem;font-weight:800;color:#e2e8f0;margin-bottom:8px;">' + escHtml(t) + '</div>' : '') +
+          (m ? '<div style="font-size:0.82rem;color:#94a3b0;line-height:1.5;margin-bottom:18px;">' + escHtml(m).replace(/\n/g,'<br>') + '</div>' : '<div style="font-size:0.82rem;color:#475569;line-height:1.5;margin-bottom:18px;font-style:italic;">Sem mensagem</div>') +
+          (c ? '<div style="display:inline-block;padding:12px 28px;border-radius:12px;background:linear-gradient(90deg,#3B82F6,#4CC8A4);color:#fff;font-size:0.85rem;font-weight:700;">' + escHtml(c) + '</div>' : '') +
+          '<div style="margin-top:14px;font-size:0.65rem;color:#475569;">\u2715</div>' +
+        '</div>';
+    }
+    $$('.pc-preview-input').forEach(function(el){ el.addEventListener('input', renderPopupPreview); });
+    renderPopupPreview();
+    $('#btnSavePopupConfig').addEventListener('click', async () => {
+      try {
+        await API.saveSettings({
+          popup_enabled: $('#settPopupEnabled').checked ? 'true' : 'false',
+          popup_title: $('#settPopupTitle').value,
+          popup_message: $('#settPopupMessage').value,
+          popup_cta_text: $('#settPopupCtaText').value,
+          popup_cta_link: $('#settPopupCtaLink').value,
+          popup_font: $('#settPopupFont').value,
+          popup_duration: String(parseInt($('#settPopupDuration').value) || 10)
+        });
+        showToast('Pop-up salvo com sucesso!');
+      } catch (e) {
+        showToast('Erro ao salvar: ' + e.message, 'error');
+      }
+    });
+  }
 
   async function renderSmsPage(container) {
     var cfg;
@@ -1432,7 +1423,7 @@
 
     const reloadPagamentos = async () => {
       const np = currentPage.pagamentos || 1;
-      container.innerHTML = '<div class="loading-spinner">Carregando...</div>';
+      container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--color-text-muted);">Carregando...</div>';
       await renderPagamentos(container, np);
     };
 
@@ -1487,17 +1478,10 @@
     });
   }
 
-  function isOperador() { return currentUser && currentUser.role === 'operador'; }
-
-  async function renderFichas(container) {
-    await renderClients(container, null, true);
-  }
-
-  async function renderClients(container, page, isOperator) {
+  async function renderClients(container, page) {
     const pageSize = 20;
     const p = page || currentPage.clients || 1;
     const filtro = currentFilter.clients || '';
-    if (isOperator === undefined) isOperator = isOperador();
     const params = `limit=${pageSize}&page=${p}${filtro ? '&status=' + filtro : ''}`;
     const data = await API.getClients(params);
     const [payments, onlineData, settingsData] = await Promise.all([
@@ -1517,21 +1501,21 @@
     const statusOptions = ['', 'pendente', 'aprovado', 'ativado', 'reprovado', 'cancelado'];
     container.innerHTML = `
       <header class="admin-header">
-        <h1 class="admin-header__title">${isOperator ? 'Fichas CredVale' : 'Clientes'}</h1>
+        <h1 class="admin-header__title">Clientes</h1>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
           <select id="clientStatusFilter" style="padding:10px 12px;border:1px solid var(--color-gray-200);border-radius:var(--radius-sm);font-size:0.875rem;">
             ${statusOptions.map(s => `<option value="${s}" ${filtro === s ? 'selected' : ''}>${s ? 'Status: ' + s : 'Todos os status'}</option>`).join('')}
           </select>
           <input type="text" id="clientSearch" placeholder="Buscar por nome ou CPF..." style="padding:10px 14px; border:1px solid var(--color-gray-200); border-radius:var(--radius-sm); font-size:0.875rem; width:200px;">
-          ${isOperator ? '' : '<button class="btn btn--primary btn--sm" onclick="exportarClientes()" title="Exportar CSV">📥 CSV</button>'}
-          ${isOperator ? '' : '<button class="btn btn--danger btn--sm" onclick="excluirTodosClientes()">🗑️ Excluir Todos</button>'}
+          <button class="btn btn--primary btn--sm" onclick="exportarClientes()" title="Exportar CSV">📥 CSV</button>
+          <button class="btn btn--danger btn--sm" onclick="excluirTodosClientes()">🗑️ Excluir Todos</button>
         </div>
       </header>
       <section class="admin-card">
         <div class="admin-table-wrap">
           <table class="admin-table">
             <thead><tr><th>Nome</th><th>CPF</th><th>WhatsApp</th><th>Dispositivo</th><th>Status</th><th>Data</th><th>Ações</th></tr></thead>
-            <tbody id="clientsTableBody">${renderClientRows(data.clients, paymentMap, onlineCpfMap, linkApp, isOperator)}</tbody>
+            <tbody id="clientsTableBody">${renderClientRows(data.clients, paymentMap, onlineCpfMap, linkApp)}</tbody>
           </table>
         </div>
         <div id="clientsPagination">${renderPagination(data.pages || 1, p, 'clients')}</div>
@@ -1541,7 +1525,7 @@
 
     const reloadClientes = async () => {
       const np = currentPage.clients || 1;
-      container.innerHTML = '<div class="loading-spinner">Carregando...</div>';
+      container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--color-text-muted);">Carregando...</div>';
       await renderClients(container, np);
     };
 
@@ -1571,8 +1555,6 @@
       await reloadClientes();
     });
 
-    if (container._listenerAttached) return;
-    container._listenerAttached = true;
     container.addEventListener('click', async (e) => {
       const pageBtn = e.target.closest('[data-page]');
       if (pageBtn && !pageBtn.disabled) {
@@ -1596,7 +1578,6 @@
       } else if (action === 'reject') {
         if (await showConfirmModal('Rejeitar cliente', 'Tem certeza que deseja rejeitar este cliente?', 'Rejeitar', 'Cancelar')) { await API.updateClientStatus(id, 'reprovado'); showToast('Cliente rejeitado'); await reloadClientes(); }
       } else if (action === 'delete') {
-        if (isOperador()) { showToast('Apenas administradores podem excluir clientes', 'error'); return; }
         await API.deleteClient(id); showToast('Cliente excluído'); await reloadClientes();
       } else if (action === 'view-payments') {
         const detailDiv = $('#clientPaymentDetail');
@@ -1687,10 +1668,9 @@
     });
   }
 
-  function renderClientRows(clients, paymentMap, onlineCpfMap, linkApp, isOperator) {
+  function renderClientRows(clients, paymentMap, onlineCpfMap, linkApp) {
     if (!clients.length) return '<tr><td colspan="7" style="text-align:center;color:var(--color-text-muted);">Nenhum cliente encontrado</td></tr>';
     if (!onlineCpfMap) onlineCpfMap = {};
-    if (isOperator === undefined) isOperator = isOperador();
     return clients.map(c => {
       var disp = c.dispositivo || '';
       var modelo = c.modelo ? c.modelo.slice(0, 60) : '';
@@ -1702,9 +1682,9 @@
       var isOnline = onlineCpfMap[c.cpf ? c.cpf.replace(/\D/g,'') : ''];
       const waNum = c.whatsapp ? c.whatsapp.replace(/\D/g, '') : '';
       const waMsg = linkApp ? fillSmsTemplate(c.nome, fmtMoney(parseFloat(c.limite_aprovado) || 0), linkApp) : '';
-      const waLink = (waNum && waMsg) ? 'https://wa.me/' + waNum + '?text=' + encodeURIComponent(waMsg) : (waNum ? 'https://wa.me/' + waNum + '?text=' + encodeURIComponent('Ol\u00e1, estou falando com voc\u00ea referente ao seu cart\u00e3o Vale Sa\u00fade.') : '');
+      const waLink = (waNum && waMsg) ? 'https://wa.me/55' + waNum + '?text=' + encodeURIComponent(waMsg) : (waNum ? 'https://wa.me/55' + waNum + '?text=' + encodeURIComponent('Ol\u00e1, estou falando com voc\u00ea referente ao seu cart\u00e3o Vale Sa\u00fade.') : '');
       return `<tr>
-        <td><strong>${isOnline ? '<span class="online-dot" style="margin-right:6px;vertical-align:middle;"></span>' : '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#CBD5E1;margin-right:6px;vertical-align:middle;"></span>'}${c.nome}</strong></td>
+        <td><strong>${isOnline ? '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#10B981;margin-right:6px;vertical-align:middle;animation:pulse 2s infinite;"></span>' : '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#475569;margin-right:6px;vertical-align:middle;"></span>'}${c.nome}</strong></td>
         <td>${formatCpf(c.cpf)}</td>
         <td>${waLink ? `<a href="${waLink}" target="_blank" style="color:var(--color-secondary);font-weight:600;text-decoration:none;" title="Abrir conversa no WhatsApp">${c.whatsapp}</a>` : (c.whatsapp || '—')} ${c.status === 'aprovado' ? `<button class="admin-btn-icon" data-action="sms" data-id="${c.id}" data-nome="${c.nome}" data-limite="${c.limite_aprovado || 0}" data-whatsapp="${c.whatsapp || ''}" title="Enviar SMS" style="vertical-align:middle;margin-left:4px;">📩</button>` : ''}</td>
         <td style="font-size:0.78rem;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${modelo}">${dispLabel}</td>
@@ -1716,7 +1696,7 @@
             <button class="admin-btn-icon" data-action="approve" data-id="${c.id}" data-limite="${c.limite_aprovado || ''}" title="Aprovar">✅</button>
             <button class="admin-btn-icon admin-btn-icon--danger" data-action="reject" data-id="${c.id}" title="Rejeitar">❌</button>
           ` : ''}
-          ${isOperator ? '' : `<button class="admin-btn-icon admin-btn-icon--danger" data-action="delete" data-id="${c.id}" title="Excluir">🗑️</button>`}
+          <button class="admin-btn-icon admin-btn-icon--danger" data-action="delete" data-id="${c.id}" title="Excluir">🗑️</button>
           ${c.status === 'aprovado' ? `<button class="admin-btn-icon" data-action="resend-sms" data-id="${c.id}" data-nome="${c.nome}" data-whatsapp="${c.whatsapp || ''}" title="Reenviar SMS">📨</button>` : ''}
         </td>
       </tr>`;
@@ -1806,13 +1786,165 @@
     });
   }
 
+  // ============================================================
+  // Produtos
+  // ============================================================
+
+  async function renderProdutos(container) {
+    const [products, plans] = await Promise.all([API.getProducts(), API.getPlans()]);
+
+    // Filtra para exibir apenas o Plano Plus (R$ 19,90) como único plano
+    const plusPlan = plans.find(p => p.nome?.toLowerCase().includes('plus') || (p.preco_mensal && parseFloat(p.preco_mensal) === 19.90));
+
+    container.innerHTML = `
+      <header class="admin-header">
+        <h1 class="admin-header__title">📦 Produtos e Planos</h1>
+        <button class="btn btn--primary btn--sm" data-action="refresh-produtos">🔄</button>
+      </header>
+      <section class="admin-card" style="margin-bottom:var(--space-md);">
+        <h2 class="admin-form__section-title" style="margin:0 0 12px;">Produtos</h2>
+        <div class="admin-table-wrap">
+          <table class="admin-table" id="produtosTable">
+            <thead><tr><th>Nome</th><th>Tipo</th><th>Preço</th><th>Ativo</th><th>Ações</th></tr></thead>
+            <tbody>${products.map(p => `
+              <tr>
+                <td>${p.nome}</td>
+                <td>${p.tipo}</td>
+                <td><span class="price-display" data-id="${p.id}" data-preco="${p.preco}" style="color:var(--color-green);font-weight:700;cursor:pointer;">${fmtMoney(p.preco)}</span></td>
+                <td>${p.ativo ? '✅' : '❌'}</td>
+                <td>
+                  <button class="btn btn--danger btn--sm" data-action="delete-produto" data-id="${p.id}">🗑️</button>
+                </td>
+              </tr>`).join('')}
+          </tbody></table>
+        </div>
+      </section>
+      <section class="admin-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <h2 class="admin-form__section-title" style="margin:0;">Planos</h2>
+        </div>
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead><tr><th>Nome</th><th>Limite</th><th>Preço Mensal</th><th>Ativo</th><th>Ações</th></tr></thead>
+            <tbody>
+              ${plusPlan ? `
+              <tr>
+                <td><strong>${plusPlan.nome}</strong></td>
+                <td>${fmtMoney(plusPlan.limite)}</td>
+                <td style="color:var(--color-green);font-weight:700;">${fmtMoney(plusPlan.preco_mensal)}</td>
+                <td>${plusPlan.ativo ? '✅' : '❌'}</td>
+                <td>
+                  <button class="btn btn--primary btn--sm" data-action="edit-plano" data-id="${plusPlan.id}" data-nome="${plusPlan.nome}" data-limite="${plusPlan.limite}" data-preco="${plusPlan.preco_mensal}">✏️</button>
+                </td>
+              </tr>
+              ` : `
+              <tr>
+                <td colspan="5" style="text-align:center;color:var(--color-text-muted);font-size:0.85rem;padding:20px;">
+                  Nenhum plano Plus encontrado. Crie o plano com nome "Plus" e preço R$ 19,90.
+                </td>
+              </tr>
+              `}
+            </tbody>
+          </table>
+        </div>
+        <div style="margin-top:12px;padding:12px 16px;background:rgba(59,130,246,0.06);border:1px solid rgba(59,130,246,0.15);border-radius:8px;">
+          <p style="margin:0;font-size:0.8rem;color:var(--color-text-muted);">
+            <strong style="color:var(--color-text-light);">Apenas Plano Plus (R$ 19,90) disponível.</strong> Os demais planos foram removidos conforme simplificação. Para criar ou editar planos, edite diretamente o banco de dados.
+          </p>
+        </div>
+      </section>
+    `;
+
+    container.addEventListener('click', async (e) => {
+      const btn = e.target.closest('[data-action]');
+      if (btn) {
+        const action = btn.dataset.action;
+        if (action === 'refresh-produtos') { navigateTo('produtos'); return; }
+        if (action === 'novo-produto') {
+          const nome = await showPromptModal('Nome do Produto', '', 'Ex: Vale Saúde Plus');
+          if (!nome) return;
+          const tipo = await showPromptModal('Tipo (virtual/fisico)', 'virtual', 'virtual ou fisico');
+          if (!tipo) return;
+          const preco = await showPromptModal('Preço (R$)', '9.99', 'Ex: 9.99');
+          if (!preco) return;
+          try { await API.createProduct({ nome, tipo, preco: parseFloat(preco) }); showToast('Produto criado'); navigateTo('produtos'); } catch (e) { showToast(e.message, 'error'); }
+          return;
+        }
+        if (action === 'delete-produto') {
+          const id = btn.dataset.id;
+          if (!await showConfirmModal('Excluir Produto', 'Tem certeza?', 'Excluir', 'Cancelar')) return;
+          try { await API.deleteProduct(id); showToast('Produto excluído'); navigateTo('produtos'); } catch (e) { showToast(e.message, 'error'); }
+          return;
+        }
+        if (action === 'edit-plano') {
+          const id = btn.dataset.id;
+          const nomeAtual = btn.dataset.nome;
+          const limiteAtual = btn.dataset.limite;
+          const precoAtual = btn.dataset.preco;
+          const nome = await showPromptModal('Nome do Plano', nomeAtual);
+          if (!nome) return;
+          const limite = await showPromptModal('Limite (R$)', String(limiteAtual));
+          if (!limite) return;
+          const preco = await showPromptModal('Preço Mensal (R$)', String(precoAtual));
+          if (!preco) return;
+          try { await API.updatePlan(id, { nome, limite: parseFloat(limite), preco_mensal: parseFloat(preco) }); showToast('Plano atualizado'); navigateTo('produtos'); } catch (e) { showToast(e.message, 'error'); }
+          return;
+        }
+        return;
+      }
+      const priceSpan = e.target.closest('.price-display');
+      if (priceSpan && !priceSpan.querySelector('input')) {
+        const td = priceSpan.closest('td');
+        const id = priceSpan.dataset.id;
+        const precoAtual = priceSpan.dataset.preco;
+        const inp = document.createElement('input');
+        inp.type = 'number';
+        inp.step = '0.01';
+        inp.value = precoAtual;
+        inp.style.cssText = 'width:80px;padding:6px 8px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.08);color:#fff;font-size:0.85rem;';
+        const saveBtn = document.createElement('button');
+        saveBtn.textContent = 'Salvar';
+        saveBtn.style.cssText = 'padding:6px 12px;border-radius:8px;border:none;background:linear-gradient(90deg,#3B82F6,#4CC8A4);color:#fff;font-size:0.78rem;font-weight:700;cursor:pointer;margin-left:6px;';
+        td.innerHTML = '';
+        td.appendChild(inp);
+        td.appendChild(saveBtn);
+        inp.focus();
+        inp.select();
+        const doSave = async () => {
+          const v = parseFloat(inp.value);
+          if (isNaN(v) || v <= 0) { showToast('Preço inválido', 'error'); inp.focus(); return; }
+          saveBtn.disabled = true;
+          saveBtn.textContent = '...';
+          try {
+            await API.updateProduct(id, { preco: v });
+            showToast('Preço atualizado');
+            navigateTo('produtos');
+          } catch (e) { showToast(e.message, 'error'); saveBtn.disabled = false; saveBtn.textContent = 'Salvar'; }
+        };
+        saveBtn.onclick = doSave;
+        inp.onkeydown = ev => { if (ev.key === 'Enter') doSave(); if (ev.key === 'Escape') navigateTo('produtos'); };
+        var cancelling = false;
+        function cancelEdit(ev) {
+          if (cancelling) return;
+          var target = ev.target;
+          if (target === inp || target === saveBtn || td.contains(target)) return;
+          cancelling = true;
+          document.removeEventListener('click', cancelEdit);
+          navigateTo('produtos');
+        }
+        setTimeout(function() { document.addEventListener('click', cancelEdit); }, 0);
+      }
+    });
+  }
+
+
 
   // ============================================================
   // Notificações
   // ============================================================
 
   async function renderNotificacoes(container) {
-    container.innerHTML = '<div class="loading-spinner">Carregando...</div>';
+    container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--color-text-muted);">Carregando...</div>';
     const data = await API.getNotifications();
     const notifs = data.notifications || [];
     container.innerHTML = `
@@ -1843,7 +1975,7 @@
   // ============================================================
 
   async function renderUsuarios(container) {
-    container.innerHTML = '<div class="loading-spinner">Carregando...</div>';
+    container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--color-text-muted);">Carregando...</div>';
     const data = await API.getUsers();
     const users = data.users || [];
     const permissoes = data.permissoes || [];
@@ -2095,7 +2227,7 @@
   // ============================================================
 
   async function renderLogsSistema(container) {
-    container.innerHTML = '<div class="loading-spinner">Carregando...</div>';
+    container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--color-text-muted);">Carregando...</div>';
     const data = await API.getLogs('limit=200');
     const logs = data.logs || [];
     container.innerHTML = `
@@ -2220,8 +2352,7 @@
       let csv = 'Nome,CPF,WhatsApp,E-mail,Status,Limite,Produto,Dispositivo,Fabricante,Modelo,OS,Navegador,Data Cadastro,Total Pago\n';
       clients.forEach(c => {
         const total = (pmap[c.id] || []).filter(p => p.status === 'pago').reduce((s, p) => s + (p.valor || 0), 0);
-        var planoLabel = c.plano_escolhido === 'plano_166' ? 'Com Plano (R$ 1,66/mês)' : c.plano_escolhido === 'sem_plano' ? 'Sem Plano' : (c.produto_escolhido || 'Aguardando');
-        csv += `"${c.nome}","${c.cpf}","${c.whatsapp || ''}","${c.email || ''}",${c.status},${c.limite_aprovado || 0},${planoLabel},"${c.dispositivo || ''}","${c.fabricante || ''}","${c.modelo || ''}","${c.os || ''}","${c.navegador || ''}${c.navegador_versao ? ' ' + c.navegador_versao : ''}",${c.created_at || ''},${total}\n`;
+        csv += `"${c.nome}","${c.cpf}","${c.whatsapp || ''}","${c.email || ''}",${c.status},${c.limite_aprovado || 0},${c.produto_escolhido || ''},"${c.dispositivo || ''}","${c.fabricante || ''}","${c.modelo || ''}","${c.os || ''}","${c.navegador || ''}${c.navegador_versao ? ' ' + c.navegador_versao : ''}",${c.created_at || ''},${total}\n`;
       });
       downloadCSV(csv, 'clientes.csv');
       showToast(`${clients.length} clientes exportados`);

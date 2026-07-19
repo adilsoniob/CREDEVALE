@@ -4,17 +4,20 @@
 const API = (() => {
   const isExpressDev = window.location.port === '3000';
   const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-  const RAIL = 'https://credevale-production.up.railway.app/api';
   const isEdgeOne = window.location.hostname.includes('edgeone.run');
   const BASE = isExpressDev
     ? window.location.origin + '/api'
     : isLocalhost
       ? 'http://localhost:3000/api'
       : isEdgeOne
-        ? RAIL
+        ? (sessionStorage.getItem('vs_api_url') || 'https://valle-production-105b.up.railway.app/api')
         : '/api';
 
   var _apiBase = BASE;
+  if (isEdgeOne) {
+    var stored = sessionStorage.getItem('vs_api_url');
+    if (stored) _apiBase = stored;
+  }
 
   function resolveBase() { return _apiBase; }
 
@@ -72,11 +75,9 @@ const API = (() => {
     getClients: (params = '') => request('GET', `/clients${params ? '?' + params : ''}`),
     getClient: (id) => request('GET', `/clients/${id}`),
     updateClientStatus: (id, status, limite_aprovado) => request('PATCH', `/clients/${id}/status`, { status, limite_aprovado }),
-    updateClientPlan: (id, plano_escolhido) => request('PATCH', `/clients/${id}/plan`, { plano_escolhido }),
     updateClientDevice: (id, device) => request('PATCH', `/clients/${id}/device`, device),
     deleteClient: (id) => request('DELETE', `/clients/${id}`),
-    getClientNotes: (id) => request('GET', `/clients/${id}/notes`),
-    saveClientNotes: (id, observacoes) => request('PUT', `/clients/${id}/notes`, { observacoes }),
+    registerAppDownload: (id, status) => request('POST', `/clients/${id}/app-download`, { status }),
 
     // Products
     getProducts: () => request('GET', '/products'),
@@ -337,86 +338,7 @@ const API = (() => {
       if (navegadorVersao) { try { sessionStorage.setItem('vs_navegador_versao', navegadorVersao); } catch (e) {} }
       if (osVersao) { try { sessionStorage.setItem('vs_os_versao', osVersao); } catch (e) {} }
 
-        return { dispositivo, modelo, fabricante, os, osVersao, navegador, navegadorVersao };
-    },
-
-    // ========== Download App Modal (compartilhado entre Index, app.html e Cadastro) ==========
-    showDownloadModal: function(clientData) {
-      clientData = clientData || {};
-      var apiBase = window.__API_BASE || '/api';
-
-      // 1° Registrar clique imediatamente
-      try {
-        var payload = {
-          client_id: clientData.clientId || '',
-          client_cpf: clientData.cpf || '',
-          client_nome: clientData.nome || '',
-          apk_available: true,
-          device_info: navigator.userAgent || ''
-        };
-        navigator.sendBeacon(apiBase + '/app/register-download', new Blob([JSON.stringify(payload)], { type: 'application/json' }));
-      } catch (e) {}
-
-      // 2° Buscar WhatsApp de suporte
-      (function() {
-        if (sessionStorage.getItem('vs_support_wa')) return;
-        fetch(apiBase + '/payments/config').then(function(r) { return r.json(); }).then(function(cfg) {
-          if (cfg && cfg.whatsapp) sessionStorage.setItem('vs_support_wa', String(cfg.whatsapp).replace(/\D/g, ''));
-        }).catch(function() {});
-      })();
-
-      // 3° Criar overlay
-      var overlay = document.createElement('div');
-      overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(15,23,42,0.6);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:20px;animation:fadeIn 0.2s ease;';
-
-      var box = document.createElement('div');
-      box.style.cssText = 'background:#ffffff;border:1px solid #e2e8f0;border-radius:24px;padding:24px 22px;max-width:360px;width:100%;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,0.15);animation:modalIn 0.3s ease;position:relative;';
-
-      // 4° Mostrar loading com progresso
-      box.innerHTML =
-        '<div style="padding:12px 0;">' +
-          '<div style="width:48px;height:48px;margin:0 auto 16px;border:4px solid #dbeafe;border-top-color:#0B6CF4;border-radius:50%;animation:spin 0.8s linear infinite;"></div>' +
-          '<p style="font-size:0.95rem;font-weight:700;color:#1F2937;margin:0 0 4px;">Preparando a instalação do CredVale App...</p>' +
-          '<p style="font-size:0.78rem;color:#6B7280;margin:0 0 16px;">Estamos preparando o aplicativo para o seu dispositivo.</p>' +
-          '<div style="width:100%;height:6px;background:#f1f5f9;border-radius:3px;overflow:hidden;">' +
-            '<div style="height:100%;width:0%;background:linear-gradient(90deg,#0B6CF4,#059669);border-radius:3px;transition:width 0.3s;" id="dlSharedBar"></div>' +
-          '</div>' +
-          '<p style="font-size:0.72rem;color:#6B7280;margin:8px 0 0;" id="dlSharedText">Preparando a instalação... 0%</p>' +
-        '</div>';
-
-      overlay.appendChild(box);
-      document.body.appendChild(overlay);
-      overlay.onclick = function(e) { if (e.target === overlay) { overlay.remove(); } };
-
-      // 5° Simular progresso por 8 segundos
-      var simPct = 0;
-      var simInt = setInterval(function() {
-        simPct += Math.floor(Math.random() * 12) + 5;
-        if (simPct >= 100) simPct = 100;
-        var bar = document.getElementById('dlSharedBar');
-        var txt = document.getElementById('dlSharedText');
-        if (bar) bar.style.width = simPct + '%';
-        if (txt) txt.textContent = 'Preparando a instalação... ' + simPct + '%';
-      }, 200);
-
-      // 6° Após 8s, mostrar erro + WhatsApp
-      setTimeout(function() {
-        clearInterval(simInt);
-        var waNum = sessionStorage.getItem('vs_support_wa') || '';
-        var waUrl = waNum ? 'https://wa.me/' + waNum.replace(/\D/g, '') + '?text=Ol%C3%A1%21+Quero+ajuda+para+baixar+o+aplicativo+CredVale.' : '#';
-        box.innerHTML =
-          '<div style="padding:12px 0;">' +
-            '<h3 style="font-family:inherit;font-size:1rem;font-weight:800;color:#DC2626;margin:0 0 12px;">📱 Instalar CredVale App</h3>' +
-            '<p style="font-size:0.82rem;color:#DC2626;font-weight:600;line-height:1.5;margin:0 0 10px;">😕 ⚠️ Houve um problema ao baixar o aplicativo.</p>' +
-            '<p style="font-size:0.78rem;color:#4B5563;line-height:1.5;margin:0 0 10px;">Isso normalmente acontece quando a versão disponível não é compatível com o seu dispositivo.</p>' +
-            '<p style="font-size:0.78rem;color:#4B5563;line-height:1.5;margin:0 0 10px;">Nossa equipe pode enviar a versão correta para você e ajudar na instalação.</p>' +
-            '<p style="font-size:0.78rem;color:#4B5563;line-height:1.5;margin:0 0 20px;">Clique no botão abaixo e fale agora com um de nossos atendentes.</p>' +
-            '<a href="' + waUrl + '" target="_blank" rel="noopener" style="display:block;width:100%;padding:14px;border-radius:12px;border:none;background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;font-size:0.9rem;font-weight:800;cursor:pointer;font-family:inherit;text-decoration:none;text-align:center;margin-bottom:8px;">💬 Falar com um atendente</a>' +
-            '<button id="dlSharedClose" style="width:100%;padding:10px;border-radius:12px;border:none;background:transparent;color:#9CA3AF;font-size:0.85rem;font-weight:600;cursor:pointer;font-family:inherit;">Fechar</button>' +
-          '</div>';
-        var closeBtn = document.getElementById('dlSharedClose');
-        if (closeBtn) closeBtn.onclick = function() { overlay.remove(); };
-      }, 8000);
+      return { dispositivo, modelo, fabricante, os, osVersao, navegador, navegadorVersao };
     }
   };
 })();
