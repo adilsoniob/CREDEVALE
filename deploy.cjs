@@ -195,11 +195,11 @@ try {
 console.log('\n📤 Committing and pushing to GitHub...');
 try {
   execSync('git add -A', { cwd: rootDir, stdio: 'inherit', timeout: 30000 });
-  execSync('git commit -m "deploy: build ' + version + ' + cache bust"', { cwd: rootDir, stdio: 'inherit', timeout: 30000 });
+  execSync('git diff --cached --quiet || git commit -m "deploy: build ' + version + ' + cache bust"', { cwd: rootDir, stdio: 'inherit', timeout: 30000 });
   execSync('git push origin main', { cwd: rootDir, stdio: 'inherit', timeout: 60000 });
   console.log('✅ GitHub push concluído — Railway fará auto-deploy');
 } catch (e) {
-  console.error('⚠️  Git push falhou (pode não haver mudanças a commitar):', e.message);
+  console.error('⚠️  Git push falhou:', e.message);
 }
 
 console.log('\n========================================');

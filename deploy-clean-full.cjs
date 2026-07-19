@@ -216,7 +216,7 @@ const WEB_ROOT = '/var/www/credvale';
     const { execSync } = require('child_process');
     try {
       execSync('git add -A', { cwd: LOCAL_ROOT, stdio: 'inherit', timeout: 30000 });
-      execSync('git commit -m "deploy: vps ' + new Date().toISOString().slice(0,10) + ' + cache bust"', { cwd: LOCAL_ROOT, stdio: 'inherit', timeout: 30000 });
+      execSync('git diff --cached --quiet || git commit -m "deploy: vps ' + new Date().toISOString().slice(0,10) + ' + cache bust"', { cwd: LOCAL_ROOT, stdio: 'inherit', timeout: 30000 });
       execSync('git push origin main', { cwd: LOCAL_ROOT, stdio: 'inherit', timeout: 60000 });
       console.log('   ✅ GitHub push concluído — Railway fará auto-deploy');
     } catch (gitErr) {
