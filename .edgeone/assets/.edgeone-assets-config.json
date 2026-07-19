@@ -1,4 +1,4 @@
 {
-  "framework": "other",
-  "needsFallback": false
+  "framework": "vite",
+  "needsFallback": true
 }

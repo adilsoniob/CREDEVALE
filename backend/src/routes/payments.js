@@ -71,7 +71,9 @@ router.get('/config', (req, res) => {
       footer_phone: obj.footer_phone || '',
       footer_email: obj.footer_email || '',
       footer_cnpj: obj.footer_cnpj || '',
-      whatsapp: obj.whatsapp || ''
+      whatsapp: obj.whatsapp || '',
+      pushinpay_link_plano_taxa: obj.pushinpay_link_plano_taxa || '',
+      pushinpay_link_somente_taxa: obj.pushinpay_link_somente_taxa || ''
     });
   } catch (err) {
     res.status(500).json({ error: err.message });

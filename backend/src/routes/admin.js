@@ -28,6 +28,7 @@ router.get('/dashboard', (req, res) => {
     const supportClickRow = get(`SELECT value FROM settings WHERE key = 'support_click_count'`);
     const supportClickCount = parseInt(supportClickRow?.value || '0', 10);
     const pageViewCount = get('SELECT COUNT(*) as count FROM page_views').count;
+    const totalClicks = (parseInt(totalPixCopies || 0) + parseInt(totalPushinpayClicks || 0) + parseInt(supportClickCount || 0));
     const monthlyRevenue = get(`SELECT COALESCE(SUM(valor), 0) as total FROM payments WHERE status = 'pago' AND paid_at >= datetime('now', '-30 days')`).total;
     const dailyRevenue = get(`SELECT COALESCE(SUM(valor), 0) as total FROM payments WHERE status = 'pago' AND paid_at >= datetime('now', '-1 day')`).total;
     const weeklyRevenue = get(`SELECT COALESCE(SUM(valor), 0) as total FROM payments WHERE status = 'pago' AND paid_at >= datetime('now', '-7 days')`).total;
@@ -40,7 +41,7 @@ router.get('/dashboard', (req, res) => {
     const recentPayments = all(`SELECT p.*, c.nome as client_nome FROM payments p JOIN clients c ON p.client_id = c.id ORDER BY p.created_at DESC LIMIT 10`);
 
     res.json({
-      kpis: { totalClients, pendingClients, approvedClients, activatedClients, totalRequests, pendingRequests, totalPayments, paidPayments, totalRevenue, pixPayments, cardPayments, conversionRate, onlineAgora, onlineSessions, totalPixCopies, totalPushinpayClicks, supportClickCount, pageViewCount, expectativaReceita, dailyRevenue, weeklyRevenue, monthlyRevenue },
+      kpis: { totalClients, pendingClients, approvedClients, activatedClients, totalRequests, pendingRequests, totalPayments, paidPayments, totalRevenue, pixPayments, cardPayments, conversionRate, onlineAgora, onlineSessions, totalPixCopies, totalPushinpayClicks, supportClickCount, pageViewCount, totalClicks, expectativaReceita, dailyRevenue, weeklyRevenue, monthlyRevenue },
       onlineSessionList,
       recentClients, recentPayments
     });
@@ -50,6 +51,18 @@ router.get('/dashboard', (req, res) => {
 });
 
 // Logs
+router.post('/logs', (req, res) => {
+  try {
+    const { action, entity, entity_id, details } = req.body;
+    if (!action || !entity) return res.status(400).json({ error: 'action e entity são obrigatórios' });
+    run(`INSERT INTO logs (user_id, action, entity, entity_id, details, ip, created_at) VALUES (?, ?, ?, ?, ?, ?, datetime('now'))`,
+      [req.user?.id || 'system', action, entity, entity_id || null, details || null, req.ip || null]);
+    res.status(201).json({ message: 'Log registrado' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.get('/logs', (req, res) => {
   try {
     const { action, entity, page = 1, limit = 100 } = req.query;
@@ -89,8 +102,9 @@ router.patch('/notifications/:id/read', (req, res) => {
 // Users management
 router.get('/users', (req, res) => {
   try {
-    const users = all('SELECT id, email, name, role, permissions, active, created_at FROM users ORDER BY created_at DESC');
-    res.json({ users });
+    const users = all('SELECT id, email, name, login, role, permissions, active, nivel, telefone, ultimo_acesso, created_at FROM users ORDER BY created_at DESC');
+    const permissoes = all('SELECT * FROM permissoes ORDER BY nome');
+    res.json({ users, permissoes });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -98,7 +112,7 @@ router.get('/users', (req, res) => {
 
 router.post('/users', (req, res) => {
   try {
-    const { email, password, name, role, permissions } = req.body;
+    const { email, password, name, login, role, nivel, permissions, telefone } = req.body;
     if (!email || !password || !name) {
       return res.status(400).json({ error: 'E-mail, senha e nome são obrigatórios' });
     }
@@ -108,9 +122,86 @@ router.post('/users', (req, res) => {
     const crypto = require('crypto');
     const hash = crypto.createHash('sha256').update(password).digest('hex');
     const id = uuidv4();
-    run('INSERT INTO users (id, email, password_hash, name, role, permissions) VALUES (?, ?, ?, ?, ?, ?)',
-      [id, email, hash, name, role || 'operador', JSON.stringify(permissions || [])]);
+    run('INSERT INTO users (id, email, password_hash, name, login, role, nivel, permissions, telefone) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [id, email, hash, name, login || email, role || 'operador', nivel || 1, JSON.stringify(permissions || []), telefone || null]);
+    run(`INSERT INTO logs (user_id, action, entity, entity_id, details) VALUES (?, ?, ?, ?, ?)`,
+      [req.user?.id || 'system', 'user_create', 'users', id, 'Criado: ' + name + ' (' + email + ')']);
     res.status(201).json({ id, message: 'Usuário criado' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.put('/users/:id', (req, res) => {
+  try {
+    const existing = get('SELECT id FROM users WHERE id = ?', [req.params.id]);
+    if (!existing) return res.status(404).json({ error: 'Usuário não encontrado' });
+
+    const { name, email, login, role, nivel, permissions, telefone, active } = req.body;
+    if (name !== undefined) run('UPDATE users SET name = ? WHERE id = ?', [name, req.params.id]);
+    if (email !== undefined) run('UPDATE users SET email = ? WHERE id = ?', [email, req.params.id]);
+    if (login !== undefined) run('UPDATE users SET login = ? WHERE id = ?', [login, req.params.id]);
+    if (role !== undefined) run('UPDATE users SET role = ? WHERE id = ?', [role, req.params.id]);
+    if (nivel !== undefined) run('UPDATE users SET nivel = ? WHERE id = ?', [nivel, req.params.id]);
+    if (permissions !== undefined) run('UPDATE users SET permissions = ? WHERE id = ?', [JSON.stringify(permissions), req.params.id]);
+    if (telefone !== undefined) run('UPDATE users SET telefone = ? WHERE id = ?', [telefone, req.params.id]);
+    if (active !== undefined) run('UPDATE users SET active = ? WHERE id = ?', [active ? 1 : 0, req.params.id]);
+    run("UPDATE users SET updated_at = datetime('now') WHERE id = ?", [req.params.id]);
+
+    run(`INSERT INTO logs (user_id, action, entity, entity_id, details) VALUES (?, ?, ?, ?, ?)`,
+      [req.user?.id || 'system', 'user_update', 'users', req.params.id, 'Atualizado: ' + (name || '')]);
+    res.json({ message: 'Usuário atualizado' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.delete('/users/:id', (req, res) => {
+  try {
+    const existing = get('SELECT id, name, email FROM users WHERE id = ?', [req.params.id]);
+    if (!existing) return res.status(404).json({ error: 'Usuário não encontrado' });
+    if (existing.email === 'admin@valesaude.com.br') return res.status(400).json({ error: 'Não é possível excluir o administrador principal' });
+
+    run('DELETE FROM users WHERE id = ?', [req.params.id]);
+    run(`INSERT INTO logs (user_id, action, entity, entity_id, details) VALUES (?, ?, ?, ?, ?)`,
+      [req.user?.id || 'system', 'user_delete', 'users', req.params.id, 'Excluído: ' + existing.name]);
+    res.json({ message: 'Usuário excluído' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/users/:id/change-password', (req, res) => {
+  try {
+    const { newPassword } = req.body;
+    if (!newPassword || newPassword.length < 6) return res.status(400).json({ error: 'Senha deve ter no mínimo 6 caracteres' });
+
+    const existing = get('SELECT id FROM users WHERE id = ?', [req.params.id]);
+    if (!existing) return res.status(404).json({ error: 'Usuário não encontrado' });
+
+    const crypto = require('crypto');
+    const hash = crypto.createHash('sha256').update(newPassword).digest('hex');
+    run('UPDATE users SET password_hash = ?, updated_at = datetime("now") WHERE id = ?', [hash, req.params.id]);
+
+    run(`INSERT INTO logs (user_id, action, entity, entity_id, details) VALUES (?, ?, ?, ?, ?)`,
+      [req.user?.id || 'system', 'user_password_change', 'users', req.params.id, 'Senha alterada']);
+    res.json({ message: 'Senha alterada com sucesso' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/users/:id/toggle-active', (req, res) => {
+  try {
+    const existing = get('SELECT id, email, active FROM users WHERE id = ?', [req.params.id]);
+    if (!existing) return res.status(404).json({ error: 'Usuário não encontrado' });
+    if (existing.email === 'admin@valesaude.com.br') return res.status(400).json({ error: 'Não é possível desativar o administrador principal' });
+
+    const newActive = existing.active ? 0 : 1;
+    run('UPDATE users SET active = ?, updated_at = datetime("now") WHERE id = ?', [newActive, req.params.id]);
+    run(`INSERT INTO logs (user_id, action, entity, entity_id, details) VALUES (?, ?, ?, ?, ?)`,
+      [req.user?.id || 'system', newActive ? 'user_activate' : 'user_deactivate', 'users', req.params.id, 'Status alterado para ' + (newActive ? 'ativo' : 'inativo')]);
+    res.json({ message: newActive ? 'Usuário ativado' : 'Usuário desativado', active: newActive });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -211,7 +302,9 @@ router.post('/sms/send', async (req, res) => {
     if (!phone || !message) return res.status(400).json({ error: 'Phone and message are required.' });
 
     var webhookUrl = cfg.url.replace(/\/+$/, '') + '/api/webhook/send';
-    var body = { phone: phone.replace(/\D/g, ''), message: message };
+    var bodyPhone = phone.replace(/\D/g, '');
+    if (bodyPhone.length <= 11) bodyPhone = '55' + bodyPhone;
+    var body = { phone: bodyPhone, message: message };
     if (selectedAccounts && selectedAccounts.length) body.selectedAccounts = selectedAccounts;
 
     var resp = await fetch(webhookUrl, {
@@ -224,7 +317,11 @@ router.post('/sms/send', async (req, res) => {
     var data;
     try { data = JSON.parse(text); } catch { data = text; }
 
-    res.status(resp.status).json({ status: resp.status, data: data });
+    if (!resp.ok) {
+      console.error('[SMS] Error:', resp.status, text, 'URL:', webhookUrl);
+    }
+
+    res.status(resp.status).json({ status: resp.status, data: data, sent_to: webhookUrl });
   } catch (err) {
     res.status(502).json({ error: err.message });
   }

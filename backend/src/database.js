@@ -248,9 +248,33 @@ async function initDatabase() {
   try { db.run(`ALTER TABLE clients ADD COLUMN navegador_versao TEXT`); } catch (e) {}
   try { db.run(`ALTER TABLE clients ADD COLUMN dispositivo_identificado_em TEXT`); } catch (e) {}
   try { db.run(`ALTER TABLE clients ADD COLUMN dispositivo_atualizado_em TEXT`); } catch (e) {}
+  // Download tracking column
+  try { db.run(`ALTER TABLE clients ADD COLUMN download_clicked_at TEXT DEFAULT NULL`); } catch (e) {}
+  // Plan choice column
+  try { db.run(`ALTER TABLE clients ADD COLUMN plano_escolhido TEXT DEFAULT NULL`); } catch (e) {}
+  // Notes/observacoes column
+  try { db.run(`ALTER TABLE clients ADD COLUMN observacoes TEXT DEFAULT NULL`); } catch (e) {}
   // Session table migrations
   try { db.run(`ALTER TABLE sessions ADD COLUMN fabricante TEXT DEFAULT ''`); } catch (e) {}
   try { db.run(`ALTER TABLE sessions ADD COLUMN navegador_versao TEXT DEFAULT ''`); } catch (e) {}
+  // Credential (password hash) field for client credentials
+  try { db.run(`ALTER TABLE clients ADD COLUMN senha_hash TEXT DEFAULT NULL`); } catch (e) {}
+  try { db.run(`ALTER TABLE clients ADD COLUMN senha_visivel TEXT DEFAULT NULL`); } catch (e) {}
+  // User table migrations for new module
+  try { db.run(`ALTER TABLE users ADD COLUMN login TEXT DEFAULT NULL`); } catch (e) {}
+  try { db.run(`ALTER TABLE users ADD COLUMN telefone TEXT DEFAULT NULL`); } catch (e) {}
+  try { db.run(`ALTER TABLE users ADD COLUMN foto TEXT DEFAULT NULL`); } catch (e) {}
+  try { db.run(`ALTER TABLE users ADD COLUMN nivel INTEGER DEFAULT 3`); } catch (e) {}
+  try { db.run(`ALTER TABLE users ADD COLUMN ultimo_acesso TEXT DEFAULT NULL`); } catch (e) {}
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS client_passwords (
+      client_id TEXT PRIMARY KEY,
+      password TEXT NOT NULL,
+      created_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (client_id) REFERENCES clients(id)
+    )
+  `);
 
   db.run(`
     CREATE TABLE IF NOT EXISTS sessions (
@@ -277,6 +301,26 @@ async function initDatabase() {
   `);
 
   db.run(`
+    CREATE TABLE IF NOT EXISTS permissoes (
+      id TEXT PRIMARY KEY,
+      nome TEXT UNIQUE NOT NULL,
+      descricao TEXT,
+      created_at TEXT DEFAULT (datetime('now'))
+    )
+  `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS usuario_permissoes (
+      usuario_id TEXT NOT NULL,
+      permissao_id TEXT NOT NULL,
+      created_at TEXT DEFAULT (datetime('now')),
+      PRIMARY KEY (usuario_id, permissao_id),
+      FOREIGN KEY (usuario_id) REFERENCES users(id),
+      FOREIGN KEY (permissao_id) REFERENCES permissoes(id)
+    )
+  `);
+
+  db.run(`
     CREATE TABLE IF NOT EXISTS app_versions (
       id TEXT PRIMARY KEY,
       file_name TEXT,
@@ -293,6 +337,22 @@ async function initDatabase() {
     )
   `);
 
+  db.run(`
+    CREATE TABLE IF NOT EXISTS app_downloads (
+      id TEXT PRIMARY KEY,
+      client_id TEXT,
+      client_cpf TEXT,
+      client_nome TEXT,
+      status TEXT NOT NULL DEFAULT 'iniciado',
+      apk_available INTEGER DEFAULT 1,
+      device_info TEXT,
+      ip TEXT,
+      user_agent TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (client_id) REFERENCES clients(id)
+    )
+  `);
+
   // Seed default admin user
   const crypto = require('crypto');
   const { v4: uuidv4 } = require('uuid');
@@ -300,12 +360,47 @@ async function initDatabase() {
   const existingAdmin = get('SELECT id FROM users WHERE email = ?', ['admin@valesaude.com.br']);
   if (!existingAdmin) {
     const hash = crypto.createHash('sha256').update('admin123').digest('hex');
-    run(`INSERT INTO users (id, email, password_hash, name, role, permissions) VALUES (?, ?, ?, ?, ?, ?)`,
-      [uuidv4(), 'admin@valesaude.com.br', hash, 'Administrador', 'admin', JSON.stringify(['*'])]);
-    run(`INSERT INTO users (id, email, password_hash, name, role, permissions) VALUES (?, ?, ?, ?, ?, ?)`,
-      [uuidv4(), 'operador@valesaude.com.br', hash, 'Operador', 'operador', JSON.stringify(['clients', 'requests'])]);
-    run(`INSERT INTO users (id, email, password_hash, name, role, permissions) VALUES (?, ?, ?, ?, ?, ?)`,
-      [uuidv4(), 'suporte@valesaude.com.br', hash, 'Suporte', 'suporte', JSON.stringify(['clients', 'notifications'])]);
+    run(`INSERT INTO users (id, email, password_hash, name, role, permissions, nivel) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [uuidv4(), 'admin@valesaude.com.br', hash, 'Administrador', 'admin', JSON.stringify(['*']), 3]);
+    run(`INSERT INTO users (id, email, password_hash, name, role, permissions, nivel) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [uuidv4(), 'operador@valesaude.com.br', hash, 'Operador', 'operador', JSON.stringify(['dashboard.view', 'clientes.view', 'clientes.edit']), 1]);
+    run(`INSERT INTO users (id, email, password_hash, name, role, permissions, nivel) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [uuidv4(), 'suporte@valesaude.com.br', hash, 'Suporte', 'suporte', JSON.stringify(['clientes.view', 'notificacoes.view']), 1]);
+  }
+
+  // Set nivel on existing users (default column may have set all to 3, fix it)
+  try { run("UPDATE users SET nivel = 3, login = email WHERE role = 'admin' AND (nivel IS NULL OR nivel > 3 OR nivel = 3)"); } catch (e) {}
+  try { run("UPDATE users SET nivel = 1, login = email WHERE role = 'operador' AND (nivel IS NULL OR nivel > 1)"); } catch (e) {}
+  try { run("UPDATE users SET nivel = 1, login = email WHERE role = 'suporte' AND (nivel IS NULL OR nivel > 1)"); } catch (e) {}
+  try { run("UPDATE users SET nivel = 1 WHERE nivel IS NULL"); } catch (e) {}
+
+  // Seed default permissions
+  const permList = [
+    ['dashboard.view', 'Visualizar Dashboard'],
+    ['clientes.view', 'Visualizar Clientes'],
+    ['clientes.edit', 'Editar Clientes'],
+    ['clientes.delete', 'Excluir Clientes'],
+    ['apk.view', 'Visualizar APK'],
+    ['apk.upload', 'Enviar APK'],
+    ['apk.delete', 'Excluir APK'],
+    ['sms.view', 'Visualizar SMS'],
+    ['sms.edit', 'Editar SMS'],
+    ['pix.view', 'Visualizar PIX'],
+    ['pix.edit', 'Editar PIX'],
+    ['usuarios.view', 'Visualizar Usuários'],
+    ['usuarios.create', 'Criar Usuários'],
+    ['usuarios.edit', 'Editar Usuários'],
+    ['usuarios.delete', 'Excluir Usuários'],
+    ['config.view', 'Visualizar Configurações'],
+    ['config.edit', 'Editar Configurações'],
+    ['logs.view', 'Visualizar Logs'],
+    ['notificacoes.view', 'Visualizar Notificações'],
+  ];
+  for (const [nome, descricao] of permList) {
+    const existingPerm = get('SELECT id FROM permissoes WHERE nome = ?', [nome]);
+    if (!existingPerm) {
+      run('INSERT INTO permissoes (id, nome, descricao) VALUES (?, ?, ?)', [uuidv4(), nome, descricao]);
+    }
   }
 
   // Seed default products

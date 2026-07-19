@@ -1,7 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 54" width="180" height="54">
-  <rect width="180" height="54" rx="10" fill="#1a1a2e" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
-  <text x="22" y="22" font-family="system-ui,sans-serif" font-size="7" fill="rgba(255,255,255,0.5)">DISPONÍVEL NO</text>
-  <text x="22" y="38" font-family="system-ui,sans-serif" font-size="16" font-weight="700" fill="#fff">Google Play</text>
-  <polygon points="8,16 8,38 14,30" fill="#4CC8A4"/>
-  <text x="160" y="30" font-family="system-ui,sans-serif" font-size="7" fill="rgba(255,255,255,0.15)" text-anchor="end">🖼 TEMP</text>
-</svg>

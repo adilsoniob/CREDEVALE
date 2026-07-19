@@ -54,6 +54,43 @@ router.get('/active', (req, res) => {
   }
 });
 
+// Public: register download click (tracking)
+router.post('/register-download', (req, res) => {
+  try {
+    const { v4: uuidv4 } = require('uuid');
+    const { client_id, client_cpf, client_nome, device_info } = req.body;
+    const id = uuidv4();
+    const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip || '';
+    const userAgent = (req.headers['user-agent'] || '').slice(0, 500);
+
+    run(`INSERT INTO app_downloads (id, client_id, client_cpf, client_nome, status, apk_available, device_info, ip, user_agent) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [id, client_id || null, client_cpf || null, client_nome || null, 'iniciado', 1, device_info || null, ip, userAgent]);
+
+    // Also update client's download_clicked_at (timestamp da tentativa)
+    if (client_id) {
+      run("UPDATE clients SET download_clicked_at = datetime('now') WHERE id = ?", [client_id]);
+    }
+
+    res.json({ success: true, download_id: id });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Public: download active APK
+router.get('/download-active', (req, res) => {
+  try {
+    const row = get("SELECT * FROM app_versions WHERE status = 'active' ORDER BY created_at DESC LIMIT 1");
+    if (!row || !row.file_path || !fs.existsSync(row.file_path)) {
+      return res.status(404).json({ error: 'Nenhum aplicativo disponível para download no momento.' });
+    }
+    if (row.external_link) return res.redirect(row.external_link);
+    res.download(row.file_path, row.original_name);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Admin: upload new version
 router.post('/upload', authMiddleware, requireAdmin, (req, res) => {
   upload.single('app_file')(req, res, (err) => {

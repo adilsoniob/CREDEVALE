@@ -4,8 +4,8 @@
   const show = el => el && (el.hidden = false);
   const hide = el => el && (el.hidden = true);
   const fmtMoney = v => 'R$ ' + Number(v).toFixed(2).replace('.', ',');
-  const fmtDate = d => d ? new Date(d).toLocaleDateString('pt-BR') : '—';
-  const fmtDateTime = d => d ? new Date(d).toLocaleString('pt-BR') : '—';
+  const fmtDate = d => d ? new Date(d + 'Z').toLocaleDateString('pt-BR') : '—';
+  const fmtDateTime = d => d ? new Date(d + 'Z').toLocaleString('pt-BR') : '—';
 
   const SMS_TEMPLATE = `Ol\u00e1, {NOME}! \ud83c\udf89\n\nParab\u00e9ns! Seu cadastro foi aprovado com sucesso no CredVale.\n\n\ud83d\udcb3 Seu limite dispon\u00edvel \u00e9 de R$ {LIMITE}.\n\nAgora voc\u00ea j\u00e1 pode baixar o aplicativo do CredVale e come\u00e7ar a aproveitar todos os benef\u00edcios:\n\n\u2705 At\u00e9 75% de desconto em medicamentos\n\u2705 Parcelamento em at\u00e9 15x\n\u2705 Fatura com at\u00e9 45 dias para pagar\n\u2705 Cart\u00e3o virtual com libera\u00e7\u00e3o imediata\n\nBaixe agora:\n{LINK_APP}\n\nSe precisar de ajuda, nossa equipe est\u00e1 \u00e0 disposi\u00e7\u00e3o.\n\nSeja bem-vindo ao CredVale! \ud83d\udc99`;
 
@@ -82,7 +82,7 @@
     if (old) old.remove();
     const el = document.createElement('div');
     el.id = 'adminToast';
-    el.style.cssText = `position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:9999;padding:14px 24px;border-radius:12px;font-size:0.875rem;font-weight:600;color:#fff;background:${type === 'success' ? '#10B981' : '#DC2626'};box-shadow:0 8px 32px rgba(0,0,0,0.3);animation:toastIn 0.3s ease;max-width:90%;text-align:center;`;
+    el.style.cssText = `position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:9999;padding:14px 24px;border-radius:12px;font-size:0.875rem;font-weight:600;color:#fff;background:${type === 'success' ? '#16C65B' : '#DC2626'};box-shadow:0 8px 32px rgba(0,0,0,0.2);animation:toastIn 0.3s ease;max-width:90%;text-align:center;backdrop-filter:blur(8px);`;
     el.textContent = msg;
     document.body.appendChild(el);
     setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity 0.3s'; setTimeout(() => el.remove(), 300); }, 3000);
@@ -135,8 +135,14 @@
     });
   }
 
-  function showSmsModal(msg, waNum) {
+  function showSmsModal(msg, waNum, onSendSms) {
+    var isSending = false;
+    
+    // Remove modais SMS anteriores para evitar empilhamento
+    document.querySelectorAll('.sms-modal-overlay').forEach(function(el){ el.remove(); });
+    
     const overlay = document.createElement('div');
+    overlay.className = 'sms-modal-overlay';
     overlay.style.cssText = 'position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:16px;';
     overlay.innerHTML = `
       <div style="background:#203A57;border-radius:24px;padding:28px 20px;max-width:440px;width:100%;border:1px solid rgba(255,255,255,0.08);box-shadow:0 30px 80px rgba(0,0,0,0.45);">
@@ -144,29 +150,37 @@
           <h3 style="font-size:1.125rem;font-weight:700;color:#fff;margin:0;">📩 Mensagem SMS</h3>
           <button class="s-close" style="background:none;border:none;color:#B7C5D8;font-size:1.25rem;cursor:pointer;padding:4px;">✕</button>
         </div>
-        <div style="background:rgba(0,0,0,0.25);border-radius:16px;padding:20px 16px;max-height:360px;overflow-y:auto;margin-bottom:20px;font-size:0.875rem;color:#e2e8f0;line-height:1.6;white-space:pre-wrap;word-break:break-word;text-align:left;">${escHtml(msg)}</div>
+        <textarea class="s-msg" style="width:100%;min-height:200px;background:rgba(0,0,0,0.25);border-radius:16px;padding:16px;margin-bottom:16px;font-size:0.875rem;color:#e2e8f0;line-height:1.6;white-space:pre-wrap;word-break:break-word;text-align:left;resize:vertical;border:1px solid rgba(255,255,255,0.1);font-family:inherit;">${escHtml(msg)}</textarea>
+        <div class="s-status" style="display:none;font-size:0.8rem;color:#B7C5D8;text-align:center;padding:8px;margin-bottom:8px;background:rgba(0,0,0,0.15);border-radius:12px;"></div>
         <div style="display:flex;flex-direction:column;gap:10px;">
           <button class="s-wa" style="width:100%;padding:14px;border-radius:14px;border:none;background:linear-gradient(90deg,#25D366,#128C7E);color:#fff;font-size:0.9375rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">Enviar no WhatsApp</button>
           <button class="s-copy" style="width:100%;padding:14px;border-radius:14px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.06);color:#B7C5D8;font-size:0.9375rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">Copiar Mensagem</button>
+          ${onSendSms ? `<button class="s-sms" style="width:100%;padding:14px;border-radius:14px;border:none;background:linear-gradient(90deg,#3B82F6,#4CC8A4);color:#fff;font-size:0.9375rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">📨 Enviar SMS</button>` : ''}
         </div>
       </div>`;
     document.body.appendChild(overlay);
 
-    const close = () => overlay.remove();
+    var txtMsg = overlay.querySelector('.s-msg');
+    var statusEl = overlay.querySelector('.s-status');
+
+    // Fecha com 1 clique no X ou no fundo
+    var close = function(){ overlay.remove(); };
     overlay.addEventListener('click', function(e) { if (e.target === overlay) close(); });
-    overlay.querySelector('.s-close').addEventListener('click', function(e) { e.stopPropagation(); close(); });
+    overlay.querySelector('.s-close').onclick = function() { close(); };
 
     overlay.querySelector('.s-wa').addEventListener('click', function(e) {
       e.stopPropagation();
-      const waLink = 'https://wa.me/55' + waNum + '?text=' + encodeURIComponent(msg);
+      var texto = txtMsg ? txtMsg.value : msg;
+      var waLink = 'https://wa.me/' + waNum + '?text=' + encodeURIComponent(texto);
       window.open(waLink, '_blank');
       close();
     });
 
     overlay.querySelector('.s-copy').addEventListener('click', async function(e) {
       e.stopPropagation();
+      var texto = txtMsg ? txtMsg.value : msg;
       try {
-        await navigator.clipboard.writeText(msg);
+        await navigator.clipboard.writeText(texto);
         const btn = overlay.querySelector('.s-copy');
         btn.textContent = '✓ Copiado!';
         btn.style.background = 'rgba(16,185,129,0.2)';
@@ -179,6 +193,32 @@
         btn.style.color = '#EF4444';
       }
     });
+
+    if (onSendSms) {
+      var smsBtn = overlay.querySelector('.s-sms');
+      smsBtn.addEventListener('click', async function(e) {
+        e.stopPropagation();
+        if (isSending) return;
+        isSending = true;
+        var texto = txtMsg ? txtMsg.value : msg;
+        smsBtn.disabled = true;
+        smsBtn.textContent = '⏳ Enviando...';
+        statusEl.style.display = '';
+        statusEl.textContent = '⏳ Enviando SMS...';
+        try {
+          await onSendSms(texto);
+          statusEl.textContent = '✅ SMS enviado com sucesso!';
+          statusEl.style.color = '#10B981';
+          setTimeout(close, 1200);
+        } catch (err) {
+          statusEl.textContent = '❌ Erro: ' + (err.message || 'Falha ao enviar');
+          statusEl.style.color = '#EF4444';
+          smsBtn.disabled = false;
+          smsBtn.textContent = '📨 Enviar SMS';
+          isSending = false;
+        }
+      });
+    }
   }
 
   function escHtml(str) {
@@ -189,32 +229,36 @@
 
   function renderPagination(totalPages, current, onChange) {
     if (totalPages <= 1) return '';
-    let html = '<div style="display:flex;gap:6px;align-items:center;justify-content:center;margin-top:16px;">';
-    html += `<button class="admin-btn-icon" data-page="${current - 1}" ${current <= 1 ? 'disabled style="opacity:0.3"' : ''}>◀</button>`;
+    let html = '<div class="pagination">';
+    html += `<button data-page="${current - 1}" ${current <= 1 ? 'disabled' : ''}>◀</button>`;
     const start = Math.max(1, current - 2);
     const end = Math.min(totalPages, current + 2);
-    if (start > 1) html += `<button class="admin-btn-icon" data-page="1">1</button>${start > 2 ? '<span style="color:var(--color-text-muted);font-size:0.75rem;">...</span>' : ''}`;
+    if (start > 1) html += `<button data-page="1">1</button>${start > 2 ? '<span style="color:var(--color-text-muted);font-size:0.78rem;">…</span>' : ''}`;
     for (let i = start; i <= end; i++) {
-      html += `<button class="admin-btn-icon" data-page="${i}" style="${i === current ? 'background:var(--color-primary);color:#fff;font-weight:700;' : ''}">${i}</button>`;
+      html += `<button data-page="${i}" class="${i === current ? 'active' : ''}">${i}</button>`;
     }
-    if (end < totalPages) html += `${end < totalPages - 1 ? '<span style="color:var(--color-text-muted);font-size:0.75rem;">...</span>' : ''}<button class="admin-btn-icon" data-page="${totalPages}">${totalPages}</button>`;
-    html += `<button class="admin-btn-icon" data-page="${current + 1}" ${current >= totalPages ? 'disabled style="opacity:0.3"' : ''}>▶</button>`;
+    if (end < totalPages) html += `${end < totalPages - 1 ? '<span style="color:var(--color-text-muted);font-size:0.78rem;">…</span>' : ''}<button data-page="${totalPages}">${totalPages}</button>`;
+    html += `<button data-page="${current + 1}" ${current >= totalPages ? 'disabled' : ''}>▶</button>`;
     html += '</div>';
     return html;
   }
 
   function initApp() {
-    const navItems = [
+    const isOperator = currentUser && currentUser.role === 'operador';
+
+    const navItems = isOperator ? [
+      { key: 'fichas', icon: '📋', label: 'Fichas CredVale' },
+      { key: 'online', icon: '🟢', label: 'Online' },
+    ] : [
       { key: 'dashboard', icon: '📊', label: 'Dashboard' },
       { key: 'separator-geral', separator: true, label: 'GERENCIAR' },
       { key: 'configuracoes', icon: '⚙️', label: 'Configurações' },
       { key: 'aplicativo', icon: '📱', label: 'Aplicativo' },
       { key: 'pagamento-config', icon: '🟢', label: 'PIX' },
-      { key: 'popup-config', icon: '🪟', label: 'Pop-up' },
+
       { key: 'sms', icon: '📨', label: 'SMS' },
       { key: 'pagamentos', icon: '💳', label: 'Pagamentos' },
       { key: 'clients', icon: '👥', label: 'Clientes' },
-      { key: 'produtos', icon: '📦', label: 'Produtos' },
       { key: 'online', icon: '🟢', label: 'Online' },
       { key: 'separator-sistema', separator: true, label: 'SISTEMA' },
       { key: 'api', icon: '🔑', label: 'API CPF' },
@@ -224,10 +268,13 @@
       { key: 'trocar-senha', icon: '🔐', label: 'Trocar Senha' },
     ];
 
+    var brand = $('#adminSidebar .admin-sidebar__brand span');
+    if (brand && isOperator) brand.textContent = '📋 Fichas CredVale';
+
     const nav = $('#adminNav');
     nav.innerHTML = navItems
       .map(item => item.separator
-        ? `<div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--color-text-muted);padding:16px 12px 6px;font-weight:700;">${item.label}</div>`
+        ? `<div class="admin-nav__separator">${item.label}</div>`
         : `<a href="#" class="admin-nav__link" data-route="${item.key}"><span class="admin-nav__icon">${item.icon}</span>${item.label}</a>`)
       .join('');
 
@@ -255,7 +302,8 @@
       navigateTo(route);
     });
 
-    const initialRoute = location.hash.replace('#', '') || 'dashboard';
+    const defaultRoute = isOperator ? 'fichas' : 'dashboard';
+    const initialRoute = location.hash.replace('#', '') || defaultRoute;
     navigateTo(initialRoute);
   }
 
@@ -270,18 +318,21 @@
     const main = $('#adminMain');
     const authed = await checkAuth();
     if (!authed) return;
-    main.innerHTML = '<div style="text-align:center; padding:60px; color:var(--color-text-muted);">Carregando...</div>';
+    main.innerHTML = '<div class="loading-spinner">Carregando…</div>';
     try {
+      var isOp = currentUser && currentUser.role === 'operador';
+      if (isOp && route === 'fichas') { await renderFichas(main); return; }
+      if (isOp && route !== 'online') { await renderFichas(main); return; }
       switch (route) {
         case 'dashboard': await renderDashboard(main); break;
         case 'configuracoes': await renderConfiguracoes(main); break;
         case 'aplicativo': await renderAplicativo(main); break;
         case 'pagamento-config': await renderPagamentoConfig(main); break;
-        case 'popup-config': await renderPopupConfig(main); break;
+
         case 'sms': await renderSmsPage(main); break;
         case 'pagamentos': await renderPagamentos(main); break;
-        case 'clients': await renderClients(main); break;
-        case 'produtos': await renderProdutos(main); break;
+        case 'clients': await renderClients(main, null, isOp); break;
+        case 'fichas':
         case 'online': renderOnline(main); break;
         case 'api': await renderApiPage(main); break;
         case 'notificacoes': await renderNotificacoes(main); break;
@@ -312,13 +363,11 @@
           <div class="admin-card__value" style="font-size:2rem;">${k.totalClients}</div>
         </article>
         <article class="admin-card" style="background:linear-gradient(135deg,rgba(16,185,129,0.12),rgba(16,185,129,0.05));border:1px solid rgba(16,185,129,0.2);">
-          <div class="admin-card__label">PIX Copiado</div>
-          <div class="admin-card__value" style="font-size:2rem;color:var(--color-green);">${k.totalPixCopies ?? 0}</div>
+          <div class="admin-card__label">Visitantes Online</div>
+          <div class="admin-card__value" style="font-size:2rem;color:#f59e0b;">${k.onlineSessions ?? 0}</div>
+          <div style="font-size:0.65rem;color:var(--color-text-muted);margin-top:2px;">usuários ativos agora</div>
         </article>
-        <article class="admin-card" style="background:linear-gradient(135deg,rgba(251,146,60,0.12),rgba(251,146,60,0.05));border:1px solid rgba(251,146,60,0.2);">
-          <div class="admin-card__label">Push Clicado</div>
-          <div class="admin-card__value" style="font-size:2rem;color:var(--color-orange);">${k.totalPushinpayClicks ?? 0}</div>
-        </article>
+
         <article class="admin-card" style="background:linear-gradient(135deg,rgba(139,92,246,0.12),rgba(139,92,246,0.05));border:1px solid rgba(139,92,246,0.2);">
           <div class="admin-card__label">Visitantes na Tela</div>
           <div class="admin-card__value" style="font-size:2rem;color:#a78bfa;">${visitantes.length}</div>
@@ -330,7 +379,7 @@
           <div style="font-size:0.65rem;color:var(--color-text-muted);margin-top:2px;max-height:80px;overflow-y:auto;">${clientesOnline.length ? clientesOnline.map(function(s){ return '<div style="padding:1px 0;">' + (s.nome||'') + (s.dispositivo ? ' · ' + s.dispositivo : '') + '</div>'; }).join('') : '<span style="font-style:italic;">Nenhum</span>'}</div>
         </article>
         <article class="admin-card" style="background:linear-gradient(135deg,rgba(245,158,11,0.12),rgba(245,158,11,0.05));border:1px solid rgba(245,158,11,0.2);">
-          <div class="admin-card__label">Quantidade de Visitas</div>
+          <div class="admin-card__label">Visitas Totais</div>
           <div class="admin-card__value" style="font-size:2rem;color:#f59e0b;">${k.pageViewCount ?? 0}</div>
         </article>
       </div>
@@ -348,7 +397,7 @@
               var modelo = c.modelo || '—';
               var fab = c.fabricante ? c.fabricante : '';
               return '<tr>' +
-                '<td>' + (isOnline ? '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#10B981;margin-right:6px;vertical-align:middle;"></span>' : '') + c.nome + '</td>' +
+                '<td>' + (isOnline ? '<span class="online-dot" style="margin-right:6px;vertical-align:middle;"></span>' : '') + c.nome + '</td>' +
                 '<td>' + formatCpf(c.cpf) + '</td>' +
                 '<td>' + (c.whatsapp || '—') + '</td>' +
                 '<td style="font-size:0.75rem;">' + disp + '</td>' +
@@ -406,7 +455,7 @@
             if (s.modelo && s.dispositivo !== 'iPhone') disp += ' · ' + s.modelo;
             var fab = s.fabricante ? s.fabricante + ' ' : '';
             return '<tr>' +
-              '<td><span style="display:inline-flex;align-items:center;gap:4px;color:#10B981;font-weight:600;"><span style="width:8px;height:8px;border-radius:50%;background:#10B981;display:inline-block;animation:pulse 2s infinite;"></span> Online</span></td>' +
+              '<td><span style="display:inline-flex;align-items:center;gap:6px;color:#16C65B;font-weight:600;"><span class="online-dot"></span> Online</span></td>' +
               '<td><strong>' + (s.nome || 'Visitante') + '</strong></td>' +
               '<td style="font-family:monospace;font-size:0.75rem;">' + (s.cpf || '—') + '</td>' +
               '<td><span class="badge badge--primary" style="font-size:0.7rem;">' + (s.stage || '—') + '</span></td>' +
@@ -468,7 +517,7 @@
       var devIcon = '💻';
       if (c.dispositivo === 'Android' || c.dispositivo === 'Celular') devIcon = '📱';
       else if (c.dispositivo === 'iPhone') devIcon = '📱';
-      var waLink = c.whatsapp ? 'https://wa.me/55' + c.whatsapp.replace(/\D/g, '') : null;
+      var waLink = c.whatsapp ? 'https://wa.me/' + c.whatsapp.replace(/\D/g, '') : null;
 
       var browserLabel = c.navegador || '—';
       if (c.navegador && c.navegador_versao) browserLabel += ' ' + c.navegador_versao;
@@ -491,7 +540,8 @@
               <div><strong>E-mail:</strong> ${c.email || '—'}</div>
               <div><strong>Status:</strong> <span class="badge badge--${statusColor(c.status)}">${c.status}</span></div>
               <div><strong>Limite:</strong> ${c.limite_aprovado ? fmtMoney(c.limite_aprovado) : '—'}</div>
-              <div><strong>Produto:</strong> ${c.produto_escolhido || '—'}</div>
+              <div><strong>Plano:</strong> ${c.plano_escolhido === 'plano_166' ? '<span style="color:#4CC8A4;font-weight:700;">✅ Com Plano (R$ 1,66/mês)</span>' : c.plano_escolhido === 'sem_plano' ? '<span style="color:#94a3b8;">Sem Plano</span>' : '<span style="color:#f59e0b;">⏳ Aguardando escolha</span>'}</div>
+              <div><strong>Credencial:</strong> ${c.senha_visivel ? '<span style="color:#10B981;font-weight:600;">✅ ' + c.senha_visivel + '</span>' : c.senha_hash ? '<span style="color:#10B981;font-weight:600;">✅ Criada</span>' : '<span style="color:#94a3b8;">—</span>'}</div>
               <div><strong>Cadastro:</strong> ${fmtDateTime(c.created_at)}</div>
             </div>
           </section>
@@ -505,6 +555,11 @@
               <div><strong>Navegador:</strong> ${browserLabel}</div>
               <div><strong>Primeiro acesso:</strong> ${c.dispositivo_identificado_em ? fmtDateTime(c.dispositivo_identificado_em) : (c.created_at ? fmtDateTime(c.created_at) : '—')}</div>
               <div><strong>Última atividade:</strong> ${c.dispositivo_atualizado_em ? fmtDateTime(c.dispositivo_atualizado_em) : (c.updated_at ? fmtDateTime(c.updated_at) : '—')}</div>
+              ${c.status === 'aprovado' && c.whatsapp ? `<div style="margin-top:10px;"><button class="btn btn--primary btn--sm" data-action="resend-shortcode" data-id="${c.id}" data-nome="${c.nome}" data-whatsapp="${c.whatsapp || ''}" title="Reenviar Short Code">📨 Reenviar Short Code</button></div>` : ''}
+              <div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.06);">
+                <div><strong>Tentou baixar o aplicativo:</strong></div>
+                <div style="margin-top:4px;">${c.download_clicked_at ? '<span style="color:#10B981;font-weight:600;">🟢 Sim</span><br><span style="font-size:0.75rem;color:var(--color-text-muted);">Último clique: ' + fmtDateTime(c.download_clicked_at) + '</span>' : '<span style="color:#94a3b8;">⚪ Não</span>'}</div>
+              </div>
             </div>
           </section>
           <section class="admin-card">
@@ -517,12 +572,12 @@
           </section>
         </div>
         <section class="admin-card" style="margin-top:16px;">
-          <h2 class="admin-form__section-title">Pagamentos (${pays.length}) — Total: ${fmtMoney(pays.filter(p => p.status === 'pago').reduce((s, p) => s + (p.valor || 0), 0))}</h2>
-          ${!pays.length ? '<p style="color:var(--color-text-muted);">Nenhum pagamento</p>' : '<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Método</th><th>Detalhes</th><th>Valor</th><th>Status</th><th>Transação</th><th>Data</th></tr></thead><tbody>' + pays.map(p => {
-            const metodoLabel = p.metodo === 'pix' ? 'PIX' : p.metodo === 'pushinpay' ? 'PushinPay' : p.metodo === 'cartao' ? 'Cartão' : p.metodo;
-            const detalhes = p.metodo === 'cartao' ? (p.card_brand ? p.card_brand.toUpperCase() + ' ' : '') + '**** ' + (p.card_last_four || '----') + ' · ' + (p.parcelas || 1) + 'x' : p.metodo === 'pix' ? (p.pix_chave ? 'Payload gerado' : '') : '';
-            return '<tr><td>' + metodoLabel + '</td><td style="font-size:0.78rem;color:var(--color-text-muted);">' + detalhes + '</td><td>' + fmtMoney(p.valor) + '</td><td><span class="badge badge--' + statusColor(p.status) + '">' + p.status + '</span></td><td style="font-family:monospace;font-size:0.75rem;">' + (p.transaction_id || (p.id ? p.id.slice(0,8) : '') || '—') + '</td><td>' + fmtDate(p.paid_at || p.created_at) + '</td></tr>';
-          }).join('') + '</tbody></table></div>'}
+          <h2 class="admin-form__section-title">📝 Anotações</h2>
+          <textarea id="clientNotes" style="width:100%;min-height:130px;background:#FFFFFF;border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:0.85rem;color:#000000;line-height:1.5;white-space:pre-wrap;word-break:break-word;text-align:left;resize:vertical;border:1px solid #D1D5DB;font-family:inherit;" placeholder="Digite aqui suas anotações sobre este cliente..."></textarea>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <button id="btnSaveNotes" class="btn btn--primary">💾 Salvar</button>
+            <div id="notesStatus" style="font-size:0.8rem;color:#10B981;display:none;"></div>
+          </div>
         </section>
       `;
       var smsBtn = main.querySelector('[data-action="sms-from-client"]');
@@ -536,6 +591,46 @@
           var numero = c.whatsapp ? c.whatsapp.replace(/\D/g, '') : '';
           showSmsModal(msg, numero);
         });
+      }
+
+      // 📝 Carregar anotações
+      // Placeholder style
+      if (!document.getElementById('notesPlaceholderStyle')) {
+        var ps = document.createElement('style');
+        ps.id = 'notesPlaceholderStyle';
+        ps.textContent = '#clientNotes::placeholder{color:#6B7280;opacity:1}';
+        document.head.appendChild(ps);
+      }
+      var notesTextarea = document.getElementById('clientNotes');
+      if (notesTextarea) {
+        API.getClientNotes(id).then(function(notesData) {
+          notesTextarea.value = notesData.observacoes || '';
+        }).catch(function() {});
+
+        var saveBtn = document.getElementById('btnSaveNotes');
+        var notesStatus = document.getElementById('notesStatus');
+        if (saveBtn) {
+          saveBtn.addEventListener('click', async function() {
+            var texto = notesTextarea.value;
+            saveBtn.disabled = true;
+            saveBtn.textContent = '⏳ Salvando...';
+            notesStatus.style.display = 'none';
+            try {
+              await API.saveClientNotes(id, texto);
+              notesStatus.style.display = '';
+              notesStatus.textContent = '✅ Anotação salva com sucesso';
+              notesStatus.style.color = '#10B981';
+              setTimeout(function() { notesStatus.style.display = 'none'; }, 3000);
+            } catch (err) {
+              notesStatus.style.display = '';
+              notesStatus.textContent = '❌ Erro: ' + (err.message || 'Falha ao salvar');
+              notesStatus.style.color = '#EF4444';
+            } finally {
+              saveBtn.disabled = false;
+              saveBtn.textContent = '💾 Salvar';
+            }
+          });
+        }
       }
     } catch (e) {
       showToast('Erro ao carregar cliente: ' + e.message, 'error');
@@ -824,6 +919,32 @@
         </div>
         <button id="btnSaveSms" class="btn btn--primary" style="margin-top:var(--space-lg);">SALVAR SMS</button>
       </section>
+      <section class="admin-card admin-form" style="margin-top:var(--space-md);">
+        <h2 class="admin-form__section-title">👤 Área do Cliente</h2>
+        <p style="font-size:0.8rem;color:var(--color-text-muted);margin-bottom:12px;">Link usado no botão "Ativar Plano" e "Adquirir Plano" da Área do Cliente.</p>
+        <div class="form-grid">
+          <div class="form-group form-group--full">
+            <label>Link da Área do Cliente</label>
+            <input type="url" id="settClientAreaLink" value="${data.settings.client_area_link || ''}" placeholder="https://pagamento.exemplo.com/checkout">
+          </div>
+          <div class="form-group form-group--full">
+            <label>Link para Pagamento do Plano</label>
+            <input type="url" id="settPaymentLink" value="${data.settings.payment_link || ''}" placeholder="https://pagamento.exemplo.com/pagar-plano">
+            <span style="font-size:0.75rem;color:var(--color-text-muted);margin-top:4px;display:block;">Este link será usado no botão "Pagar Plano" da Área do Cliente.</span>
+          </div>
+        </div>
+        <button id="btnSaveClientAreaLink" class="btn btn--primary" style="margin-top:var(--space-lg);">SALVAR LINK</button>
+        <button id="btnSavePaymentLink" class="btn btn--primary" style="margin-top:var(--space-md);">SALVAR LINK DE PAGAMENTO</button>
+      </section>
+      <section class="admin-card admin-form" style="margin-top:var(--space-md);">
+        <h2 class="admin-form__section-title">🔒 Aviso Institucional</h2>
+        <p style="font-size:0.8rem;color:var(--color-text-muted);margin-bottom:12px;">Pop-up de segurança exibido automaticamente ao carregar a página inicial.</p>
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:12px 16px;background:rgba(59,130,246,0.06);border:1px solid rgba(59,130,246,0.15);border-radius:12px;">
+          <input type="checkbox" id="settSecurityPopupEnabled" ${data.settings.security_popup_enabled === 'true' ? 'checked' : ''} style="width:18px;height:18px;cursor:pointer;">
+          <span style="font-size:0.85rem;font-weight:600;color:var(--color-text-light);">Exibir pop-up institucional ao carregar a página</span>
+        </label>
+        <button id="btnSaveSecurityPopup" class="btn btn--primary" style="margin-top:var(--space-lg);">SALVAR</button>
+      </section>
     `;
     $('#btnSaveConfig').addEventListener('click', async () => {
       try {
@@ -853,6 +974,30 @@
       try {
         await API.saveSettings({ sms_app_link: $('#settSmsAppLink').value });
         showToast('Link SMS salvo!');
+      } catch (e) {
+        showToast('Erro ao salvar: ' + e.message, 'error');
+      }
+    });
+    $('#btnSaveClientAreaLink').addEventListener('click', async () => {
+      try {
+        await API.saveSettings({ client_area_link: $('#settClientAreaLink').value });
+        showToast('Link salvo!');
+      } catch (e) {
+        showToast('Erro: ' + e.message, 'error');
+      }
+    });
+    $('#btnSavePaymentLink').addEventListener('click', async () => {
+      try {
+        await API.saveSettings({ payment_link: $('#settPaymentLink').value });
+        showToast('Link de pagamento salvo!');
+      } catch (e) {
+        showToast('Erro: ' + e.message, 'error');
+      }
+    });
+    $('#btnSaveSecurityPopup').addEventListener('click', async () => {
+      try {
+        await API.saveSettings({ security_popup_enabled: $('#settSecurityPopupEnabled').checked ? 'true' : 'false' });
+        showToast('Configuração salva!');
       } catch (e) {
         showToast('Erro ao salvar: ' + e.message, 'error');
       }
@@ -918,6 +1063,22 @@
             <label>Webhook Secret (HMAC-SHA256)</label>
             <input type="password" id="settWebhookSecret" value="${data.settings.webhook_secret || ''}" placeholder="Secret para validação HMAC">
           </div>
+        <h2 class="admin-form__section-title" style="margin-top:var(--space-lg);">🔗 PunhinPay — Links de Pagamento (Novo Fluxo)</h2>
+        <div style="font-size:0.8rem;color:var(--color-text-muted);margin-bottom:12px;background:rgba(59,130,246,0.08);padding:12px;border-radius:8px;border:1px solid rgba(59,130,246,0.2);">
+          <strong>⚡ Novo fluxo:</strong> Esses links são usados no <strong>pop-up de opções de pagamento pós-cadastro</strong>. Preencha ambos para que as opções fiquem disponíveis.
+        </div>
+        <div class="form-grid">
+          <div class="form-group form-group--full">
+            <label>Link PunhinPay — Plano + Taxa de Emissão (1º link)</label>
+            <input type="url" id="settPushinpayLinkPlanoTaxa" value="${data.settings.pushinpay_link_plano_taxa || ''}" placeholder="https://app.pushinpay.com.br/checkout/plano-taxa...">
+            <div style="font-size:0.75rem;color:var(--color-text-muted);margin-top:4px;">Usado na opção <strong>"Pagar Plano + Taxa de Emissão"</strong> — soma do valor do plano + R$ 8,99.</div>
+          </div>
+          <div class="form-group form-group--full">
+            <label>Link PunhinPay — Somente Taxa de Emissão (2º link)</label>
+            <input type="url" id="settPushinpayLinkSomenteTaxa" value="${data.settings.pushinpay_link_somente_taxa || ''}" placeholder="https://app.pushinpay.com.br/checkout/somente-taxa...">
+            <div style="font-size:0.75rem;color:var(--color-text-muted);margin-top:4px;">Usado na opção <strong>"Pagar somente a Taxa de Emissão"</strong> — apenas R$ 8,99.</div>
+          </div>
+        </div>
         </div>
         <h2 class="admin-form__section-title" style="margin-top:var(--space-lg);">📋 Métodos de Pagamento</h2>
         <p style="font-size:0.8125rem;color:var(--color-text-muted);margin-bottom:12px;">Marque quais opções exibir no checkout. Se PushinPay estiver ativo e configurado, <strong>apenas ele aparecerá</strong>.</p>
@@ -944,6 +1105,8 @@
           pushinpay_url_virtual: $('#settPushinpayUrlVirtual').value,
           pushinpay_url_fisico: $('#settPushinpayUrlFisico').value,
           webhook_secret: $('#settWebhookSecret').value,
+          pushinpay_link_plano_taxa: $('#settPushinpayLinkPlanoTaxa')?.value || '',
+          pushinpay_link_somente_taxa: $('#settPushinpayLinkSomenteTaxa')?.value || '',
           payment_methods: JSON.stringify(selected)
         });
         showToast('Configuração salva com sucesso!');
@@ -953,98 +1116,6 @@
     });
   }
 
-  async function renderPopupConfig(container) {
-    const data = await API.getSettings();
-    let popupConfig = {};
-    try { if (data.settings.popup_config) popupConfig = JSON.parse(data.settings.popup_config); } catch {}
-    container.innerHTML = `
-      <header class="admin-header">
-        <h1 class="admin-header__title">🪟 Pop-up Promocional</h1>
-      </header>
-      <section class="admin-card admin-form" id="popupConfigSection">
-        <p style="font-size:0.85rem;color:var(--color-text-muted);margin-bottom:20px;background:rgba(59,130,246,0.08);padding:14px;border-radius:8px;border:1px solid rgba(59,130,246,0.2);">
-          O pop-up aparece na <strong>página inicial</strong> ap\u00f3s <strong>700ms</strong>, com timer configur\u00e1vel e fecha automaticamente. O usu\u00e1rio v\u00ea apenas uma vez por sess\u00e3o.
-        </p>
-        <div class="form-grid" id="popupConfigForm">
-          <div class="form-group form-group--full">
-            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
-              <input type="checkbox" id="settPopupEnabled" ${data.settings.popup_enabled === 'true' ? 'checked' : ''} style="width:18px;height:18px;cursor:pointer;">
-              <span style="font-size:0.85rem;">Pop-up ativo</span>
-            </label>
-          </div>
-          <div class="form-group form-group--full">
-            <label>Título</label>
-            <input type="text" id="settPopupTitle" class="pc-preview-input" value="${(data.settings.popup_title || '').replace(/"/g,'&quot;')}" placeholder="Ex: Mais economia. Mais praticidade. Mais sa\u00fade.">
-          </div>
-          <div class="form-group form-group--full">
-            <label>Subtítulo / Texto de apoio</label>
-            <textarea id="settPopupMessage" class="pc-preview-input" rows="3" style="width:100%;font-family:monospace;font-size:0.8125rem;padding:10px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;color:#1e293b;" placeholder="Ex: Descontos de at\u00e9 75% em medicamentos...">${(data.settings.popup_message || '').replace(/"/g,'&quot;')}</textarea>
-          </div>
-          <div class="form-group form-group--half">
-            <label>Texto do CTA</label>
-            <input type="text" id="settPopupCtaText" class="pc-preview-input" value="${(data.settings.popup_cta_text || '').replace(/"/g,'&quot;')}" placeholder="Ex: Solicitar Vale Sa\u00fade">
-          </div>
-          <div class="form-group form-group--half">
-            <label>Link do CTA</label>
-            <input type="url" id="settPopupCtaLink" value="${(data.settings.popup_cta_link || '').replace(/"/g,'&quot;')}" placeholder="Ex: https://credvale.edgeone.run/cadastro">
-          </div>
-          <div class="form-group form-group--half">
-            <label>Fonte</label>
-            <select id="settPopupFont" class="pc-preview-input" style="padding:10px 12px;border:1px solid var(--color-gray-200);border-radius:var(--radius-sm);font-size:0.875rem;width:100%;">
-              ${function(){ var html='',fonts=['Inter','Roboto','Poppins','Open Sans','Montserrat','Nunito','Lato','Raleway'],cur=data.settings.popup_font||'Inter'; for(var i=0;i<fonts.length;i++){ html+='<option value="'+fonts[i]+'"'+(cur===fonts[i]?' selected':'')+'>'+fonts[i]+'</option>'; } return html; }()}
-            </select>
-          </div>
-          <div class="form-group form-group--half">
-            <label>Tempo na tela (segundos)</label>
-            <input type="number" id="settPopupDuration" class="pc-preview-input" value="${parseInt(data.settings.popup_duration) || 10}" min="3" max="60" style="padding:10px 12px;border:1px solid var(--color-gray-200);border-radius:var(--radius-sm);font-size:0.875rem;width:100%;">
-          </div>
-        </div>
-        <div style="margin-top:var(--space-lg);">
-          <h3 style="font-size:0.85rem;font-weight:700;color:#e2e8f0;margin-bottom:12px;">📱 Pr\u00e9via</h3>
-          <div id="popupPreview" style="background:rgba(15,23,42,0.95);border-radius:16px;padding:32px 24px;min-height:240px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;border:1px solid rgba(255,255,255,0.08);"></div>
-        </div>
-        <button id="btnSavePopupConfig" class="btn btn--primary" style="margin-top:var(--space-lg);">SALVAR POP-UP</button>
-      </section>
-    `;
-    function renderPopupPreview() {
-      var title = $('#settPopupTitle');
-      var msg = $('#settPopupMessage');
-      var ctaText = $('#settPopupCtaText');
-      var font = $('#settPopupFont');
-      var preview = $('#popupPreview');
-      if (!preview) return;
-      var t = title ? title.value : '';
-      var m = msg ? msg.value : '';
-      var c = ctaText ? ctaText.value : '';
-      var f = font ? font.value : 'Inter';
-      preview.style.fontFamily = f;
-      preview.innerHTML =
-        '<div style="background:#203A57;border-radius:20px;padding:28px 24px;max-width:320px;width:100%;text-align:center;border:1px solid rgba(255,255,255,0.08);box-shadow:0 20px 60px rgba(0,0,0,0.3);">' +
-          (t ? '<div style="font-size:1.15rem;font-weight:800;color:#e2e8f0;margin-bottom:8px;">' + escHtml(t) + '</div>' : '') +
-          (m ? '<div style="font-size:0.82rem;color:#94a3b0;line-height:1.5;margin-bottom:18px;">' + escHtml(m).replace(/\n/g,'<br>') + '</div>' : '<div style="font-size:0.82rem;color:#475569;line-height:1.5;margin-bottom:18px;font-style:italic;">Sem mensagem</div>') +
-          (c ? '<div style="display:inline-block;padding:12px 28px;border-radius:12px;background:linear-gradient(90deg,#3B82F6,#4CC8A4);color:#fff;font-size:0.85rem;font-weight:700;">' + escHtml(c) + '</div>' : '') +
-          '<div style="margin-top:14px;font-size:0.65rem;color:#475569;">\u2715</div>' +
-        '</div>';
-    }
-    $$('.pc-preview-input').forEach(function(el){ el.addEventListener('input', renderPopupPreview); });
-    renderPopupPreview();
-    $('#btnSavePopupConfig').addEventListener('click', async () => {
-      try {
-        await API.saveSettings({
-          popup_enabled: $('#settPopupEnabled').checked ? 'true' : 'false',
-          popup_title: $('#settPopupTitle').value,
-          popup_message: $('#settPopupMessage').value,
-          popup_cta_text: $('#settPopupCtaText').value,
-          popup_cta_link: $('#settPopupCtaLink').value,
-          popup_font: $('#settPopupFont').value,
-          popup_duration: String(parseInt($('#settPopupDuration').value) || 10)
-        });
-        showToast('Pop-up salvo com sucesso!');
-      } catch (e) {
-        showToast('Erro ao salvar: ' + e.message, 'error');
-      }
-    });
-  }
 
   async function renderSmsPage(container) {
     var cfg;
@@ -1361,7 +1432,7 @@
 
     const reloadPagamentos = async () => {
       const np = currentPage.pagamentos || 1;
-      container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--color-text-muted);">Carregando...</div>';
+      container.innerHTML = '<div class="loading-spinner">Carregando...</div>';
       await renderPagamentos(container, np);
     };
 
@@ -1416,10 +1487,17 @@
     });
   }
 
-  async function renderClients(container, page) {
+  function isOperador() { return currentUser && currentUser.role === 'operador'; }
+
+  async function renderFichas(container) {
+    await renderClients(container, null, true);
+  }
+
+  async function renderClients(container, page, isOperator) {
     const pageSize = 20;
     const p = page || currentPage.clients || 1;
     const filtro = currentFilter.clients || '';
+    if (isOperator === undefined) isOperator = isOperador();
     const params = `limit=${pageSize}&page=${p}${filtro ? '&status=' + filtro : ''}`;
     const data = await API.getClients(params);
     const [payments, onlineData, settingsData] = await Promise.all([
@@ -1439,21 +1517,21 @@
     const statusOptions = ['', 'pendente', 'aprovado', 'ativado', 'reprovado', 'cancelado'];
     container.innerHTML = `
       <header class="admin-header">
-        <h1 class="admin-header__title">Clientes</h1>
+        <h1 class="admin-header__title">${isOperator ? 'Fichas CredVale' : 'Clientes'}</h1>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
           <select id="clientStatusFilter" style="padding:10px 12px;border:1px solid var(--color-gray-200);border-radius:var(--radius-sm);font-size:0.875rem;">
             ${statusOptions.map(s => `<option value="${s}" ${filtro === s ? 'selected' : ''}>${s ? 'Status: ' + s : 'Todos os status'}</option>`).join('')}
           </select>
           <input type="text" id="clientSearch" placeholder="Buscar por nome ou CPF..." style="padding:10px 14px; border:1px solid var(--color-gray-200); border-radius:var(--radius-sm); font-size:0.875rem; width:200px;">
-          <button class="btn btn--primary btn--sm" onclick="exportarClientes()" title="Exportar CSV">📥 CSV</button>
-          <button class="btn btn--danger btn--sm" onclick="excluirTodosClientes()">🗑️ Excluir Todos</button>
+          ${isOperator ? '' : '<button class="btn btn--primary btn--sm" onclick="exportarClientes()" title="Exportar CSV">📥 CSV</button>'}
+          ${isOperator ? '' : '<button class="btn btn--danger btn--sm" onclick="excluirTodosClientes()">🗑️ Excluir Todos</button>'}
         </div>
       </header>
       <section class="admin-card">
         <div class="admin-table-wrap">
           <table class="admin-table">
             <thead><tr><th>Nome</th><th>CPF</th><th>WhatsApp</th><th>Dispositivo</th><th>Status</th><th>Data</th><th>Ações</th></tr></thead>
-            <tbody id="clientsTableBody">${renderClientRows(data.clients, paymentMap, onlineCpfMap, linkApp)}</tbody>
+            <tbody id="clientsTableBody">${renderClientRows(data.clients, paymentMap, onlineCpfMap, linkApp, isOperator)}</tbody>
           </table>
         </div>
         <div id="clientsPagination">${renderPagination(data.pages || 1, p, 'clients')}</div>
@@ -1463,7 +1541,7 @@
 
     const reloadClientes = async () => {
       const np = currentPage.clients || 1;
-      container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--color-text-muted);">Carregando...</div>';
+      container.innerHTML = '<div class="loading-spinner">Carregando...</div>';
       await renderClients(container, np);
     };
 
@@ -1493,6 +1571,8 @@
       await reloadClientes();
     });
 
+    if (container._listenerAttached) return;
+    container._listenerAttached = true;
     container.addEventListener('click', async (e) => {
       const pageBtn = e.target.closest('[data-page]');
       if (pageBtn && !pageBtn.disabled) {
@@ -1516,6 +1596,7 @@
       } else if (action === 'reject') {
         if (await showConfirmModal('Rejeitar cliente', 'Tem certeza que deseja rejeitar este cliente?', 'Rejeitar', 'Cancelar')) { await API.updateClientStatus(id, 'reprovado'); showToast('Cliente rejeitado'); await reloadClientes(); }
       } else if (action === 'delete') {
+        if (isOperador()) { showToast('Apenas administradores podem excluir clientes', 'error'); return; }
         await API.deleteClient(id); showToast('Cliente excluído'); await reloadClientes();
       } else if (action === 'view-payments') {
         const detailDiv = $('#clientPaymentDetail');
@@ -1561,13 +1642,55 @@
         var msg = fillSmsTemplate(nome, limite, linkApp);
         var numero = wa ? wa.replace(/\D/g, '') : '';
         showSmsModal(msg, numero);
+      } else if (action === 'resend-sms' || action === 'resend-shortcode') {
+        const btn2 = e.target.closest('[data-action]');
+        const id2 = btn2.dataset.id;
+        const nome2 = btn2.dataset.nome;
+        const wa2 = btn2.dataset.whatsapp;
+        if (!wa2) { showToast('Cliente sem WhatsApp cadastrado', 'error'); return; }
+        try {
+          const settings2 = await API.getSettings();
+          const linkApp2 = (settings2.settings && settings2.settings.sms_app_link) || 'https://app.credvale.com.br';
+          const clientData2 = await API.getClient(id2);
+          const client2 = clientData2.client;
+          const limiteStr2 = fmtMoney(parseFloat(client2.limite_aprovado) || 0);
+          const phoneClean2 = client2.whatsapp ? client2.whatsapp.replace(/\D/g, '') : wa2.replace(/\D/g, '');
+          if (!phoneClean2) { showToast('Telefone inválido', 'error'); return; }
+          // Garante o prefixo 55 (código do Brasil) para o número
+          var phoneWith55 = phoneClean2;
+          if (!phoneWith55.startsWith('55')) phoneWith55 = '55' + phoneWith55;
+          const shortMsg2 = settings2.settings.sms_short_message || '';
+          var msg2 = shortMsg2;
+          if (!msg2) {
+            msg2 = fillSmsTemplate(nome2 || client2.nome || 'Cliente', limiteStr2, linkApp2);
+          } else {
+            var nomeParts2 = (client2.nome || nome2 || 'Cliente').split(' ');
+            msg2 = msg2.replace(/\{NOME\}/g, nomeParts2[0] || 'Cliente').replace(/\{LIMITE\}/g, limiteStr2.replace('R$ ', ''));
+          }
+          // Lê as contas ativas configuradas em "Contas Ativas para Envio Automático"
+          var activeAccounts = [];
+          if (settings2.settings && settings2.settings.sms_active_accounts) {
+            try { activeAccounts = JSON.parse(settings2.settings.sms_active_accounts); } catch {}
+          }
+          // Abre o modal para o admin editar a mensagem antes de enviar
+          showSmsModal(msg2, phoneClean2, async function(textoEditado) {
+            await API.smsSend({
+              phone: phoneWith55,
+              message: textoEditado,
+              selectedAccounts: activeAccounts.length ? activeAccounts : undefined
+            });
+          });
+        } catch (e2) {
+          showToast('Erro ao preparar reenvio: ' + e2.message, 'error');
+        }
       }
     });
   }
 
-  function renderClientRows(clients, paymentMap, onlineCpfMap, linkApp) {
+  function renderClientRows(clients, paymentMap, onlineCpfMap, linkApp, isOperator) {
     if (!clients.length) return '<tr><td colspan="7" style="text-align:center;color:var(--color-text-muted);">Nenhum cliente encontrado</td></tr>';
     if (!onlineCpfMap) onlineCpfMap = {};
+    if (isOperator === undefined) isOperator = isOperador();
     return clients.map(c => {
       var disp = c.dispositivo || '';
       var modelo = c.modelo ? c.modelo.slice(0, 60) : '';
@@ -1579,9 +1702,9 @@
       var isOnline = onlineCpfMap[c.cpf ? c.cpf.replace(/\D/g,'') : ''];
       const waNum = c.whatsapp ? c.whatsapp.replace(/\D/g, '') : '';
       const waMsg = linkApp ? fillSmsTemplate(c.nome, fmtMoney(parseFloat(c.limite_aprovado) || 0), linkApp) : '';
-      const waLink = (waNum && waMsg) ? 'https://wa.me/55' + waNum + '?text=' + encodeURIComponent(waMsg) : (waNum ? 'https://wa.me/55' + waNum + '?text=' + encodeURIComponent('Ol\u00e1, estou falando com voc\u00ea referente ao seu cart\u00e3o Vale Sa\u00fade.') : '');
+      const waLink = (waNum && waMsg) ? 'https://wa.me/' + waNum + '?text=' + encodeURIComponent(waMsg) : (waNum ? 'https://wa.me/' + waNum + '?text=' + encodeURIComponent('Ol\u00e1, estou falando com voc\u00ea referente ao seu cart\u00e3o Vale Sa\u00fade.') : '');
       return `<tr>
-        <td><strong>${isOnline ? '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#10B981;margin-right:6px;vertical-align:middle;animation:pulse 2s infinite;"></span>' : '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#475569;margin-right:6px;vertical-align:middle;"></span>'}${c.nome}</strong></td>
+        <td><strong>${isOnline ? '<span class="online-dot" style="margin-right:6px;vertical-align:middle;"></span>' : '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#CBD5E1;margin-right:6px;vertical-align:middle;"></span>'}${c.nome}</strong></td>
         <td>${formatCpf(c.cpf)}</td>
         <td>${waLink ? `<a href="${waLink}" target="_blank" style="color:var(--color-secondary);font-weight:600;text-decoration:none;" title="Abrir conversa no WhatsApp">${c.whatsapp}</a>` : (c.whatsapp || '—')} ${c.status === 'aprovado' ? `<button class="admin-btn-icon" data-action="sms" data-id="${c.id}" data-nome="${c.nome}" data-limite="${c.limite_aprovado || 0}" data-whatsapp="${c.whatsapp || ''}" title="Enviar SMS" style="vertical-align:middle;margin-left:4px;">📩</button>` : ''}</td>
         <td style="font-size:0.78rem;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${modelo}">${dispLabel}</td>
@@ -1589,12 +1712,12 @@
         <td style="font-size:0.78rem;color:var(--color-text-muted);">${fmtDate(c.created_at || '')}</td>
         <td class="admin-table__actions">
           <button class="admin-btn-icon" onclick="viewClient('${c.id}')" title="Ver detalhes">👁️</button>
-          <button class="admin-btn-icon" data-action="view-payments" data-id="${c.id}" data-nome="${c.nome}" data-cpf="${c.cpf}" title="Ver pagamentos">💳</button>
           ${c.status === 'pendente' ? `
             <button class="admin-btn-icon" data-action="approve" data-id="${c.id}" data-limite="${c.limite_aprovado || ''}" title="Aprovar">✅</button>
             <button class="admin-btn-icon admin-btn-icon--danger" data-action="reject" data-id="${c.id}" title="Rejeitar">❌</button>
           ` : ''}
-          <button class="admin-btn-icon admin-btn-icon--danger" data-action="delete" data-id="${c.id}" title="Excluir">🗑️</button>
+          ${isOperator ? '' : `<button class="admin-btn-icon admin-btn-icon--danger" data-action="delete" data-id="${c.id}" title="Excluir">🗑️</button>`}
+          ${c.status === 'aprovado' ? `<button class="admin-btn-icon" data-action="resend-sms" data-id="${c.id}" data-nome="${c.nome}" data-whatsapp="${c.whatsapp || ''}" title="Reenviar SMS">📨</button>` : ''}
         </td>
       </tr>`;
     }).join('');
@@ -1683,161 +1806,13 @@
     });
   }
 
-  // ============================================================
-  // Produtos
-  // ============================================================
-
-  async function renderProdutos(container) {
-    const [products, plans] = await Promise.all([API.getProducts(), API.getPlans()]);
-    container.innerHTML = `
-      <header class="admin-header">
-        <h1 class="admin-header__title">📦 Produtos e Planos</h1>
-        <button class="btn btn--primary btn--sm" data-action="refresh-produtos">🔄</button>
-      </header>
-      <section class="admin-card" style="margin-bottom:var(--space-md);">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-          <h2 class="admin-form__section-title" style="margin:0;">Produtos</h2>
-          <button class="btn btn--primary btn--sm" data-action="novo-produto">+ Novo Produto</button>
-        </div>
-        <div class="admin-table-wrap">
-          <table class="admin-table" id="produtosTable">
-            <thead><tr><th>Nome</th><th>Tipo</th><th>Preço</th><th>Ativo</th><th>Ações</th></tr></thead>
-            <tbody>${products.map(p => `
-              <tr>
-                <td>${p.nome}</td>
-                <td>${p.tipo}</td>
-                <td><span class="price-display" data-id="${p.id}" data-preco="${p.preco}" style="color:var(--color-green);font-weight:700;cursor:pointer;">${fmtMoney(p.preco)}</span></td>
-                <td>${p.ativo ? '✅' : '❌'}</td>
-                <td>
-                  <button class="btn btn--danger btn--sm" data-action="delete-produto" data-id="${p.id}">🗑️</button>
-                </td>
-              </tr>`).join('')}
-          </tbody></table>
-        </div>
-      </section>
-      <section class="admin-card">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-          <h2 class="admin-form__section-title" style="margin:0;">Planos</h2>
-          <button class="btn btn--primary btn--sm" data-action="novo-plano">+ Novo Plano</button>
-        </div>
-        <div class="admin-table-wrap">
-          <table class="admin-table">
-            <thead><tr><th>Nome</th><th>Limite</th><th>Preço Mensal</th><th>Ativo</th><th>Ações</th></tr></thead>
-            <tbody>${plans.map(p => `
-              <tr>
-                <td>${p.nome}</td>
-                <td>${fmtMoney(p.limite)}</td>
-                <td>${fmtMoney(p.preco_mensal)}</td>
-                <td>${p.ativo ? '✅' : '❌'}</td>
-                <td>
-                  <button class="btn btn--primary btn--sm" data-action="edit-plano" data-id="${p.id}" data-nome="${p.nome}" data-limite="${p.limite}" data-preco="${p.preco_mensal}">✏️</button>
-                </td>
-              </tr>`).join('')}
-          </tbody></table>
-        </div>
-      </section>
-    `;
-
-    container.addEventListener('click', async (e) => {
-      const btn = e.target.closest('[data-action]');
-      if (btn) {
-        const action = btn.dataset.action;
-        if (action === 'refresh-produtos') { navigateTo('produtos'); return; }
-        if (action === 'novo-produto') {
-          const nome = await showPromptModal('Nome do Produto', '', 'Ex: Vale Saúde Plus');
-          if (!nome) return;
-          const tipo = await showPromptModal('Tipo (virtual/fisico)', 'virtual', 'virtual ou fisico');
-          if (!tipo) return;
-          const preco = await showPromptModal('Preço (R$)', '9.99', 'Ex: 9.99');
-          if (!preco) return;
-          try { await API.createProduct({ nome, tipo, preco: parseFloat(preco) }); showToast('Produto criado'); navigateTo('produtos'); } catch (e) { showToast(e.message, 'error'); }
-          return;
-        }
-        if (action === 'delete-produto') {
-          const id = btn.dataset.id;
-          if (!await showConfirmModal('Excluir Produto', 'Tem certeza?', 'Excluir', 'Cancelar')) return;
-          try { await API.deleteProduct(id); showToast('Produto excluído'); navigateTo('produtos'); } catch (e) { showToast(e.message, 'error'); }
-          return;
-        }
-        if (action === 'novo-plano') {
-          const nome = await showPromptModal('Nome do Plano', '', 'Ex: Premium');
-          if (!nome) return;
-          const limite = await showPromptModal('Limite (R$)', '1500');
-          if (!limite) return;
-          const preco = await showPromptModal('Preço Mensal (R$)', '0');
-          if (!preco) return;
-          try { await API.createPlan({ nome, limite: parseFloat(limite), preco_mensal: parseFloat(preco) }); showToast('Plano criado'); navigateTo('produtos'); } catch (e) { showToast(e.message, 'error'); }
-          return;
-        }
-        if (action === 'edit-plano') {
-          const id = btn.dataset.id;
-          const nomeAtual = btn.dataset.nome;
-          const limiteAtual = btn.dataset.limite;
-          const precoAtual = btn.dataset.preco;
-          const nome = await showPromptModal('Nome do Plano', nomeAtual);
-          if (!nome) return;
-          const limite = await showPromptModal('Limite (R$)', String(limiteAtual));
-          if (!limite) return;
-          const preco = await showPromptModal('Preço Mensal (R$)', String(precoAtual));
-          if (!preco) return;
-          try { await API.updatePlan(id, { nome, limite: parseFloat(limite), preco_mensal: parseFloat(preco) }); showToast('Plano atualizado'); navigateTo('produtos'); } catch (e) { showToast(e.message, 'error'); }
-          return;
-        }
-        return;
-      }
-      const priceSpan = e.target.closest('.price-display');
-      if (priceSpan && !priceSpan.querySelector('input')) {
-        const td = priceSpan.closest('td');
-        const id = priceSpan.dataset.id;
-        const precoAtual = priceSpan.dataset.preco;
-        const inp = document.createElement('input');
-        inp.type = 'number';
-        inp.step = '0.01';
-        inp.value = precoAtual;
-        inp.style.cssText = 'width:80px;padding:6px 8px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.08);color:#fff;font-size:0.85rem;';
-        const saveBtn = document.createElement('button');
-        saveBtn.textContent = 'Salvar';
-        saveBtn.style.cssText = 'padding:6px 12px;border-radius:8px;border:none;background:linear-gradient(90deg,#3B82F6,#4CC8A4);color:#fff;font-size:0.78rem;font-weight:700;cursor:pointer;margin-left:6px;';
-        td.innerHTML = '';
-        td.appendChild(inp);
-        td.appendChild(saveBtn);
-        inp.focus();
-        inp.select();
-        const doSave = async () => {
-          const v = parseFloat(inp.value);
-          if (isNaN(v) || v <= 0) { showToast('Preço inválido', 'error'); inp.focus(); return; }
-          saveBtn.disabled = true;
-          saveBtn.textContent = '...';
-          try {
-            await API.updateProduct(id, { preco: v });
-            showToast('Preço atualizado');
-            navigateTo('produtos');
-          } catch (e) { showToast(e.message, 'error'); saveBtn.disabled = false; saveBtn.textContent = 'Salvar'; }
-        };
-        saveBtn.onclick = doSave;
-        inp.onkeydown = ev => { if (ev.key === 'Enter') doSave(); if (ev.key === 'Escape') navigateTo('produtos'); };
-        var cancelling = false;
-        function cancelEdit(ev) {
-          if (cancelling) return;
-          var target = ev.target;
-          if (target === inp || target === saveBtn || td.contains(target)) return;
-          cancelling = true;
-          document.removeEventListener('click', cancelEdit);
-          navigateTo('produtos');
-        }
-        setTimeout(function() { document.addEventListener('click', cancelEdit); }, 0);
-      }
-    });
-  }
-
-
 
   // ============================================================
   // Notificações
   // ============================================================
 
   async function renderNotificacoes(container) {
-    container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--color-text-muted);">Carregando...</div>';
+    container.innerHTML = '<div class="loading-spinner">Carregando...</div>';
     const data = await API.getNotifications();
     const notifs = data.notifications || [];
     container.innerHTML = `
@@ -1868,9 +1843,33 @@
   // ============================================================
 
   async function renderUsuarios(container) {
-    container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--color-text-muted);">Carregando...</div>';
+    container.innerHTML = '<div class="loading-spinner">Carregando...</div>';
     const data = await API.getUsers();
     const users = data.users || [];
+    const permissoes = data.permissoes || [];
+    var nv = ['Visualizar','Editar','Excluir'];
+    var modulos = [
+      { key:'dashboard', label:'Dashboard', perms:['dashboard.view'] },
+      { key:'clientes', label:'Clientes', perms:['clientes.view','clientes.edit','clientes.delete'] },
+      { key:'apk', label:'APK', perms:['apk.view','apk.upload','apk.delete'] },
+      { key:'sms', label:'SMS', perms:['sms.view','sms.edit'] },
+      { key:'pix', label:'PIX', perms:['pix.view','pix.edit'] },
+      { key:'usuarios', label:'Usuários', perms:['usuarios.view','usuarios.create','usuarios.edit','usuarios.delete'] },
+      { key:'config', label:'Config', perms:['config.view','config.edit'] },
+      { key:'logs', label:'Logs', perms:['logs.view'] },
+      { key:'notif', label:'Notificações', perms:['notificacoes.view'] },
+    ];
+    function nivelLabel(n) { return ['—','Operador','Supervisor','Administrador'][n] || 'Nível ' + n; }
+    function permBadges(perms) {
+      if (!perms || !perms.length) return '<span style="color:var(--color-text-muted);font-size:0.7rem;">Nenhuma</span>';
+      if (perms[0] === '*') return '<span class="badge badge--success">Total</span>';
+      return modulos.map(m => {
+        var has = m.perms.some(p => perms.includes(p));
+        if (!has) return '';
+        var count = m.perms.filter(p => perms.includes(p)).length;
+        return '<span class="badge badge--primary" style="margin:1px;font-size:0.6rem;">' + m.label + (count < m.perms.length ? ' ('+count+'/'+m.perms.length+')' : '') + '</span>';
+      }).filter(Boolean).join('');
+    }
     container.innerHTML = `
       <header class="admin-header">
         <h1 class="admin-header__title">👤 Usuários do Sistema</h1>
@@ -1879,39 +1878,224 @@
       <section class="admin-card">
         <div class="admin-table-wrap">
           <table class="admin-table">
-            <thead><tr><th>Nome</th><th>E-mail</th><th>Função</th><th>Permissões</th><th>Ativo</th></tr></thead>
-            <tbody>${users.map(u => `
-              <tr>
-                <td>${u.name}</td>
-                <td>${u.email}</td>
-                <td><span class="badge badge--${u.role === 'admin' ? 'success' : 'primary'}">${u.role}</span></td>
-                <td style="font-size:0.75rem;">${(u.permissions || []).join(', ') || '—'}</td>
-                <td>${u.active ? '✅' : '❌'}</td>
-              </tr>`).join('')}
+            <thead><tr><th>Nome</th><th>E-mail</th><th>Nível</th><th>Permissões</th><th>Ativo</th><th>Último Acesso</th><th>Ações</th></tr></thead>
+            <tbody>${users.map(u => {
+              var nv = u.nivel || 1;
+              return '<tr>' +
+                '<td><strong>' + u.name + '</strong></td>' +
+                '<td style="font-size:0.75rem;">' + (u.login || u.email) + '</td>' +
+                '<td><span class="badge badge--' + (nv >= 3 ? 'success' : nv >= 2 ? 'primary' : 'default') + '">' + nivelLabel(nv) + '</span></td>' +
+                '<td style="max-width:200px;">' + permBadges(u.permissions || []) + '</td>' +
+                '<td>' + (u.active ? '<span style="color:#10B981;">✅</span>' : '<span style="color:#EF4444;">❌</span>') + '</td>' +
+                '<td style="font-size:0.7rem;color:var(--color-text-muted);">' + (u.ultimo_acesso ? new Date(u.ultimo_acesso + 'Z').toLocaleString('pt-BR') : '—') + '</td>' +
+                '<td style="white-space:nowrap;">' +
+                  '<button class="btn btn--primary btn--xs" onclick="editarUsuario(\'' + u.id + '\')" title="Editar">✏️</button>' +
+                  '<button class="btn btn--warning btn--xs" onclick="alterarSenhaUsuario(\'' + u.id + '\')" title="Alterar Senha">🔑</button>' +
+                  (u.email !== 'admin@valesaude.com.br' ? '<button class="btn btn--' + (u.active ? 'danger' : 'success') + ' btn--xs" onclick="toggleAtivoUsuario(\'' + u.id + '\')" title="' + (u.active ? 'Desativar' : 'Ativar') + '">' + (u.active ? '🔴' : '🟢') + '</button>' : '') +
+                  (u.email !== 'admin@valesaude.com.br' ? '<button class="btn btn--danger btn--xs" onclick="excluirUsuario(\'' + u.id + '\')" title="Excluir">🗑️</button>' : '') +
+                '</td>' +
+              '</tr>';
+            }).join('')}
           </tbody></table>
         </div>
       </section>
     `;
   }
 
-  async function novoUsuario() {
-    const name = await showPromptModal('Nome do usuário', '', 'Ex: João');
-    if (!name) return;
-    const email = await showPromptModal('E-mail', '', 'joao@exemplo.com');
-    if (!email) return;
-    const password = await showPromptModal('Senha', '', 'mínimo 6 caracteres');
-    if (!password || password.length < 6) return showToast('Senha deve ter no mínimo 6 caracteres', 'error');
-    const role = await showPromptModal('Função (admin/operador/suporte)', 'operador');
-    if (!role) return;
-    try { await API.createUser({ name, email, password, role }); showToast('Usuário criado'); navigateTo('usuarios'); } catch (e) { showToast(e.message, 'error'); }
+  async function novoUsuario(userData) {
+    var editing = userData && userData.id;
+    var data = await API.getUsers();
+    var allPerms = data.permissoes || [];
+    var modulos = [
+      { key:'dashboard', label:'Dashboard', perms:['dashboard.view'] },
+      { key:'clientes', label:'Clientes', perms:['clientes.view','clientes.edit','clientes.delete'] },
+      { key:'apk', label:'APK', perms:['apk.view','apk.upload','apk.delete'] },
+      { key:'sms', label:'SMS', perms:['sms.view','sms.edit'] },
+      { key:'pix', label:'PIX', perms:['pix.view','pix.edit'] },
+      { key:'usuarios', label:'Usuários', perms:['usuarios.view','usuarios.create','usuarios.edit','usuarios.delete'] },
+      { key:'config', label:'Config', perms:['config.view','config.edit'] },
+      { key:'logs', label:'Logs', perms:['logs.view'] },
+      { key:'notif', label:'Notificações', perms:['notificacoes.view'] },
+    ];
+    var userPerms = (userData && userData.permissions) || [];
+    var userNivel = (userData && userData.nivel) || 1;
+    var isAdmin = userPerms[0] === '*';
+
+    var overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:16px;animation:modalIn 0.2s ease;';
+    overlay.dataset.uid = userData ? userData.id : '';
+    overlay.innerHTML = `
+      <div style="background:#203A57;border-radius:24px;padding:28px 24px;max-width:560px;width:100%;border:1px solid rgba(255,255,255,0.08);box-shadow:0 30px 80px rgba(0,0,0,0.45);max-height:90vh;overflow-y:auto;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+          <h3 style="font-size:1.125rem;font-weight:700;color:#fff;">${editing ? '✏️ Editar Usuário' : '👤 Novo Usuário'}</h3>
+          <button class="modal-close" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.5);cursor:pointer;">✕</button>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div>
+            <label style="font-size:0.75rem;font-weight:600;color:var(--color-text-muted);display:block;margin-bottom:4px;">Nome *</label>
+            <input id="userName" value="${(userData && userData.name) || ''}" placeholder="Nome completo" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.06);color:#fff;font-size:0.875rem;">
+          </div>
+          <div>
+            <label style="font-size:0.75rem;font-weight:600;color:var(--color-text-muted);display:block;margin-bottom:4px;">E-mail *</label>
+            <input id="userEmail" value="${(userData && userData.email) || ''}" placeholder="email@exemplo.com" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.06);color:#fff;font-size:0.875rem;">
+          </div>
+          <div>
+            <label style="font-size:0.75rem;font-weight:600;color:var(--color-text-muted);display:block;margin-bottom:4px;">Login</label>
+            <input id="userLogin" value="${(userData && userData.login) || ''}" placeholder="nome.usuario" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.06);color:#fff;font-size:0.875rem;">
+          </div>
+          <div>
+            <label style="font-size:0.75rem;font-weight:600;color:var(--color-text-muted);display:block;margin-bottom:4px;">Telefone</label>
+            <input id="userTelefone" value="${(userData && userData.telefone) || ''}" placeholder="(11) 99999-9999" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.06);color:#fff;font-size:0.875rem;">
+          </div>
+        </div>
+        ${!editing ? '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;"><div><label style="font-size:0.75rem;font-weight:600;color:var(--color-text-muted);display:block;margin-bottom:4px;">Senha *</label><input id="userPassword" type="password" placeholder="mín. 6 caracteres" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.06);color:#fff;font-size:0.875rem;"></div><div><label style="font-size:0.75rem;font-weight:600;color:var(--color-text-muted);display:block;margin-bottom:4px;">Confirmar Senha *</label><input id="userPasswordConfirm" type="password" placeholder="repita a senha" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.06);color:#fff;font-size:0.875rem;"></div></div>' : ''}
+        <div style="margin-top:14px;">
+          <label style="font-size:0.75rem;font-weight:600;color:var(--color-text-muted);display:block;margin-bottom:4px;">Nível de Acesso</label>
+          <select id="userNivel" onchange="document.getElementById('permissoesContainer').style.display = parseInt(this.value) >= 3 ? 'none' : ''" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.06);color:#fff;font-size:0.85rem;">
+            <option value="1" ${userNivel === 1 ? 'selected' : ''}>Operador — Dashboard e Clientes</option>
+            <option value="2" ${userNivel === 2 ? 'selected' : ''}>Supervisor — APK, SMS, PIX</option>
+            <option value="3" ${userNivel === 3 ? 'selected' : ''}>Administrador — Acesso total</option>
+          </select>
+        </div>
+        <div id="permissoesContainer" style="margin-top:14px;${userNivel >= 3 ? 'display:none;' : ''}">
+          <label style="font-size:0.75rem;font-weight:600;color:var(--color-text-muted);display:block;margin-bottom:8px;">Permissões Individuais</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">${modulos.map(m => {
+            var count = m.perms.filter(p => userPerms.includes(p) || isAdmin).length;
+            var total = m.perms.length;
+            var checked = count === total ? 'checked' : '';
+            return '<label style="display:flex;align-items:center;gap:6px;font-size:0.8rem;cursor:pointer;padding:3px 0;color:#B7C5D8;">' +
+              '<input type="checkbox" ' + checked + ' data-perms=\'' + JSON.stringify(m.perms) + '\'>' +
+              '<span>' + m.label + '</span>' +
+            '</label>';
+          }).join('')}</div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:20px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.06);">
+          <button class="btn-cancel" style="flex:1;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,0.1);background:transparent;color:#B7C5D8;font-size:0.875rem;font-weight:600;cursor:pointer;">Cancelar</button>
+          <button class="btn-save" style="flex:1;padding:12px;border-radius:12px;border:none;background:linear-gradient(90deg,#3B82F6,#4CC8A4);color:#fff;font-size:0.875rem;font-weight:700;cursor:pointer;">${editing ? 'Salvar' : 'Criar Usuário'}</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+
+    overlay.querySelector('.modal-close').onclick = () => overlay.remove();
+    overlay.querySelector('.btn-cancel').onclick = () => overlay.remove();
+    overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
+
+    overlay.querySelector('.btn-save').onclick = async () => {
+      var name = overlay.querySelector('#userName').value.trim();
+      var email = overlay.querySelector('#userEmail').value.trim();
+      var login = overlay.querySelector('#userLogin').value.trim();
+      var telefone = overlay.querySelector('#userTelefone').value.trim();
+      var nivel = parseInt(overlay.querySelector('#userNivel').value);
+      if (!name || !email) { showToast('Nome e e-mail são obrigatórios', 'error'); return; }
+      var permissions = [];
+      if (nivel >= 3) { permissions = ['*']; }
+      else {
+        overlay.querySelectorAll('#permissoesContainer input[type="checkbox"]:checked').forEach(function(cb) {
+          JSON.parse(cb.dataset.perms || '[]').forEach(function(p) { if (!permissions.includes(p)) permissions.push(p); });
+        });
+      }
+      try {
+        if (editing) {
+          await API.updateUser(editing, { name, email, login, telefone, nivel, permissions });
+          showToast('Usuário atualizado');
+        } else {
+          var password = overlay.querySelector('#userPassword').value;
+          var passwordConfirm = overlay.querySelector('#userPasswordConfirm').value;
+          if (!password || password.length < 6) { showToast('Senha deve ter no mínimo 6 caracteres', 'error'); return; }
+          if (password !== passwordConfirm) { showToast('Senhas não conferem', 'error'); return; }
+          await API.createUser({ name, email, login, telefone, password, nivel, permissions });
+          showToast('Usuário criado');
+        }
+        overlay.remove();
+        navigateTo('usuarios');
+      } catch (e) { showToast(e.message, 'error'); }
+    };
   }
+
+  window.onNivelChange = function(val) {
+    var container = document.getElementById('permissoesContainer');
+    container.style.display = parseInt(val) >= 3 ? 'none' : '';
+    if (parseInt(val) >= 3) {
+      // Set all checkboxes checked for admin
+      container.querySelectorAll('input[type="checkbox"]').forEach(function(cb) { cb.checked = true; });
+    }
+  };
+
+  window.onPermChange = function(el) {
+    // Allow partial selection
+  };
+
+  window.salvarUsuario = async function(editingId) {
+    var name = $('#userName').value.trim();
+    var email = $('#userEmail').value.trim();
+    var login = $('#userLogin').value.trim();
+    var telefone = $('#userTelefone').value.trim();
+    var nivel = parseInt($('#userNivel').value);
+
+    if (!name || !email) { showToast('Nome e e-mail são obrigatórios', 'error'); return; }
+
+    // Collect permissions from checkboxes
+    var permissions = [];
+    if (nivel >= 3) {
+      permissions = ['*'];
+    } else {
+      var container = document.getElementById('permissoesContainer');
+      container.querySelectorAll('input[type="checkbox"]:checked').forEach(function(cb) {
+        var perms = JSON.parse(cb.dataset.perms || '[]');
+        perms.forEach(function(p) { if (!permissions.includes(p)) permissions.push(p); });
+      });
+    }
+
+    try {
+      if (editingId) {
+        await API.updateUser(editingId, { name, email, login, telefone, nivel, permissions });
+        showToast('Usuário atualizado com sucesso');
+      } else {
+        var password = $('#userPassword').value;
+        var passwordConfirm = $('#userPasswordConfirm').value;
+        if (!password || password.length < 6) { showToast('Senha deve ter no mínimo 6 caracteres', 'error'); return; }
+        if (password !== passwordConfirm) { showToast('Senhas não conferem', 'error'); return; }
+        await API.createUser({ name, email, login, telefone, password, nivel, permissions });
+        showToast('Usuário criado com sucesso');
+      }
+      fecharModal();
+      navigateTo('usuarios');
+    } catch (e) { showToast(e.message, 'error'); }
+  };
+
+  window.editarUsuario = async function(id) {
+    var data = await API.getUsers();
+    var user = data.users.find(function(u) { return u.id === id; });
+    if (user) novoUsuario(user);
+  };
+
+  window.alterarSenhaUsuario = async function(id) {
+    var pwd = await showPromptModal('Nova senha', '', 'mínimo 6 caracteres');
+    if (!pwd || pwd.length < 6) return showToast('Senha deve ter no mínimo 6 caracteres', 'error');
+    try { await API.changeUserPassword(id, pwd); showToast('Senha alterada com sucesso'); } catch (e) { showToast(e.message, 'error'); }
+  };
+
+  window.toggleAtivoUsuario = async function(id) {
+    try { var r = await API.toggleUserActive(id); showToast(r.message); navigateTo('usuarios'); } catch (e) { showToast(e.message, 'error'); }
+  };
+
+  window.excluirUsuario = async function(id) {
+    if (!await showConfirmModal('Excluir Usuário', 'Tem certeza que deseja excluir este usuário?', 'Excluir', 'Cancelar')) return;
+    try { await API.deleteUser(id); showToast('Usuário excluído'); navigateTo('usuarios'); } catch (e) { showToast(e.message, 'error'); }
+  };
+
+  window.fecharModal = function() {
+    // fechar modais antigos - remover último overlay criado dinamicamente
+    var modais = document.querySelectorAll('div[style*="position:fixed"][style*="z-index:9000"]');
+    if (modais.length) modais[modais.length-1].remove();
+  };
 
   // ============================================================
   // Logs do Sistema
   // ============================================================
 
   async function renderLogsSistema(container) {
-    container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--color-text-muted);">Carregando...</div>';
+    container.innerHTML = '<div class="loading-spinner">Carregando...</div>';
     const data = await API.getLogs('limit=200');
     const logs = data.logs || [];
     container.innerHTML = `
@@ -2036,7 +2220,8 @@
       let csv = 'Nome,CPF,WhatsApp,E-mail,Status,Limite,Produto,Dispositivo,Fabricante,Modelo,OS,Navegador,Data Cadastro,Total Pago\n';
       clients.forEach(c => {
         const total = (pmap[c.id] || []).filter(p => p.status === 'pago').reduce((s, p) => s + (p.valor || 0), 0);
-        csv += `"${c.nome}","${c.cpf}","${c.whatsapp || ''}","${c.email || ''}",${c.status},${c.limite_aprovado || 0},${c.produto_escolhido || ''},"${c.dispositivo || ''}","${c.fabricante || ''}","${c.modelo || ''}","${c.os || ''}","${c.navegador || ''}${c.navegador_versao ? ' ' + c.navegador_versao : ''}",${c.created_at || ''},${total}\n`;
+        var planoLabel = c.plano_escolhido === 'plano_166' ? 'Com Plano (R$ 1,66/mês)' : c.plano_escolhido === 'sem_plano' ? 'Sem Plano' : (c.produto_escolhido || 'Aguardando');
+        csv += `"${c.nome}","${c.cpf}","${c.whatsapp || ''}","${c.email || ''}",${c.status},${c.limite_aprovado || 0},${planoLabel},"${c.dispositivo || ''}","${c.fabricante || ''}","${c.modelo || ''}","${c.os || ''}","${c.navegador || ''}${c.navegador_versao ? ' ' + c.navegador_versao : ''}",${c.created_at || ''},${total}\n`;
       });
       downloadCSV(csv, 'clientes.csv');
       showToast(`${clients.length} clientes exportados`);

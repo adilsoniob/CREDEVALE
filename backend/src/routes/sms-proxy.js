@@ -24,7 +24,10 @@ router.post('/send', async (req, res) => {
     if (!phone || !message) return res.status(400).json({ error: 'Phone and message are required.' });
 
     var webhookUrl = cfg.url.replace(/\/+$/, '') + '/api/webhook/send';
-    var body = { phone: phone.replace(/\D/g, ''), message: message };
+    var bodyPhone = phone.replace(/\D/g, '');
+    // Garante formato internacional com código 55
+    if (bodyPhone.length <= 11) bodyPhone = '55' + bodyPhone;
+    var body = { phone: bodyPhone, message: message };
     if (selectedAccounts && selectedAccounts.length) body.selectedAccounts = selectedAccounts;
 
     var resp = await fetch(webhookUrl, {

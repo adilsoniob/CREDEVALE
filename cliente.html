@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>Área do Cliente – CredVale</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --cred-blue:#0B6CF4;
+  --cred-blue-dark:#052C6E;
+  --cred-green:#4CC8A4;
+  --cred-green-dark:#16C65B;
+  --primary:#0a1e3d;
+  --primary-gradient:linear-gradient(160deg,#0a1e3d,#14305a,#1a3a6b);
+  --accent-gradient:linear-gradient(135deg,#0B6CF4,#4CC8A4);
+  --green-gradient:linear-gradient(135deg,#16C65B,#0EA34A);
+  --brand-gradient:linear-gradient(135deg,#0B6CF4,#4CC8A4);
+  --success:#16C65B;
+  --warning:#F59E0B;
+  --text:#1A1F2B;
+  --text-secondary:#5A6577;
+  --text-muted:#8895A7;
+  --text-light:#B0BEC5;
+  --surface:#FFFFFF;
+  --surface-alt:#F4F6FA;
+  --surface-card:#FFFFFF;
+  --border:#E8ECF1;
+  --border-light:#F1F4F8;
+  --radius-sm:10px;
+  --radius-md:16px;
+  --radius-lg:20px;
+  --radius-xl:24px;
+  --shadow-card:0 2px 12px rgba(10,30,61,0.06),0 6px 24px rgba(10,30,61,0.04);
+  --shadow-elevated:0 8px 40px rgba(10,30,61,0.10),0 2px 8px rgba(10,30,61,0.06);
+  --shadow-card-hover:0 12px 48px rgba(10,30,61,0.12),0 4px 16px rgba(10,30,61,0.06);
+  --font:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  --font-display:'Space Grotesk','Inter',sans-serif;
+  --font-mono:'JetBrains Mono','SF Mono',monospace;
+}
+html,body{height:100%;font-family:var(--font);font-size:15px;line-height:1.5;color:var(--text);background:#F0F2F5;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+input,button{font-family:var(--font);}
+
+/* Locked mobile container */
+.app-container{width:100%;max-width:430px;margin:0 auto;min-height:100vh;background:#F0F2F5;position:relative;overflow-x:hidden}
+
+/* ========== LOGIN (refined) ========== */
+#loginScreen{display:flex;min-height:100vh;align-items:center;justify-content:center;padding:24px 20px;animation:fadeIn .4s ease}
+.login-card{background:var(--surface);border-radius:var(--radius-xl);padding:44px 28px 36px;width:100%;box-shadow:var(--shadow-elevated);text-align:center;position:relative;overflow:hidden}
+.login-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:var(--accent-gradient)}
+.login-card::after{content:'';position:absolute;top:-60%;right:-30%;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(11,107,244,0.03),transparent 60%);pointer-events:none}
+.login-logo{display:flex;align-items:center;justify-content:center;margin-bottom:20px}
+.login-logo img{height:52px;width:auto;display:block;filter:drop-shadow(0 2px 8px rgba(11,107,244,0.15))}
+.login-title{font-family:var(--font-display);font-size:1.45rem;font-weight:800;color:var(--primary);margin-bottom:3px;letter-spacing:-0.03em}
+.login-sub{font-size:0.82rem;color:var(--text-muted);margin-bottom:32px}
+.login-field{margin-bottom:20px;text-align:left}
+.login-field label{font-size:0.78rem;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:0.04em}
+.login-field input{width:100%;padding:15px 16px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:#FAFBFC;color:var(--text);font-size:0.95rem;transition:border-color .2s,box-shadow .2s,background .2s}
+.login-field input:focus{outline:none;border-color:var(--cred-blue);box-shadow:0 0 0 3px rgba(11,107,244,0.1);background:var(--surface)}
+.login-field input::placeholder{color:var(--text-muted);opacity:0.5}
+.login-error{font-size:0.82rem;color:#DC2626;margin-bottom:16px;display:none;background:rgba(220,38,38,0.06);padding:12px 16px;border-radius:10px;text-align:center;border:1px solid rgba(220,38,38,0.12)}
+.login-btn{width:100%;padding:16px;border-radius:var(--radius-sm);border:none;background:var(--accent-gradient);color:#fff;font-size:1rem;font-weight:700;cursor:pointer;transition:all .25s;position:relative;overflow:hidden;box-shadow:0 4px 16px rgba(11,107,244,0.2)}
+.login-btn::after{content:'';position:absolute;top:0;left:-75%;width:50%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.15),transparent);transform:skewX(-25deg);animation:btnShimmer 3s ease-in-out infinite}
+.login-btn:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(11,107,244,0.3)}
+.login-btn:active{transform:scale(0.97)}
+.login-btn:disabled{opacity:0.5;cursor:default;transform:none;box-shadow:none}
+.login-btn:disabled::after{animation:none}
+.login-footer{font-size:0.72rem;color:var(--text-muted);margin-top:24px;padding-top:20px;border-top:1px solid var(--border)}
+
+/* ========== LOCKED OLD LOADING STYLES (keep for fallback) ========== */
+#loadingScreen{display:none;min-height:100vh;align-items:center;justify-content:center;padding:40px}
+#loadingScreen .spinner{text-align:center;color:var(--text-muted);font-size:0.9rem;font-weight:500}
+
+/* ========== DASHBOARD ========== */
+#dashboardScreen{display:none;padding-bottom:80px;animation:dashFadeIn .6s ease}
+
+/* ========== HEADER PREMIUM ========== */
+.dash-header{
+  background:var(--primary-gradient);
+  padding:20px 20px 95px;
+  position:relative;overflow:hidden
+}
+.dash-header::before{
+  content:'';position:absolute;top:-60%;right:-15%;width:450px;height:450px;
+  border-radius:50%;background:radial-gradient(circle,rgba(76,200,164,0.08),transparent 60%);
+  pointer-events:none
+}
+.dash-header::after{
+  content:'';position:absolute;bottom:-40%;left:-10%;width:300px;height:300px;
+  border-radius:50%;background:radial-gradient(circle,rgba(11,107,244,0.06),transparent 60%);
+  pointer-events:none
+}
+.dash-top{display:flex;align-items:center;justify-content:space-between;position:relative;z-index:1}
+.dash-logo{display:flex;align-items:center;gap:10px}
+.dash-logo-img{width:34px;height:34px;display:block;border-radius:8px;object-fit:contain;filter:drop-shadow(0 2px 12px rgba(11,107,244,0.35))}
+.dash-logo-text{
+  font-family:var(--font-display);font-size:1.15rem;font-weight:800;
+  color:#fff;letter-spacing:-0.03em
+}
+.dash-logout{
+  background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);
+  color:rgba(255,255,255,0.75);padding:8px 18px;border-radius:50px;
+  font-size:0.76rem;font-weight:600;cursor:pointer;transition:all .25s;letter-spacing:0.02em;
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)
+}
+.dash-logout:hover{background:rgba(255,255,255,0.15);color:#fff;transform:translateY(-1px)}
+.dash-greeting{
+  font-family:var(--font-display);font-size:1.4rem;font-weight:800;
+  color:#fff;margin-top:18px;position:relative;z-index:1;letter-spacing:-0.02em;
+  opacity:0;animation:slideUpFade .5s ease .1s forwards
+}
+.dash-greeting-sub{
+  font-size:0.85rem;color:rgba(255,255,255,0.55);margin-top:5px;
+  position:relative;z-index:1;font-weight:400;
+  opacity:0;animation:slideUpFade .5s ease .25s forwards
+}
+
+/* ========== CREDIT CARD PREMIUM ========== */
+.card-wrap{padding:0 16px;margin-top:-68px;position:relative;z-index:5}
+.virtual-card{
+  width:100%;aspect-ratio:1.586/1;position:relative;
+  border-radius:16px;overflow:hidden;cursor:default;
+  box-shadow:0 12px 50px rgba(10,30,61,0.25),0 4px 16px rgba(10,30,61,0.1);
+  transition:transform .35s cubic-bezier(0.4,0,0.2,1),box-shadow .35s cubic-bezier(0.4,0,0.2,1);
+  opacity:0;animation:cardFloatIn .6s cubic-bezier(0.34,1.56,0.64,1) .4s forwards
+}
+.virtual-card:hover{
+  transform:translateY(-4px) scale(1.01);
+  box-shadow:0 20px 60px rgba(10,30,61,0.3),0 6px 20px rgba(10,30,61,0.12)
+}
+.virtual-card svg{display:block;width:100%;height:100%}
+
+/* ========== LIMIT CARD ========== */
+.limit-section{padding:0 16px;margin-top:20px;opacity:0;animation:slideUpFade .5s ease .6s forwards}
+.limit-card{
+  background:var(--surface);border-radius:var(--radius-lg);padding:22px 24px 20px;
+  box-shadow:var(--shadow-card);text-align:center;position:relative;overflow:hidden
+}
+.limit-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:var(--accent-gradient);border-radius:var(--radius-lg) var(--radius-lg) 0 0
+}
+.limit-label{
+  font-size:0.72rem;font-weight:600;color:var(--text-muted);
+  margin-bottom:4px;text-transform:uppercase;letter-spacing:0.06em
+}
+.limit-value{
+  font-family:var(--font-display);font-size:2.2rem;font-weight:800;
+  color:var(--text);letter-spacing:-0.03em;line-height:1.15;margin-bottom:14px
+}
+.limit-value .currency{font-size:1rem;font-weight:600;color:var(--text-secondary);vertical-align:super}
+.limit-bar-wrap{
+  height:6px;border-radius:3px;background:var(--border);overflow:hidden;margin-bottom:6px
+}
+.limit-bar{
+  height:100%;border-radius:3px;
+  background:linear-gradient(90deg,var(--cred-green),var(--success));
+  transition:width .8s cubic-bezier(0.4,0,0.2,1);width:100%;
+  position:relative
+}
+.limit-bar::after{
+  content:'';position:absolute;top:0;right:0;bottom:0;left:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent);
+  animation:barShimmer 2s ease-in-out infinite
+}
+.limit-bar-label{
+  font-size:0.7rem;color:var(--success);font-weight:600;display:flex;align-items:center;justify-content:center;gap:4px
+}
+.limit-bar-label::before{content:'✓';font-weight:800}
+
+/* ========== TIMELINE ========== */
+.timeline-section{padding:0 16px;margin-top:20px;opacity:0;animation:slideUpFade .5s ease .75s forwards}
+.section-title{
+  font-family:var(--font-display);font-size:0.9rem;font-weight:700;
+  color:var(--text);margin-bottom:12px;letter-spacing:-0.01em;
+  display:flex;align-items:center;gap:8px
+}
+.section-title::after{content:'';flex:1;height:1px;background:var(--border)}
+.timeline-card{
+  background:var(--surface);border-radius:var(--radius-lg);padding:22px 20px 18px;
+  box-shadow:var(--shadow-card);border:1px solid var(--border-light)
+}
+.timeline-step{
+  display:flex;align-items:flex-start;gap:14px;padding:4px 0 10px;position:relative
+}
+.timeline-step:not(:last-child)::after{
+  content:'';position:absolute;left:18px;top:34px;bottom:2px;
+  width:2px;border-radius:2px;background:var(--border)
+}
+.timeline-step.completed:not(:last-child)::after{background:var(--accent-gradient)}
+.timeline-icon{
+  width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:0.8rem;flex-shrink:0;position:relative;z-index:1;font-weight:700;
+  border:2.5px solid var(--border);color:var(--text-muted);
+  background:var(--surface);transition:all .35s cubic-bezier(0.4,0,0.2,1)
+}
+.timeline-icon.done{
+  background:var(--accent-gradient);color:#fff;border-color:transparent;
+  box-shadow:0 4px 12px rgba(11,107,244,0.25)
+}
+.timeline-icon.current{
+  border-color:var(--cred-green);color:var(--cred-green);
+  background:rgba(76,200,164,0.06);
+  box-shadow:0 0 0 4px rgba(76,200,164,0.1);
+  animation:tlPulse 1.8s ease-in-out infinite
+}
+.timeline-info{flex:1;padding-top:5px}
+.timeline-label{font-size:0.85rem;font-weight:600;color:var(--text)}
+.timeline-desc{font-size:0.74rem;color:var(--text-muted);margin-top:3px}
+.timeline-desc strong{color:var(--cred-green);font-weight:700}
+
+/* ========== TIMELINE ADDRESS ========== */
+.timeline-address{
+  margin-top:14px;padding-top:14px;
+  border-top:1px solid var(--border-light);
+  display:flex;align-items:center;gap:10px
+}
+.timeline-address-icon{
+  width:32px;height:32px;border-radius:10px;
+  background:var(--primary-gradient);color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;font-size:0.85rem
+}
+.timeline-address-info{flex:1;min-width:0}
+.timeline-address-title{
+  font-size:0.7rem;font-weight:600;color:var(--text-muted);
+  text-transform:uppercase;letter-spacing:0.04em;margin-bottom:1px
+}
+.timeline-address-text{
+  font-size:0.82rem;font-weight:500;color:var(--text-secondary);
+  line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis
+}
+
+/* ========== PLAN CARD ========== */
+.plan-section{padding:0 16px;margin-top:20px;opacity:0;animation:slideUpFade .5s ease .9s forwards}
+.plan-card{
+  background:var(--surface);border-radius:var(--radius-lg);padding:20px;
+  box-shadow:var(--shadow-card);display:flex;align-items:center;justify-content:space-between;gap:16px;
+  border:1px solid var(--border-light);position:relative;overflow:hidden
+}
+.plan-card::before{
+  content:'';position:absolute;bottom:0;left:0;right:0;height:2px;
+  background:var(--accent-gradient);opacity:0.3;border-radius:0 0 var(--radius-lg) var(--radius-lg)
+}
+.plan-info{flex:1}
+.plan-name{font-size:0.9rem;font-weight:700;color:var(--text);margin-bottom:2px}
+.plan-price{
+  font-family:var(--font-display);font-size:1.7rem;font-weight:800;
+  background:var(--accent-gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  letter-spacing:-0.02em;line-height:1.15
+}
+.plan-price span{font-size:0.8rem;font-weight:500;color:var(--text-secondary);-webkit-text-fill-color:var(--text-secondary)}
+.plan-status{
+  font-size:0.76rem;color:var(--warning);font-weight:600;margin-top:6px;
+  display:flex;align-items:center;gap:6px
+}
+.plan-status .dot{
+  width:8px;height:8px;border-radius:50%;background:var(--warning);
+  display:inline-block;animation:tlPulse 1.8s ease-in-out infinite
+}
+.plan-status.active{color:var(--success)}
+.plan-status.active .dot{background:var(--success);animation:none}
+.plan-actions{display:flex;flex-direction:column;gap:8px;flex-shrink:0}
+
+/* ========== BUTTONS ========== */
+.plan-btn{
+  padding:11px 22px;border-radius:50px;border:none;
+  background:var(--accent-gradient);color:#fff;
+  font-size:0.82rem;font-weight:700;cursor:pointer;
+  text-decoration:none;display:inline-block;text-align:center;
+  transition:all .25s cubic-bezier(0.4,0,0.2,1);
+  white-space:nowrap;letter-spacing:0.01em;
+  box-shadow:0 4px 16px rgba(11,107,244,0.2);
+  position:relative;overflow:hidden
+}
+.plan-btn::after{
+  content:'';position:absolute;top:0;left:-75%;width:50%;height:100%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.15),transparent);
+  transform:skewX(-25deg);animation:btnShimmer 3s ease-in-out infinite
+}
+.plan-btn:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(11,107,244,0.3)}
+.plan-btn:active{transform:scale(0.96)}
+.plan-btn-no-shimmer::after{animation:none}
+
+.pay-btn{
+  padding:12px 24px;border-radius:50px;border:none;
+  background:linear-gradient(135deg,#16C65B,#0EA34A);color:#fff;
+  font-size:0.82rem;font-weight:800;cursor:pointer;
+  text-decoration:none;display:inline-block;text-align:center;
+  transition:all .25s cubic-bezier(0.4,0,0.2,1);
+  white-space:nowrap;letter-spacing:0.02em;
+  position:relative;overflow:hidden;
+  box-shadow:0 4px 16px rgba(22,198,91,0.3)
+}
+.pay-btn::after{
+  content:'';position:absolute;top:0;left:-75%;width:50%;height:100%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent);
+  transform:skewX(-25deg);animation:btnShimmer 2.5s ease-in-out infinite
+}
+.pay-btn:hover{
+  transform:translateY(-2px);
+  box-shadow:0 6px 24px rgba(22,198,91,0.4)
+}
+.pay-btn:active{transform:scale(0.95)}
+.pay-btn.pulse{animation:payPulse 3s ease-in-out infinite}
+
+@keyframes btnShimmer{0%{left:-75%}60%{left:125%}100%{left:125%}}
+@keyframes payPulse{0%,100%{box-shadow:0 4px 16px rgba(22,198,91,0.3)}50%{box-shadow:0 6px 28px rgba(22,198,91,0.5)}}
+
+.plan-no-plan{text-align:center;padding:20px;width:100%}
+.plan-no-plan-icon{
+  font-size:2.5rem;margin-bottom:10px;display:block;
+  animation:planNoFloat 2.5s ease-in-out infinite
+}
+@keyframes planNoFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+.plan-no-plan p{font-size:0.88rem;color:var(--text-secondary);margin-bottom:18px;line-height:1.5}
+
+/* ========== BENEFITS ========== */
+.benefits-section{padding:0 16px;margin-top:20px;opacity:0;animation:slideUpFade .5s ease 1.05s forwards}
+.benefits-card{background:transparent;border:none;padding:0;box-shadow:none}
+.benefits-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.benefit-item{
+  border-radius:var(--radius-lg);min-height:110px;
+  box-shadow:var(--shadow-card);text-align:center;
+  transition:all .3s cubic-bezier(0.4,0,0.2,1);
+  cursor:default;position:relative;overflow:hidden;
+  border:1px solid var(--border-light)
+}
+.benefit-item:hover{transform:translateY(-4px);box-shadow:var(--shadow-card-hover)}
+.benefit-item[data-whatsapp]{cursor:pointer}
+.benefit-item .benefit-img{
+  position:absolute;inset:0;width:100%;height:100%;
+  object-fit:cover;display:block;
+  transition:transform .4s cubic-bezier(0.4,0,0.2,1)
+}
+.benefit-item:hover .benefit-img{transform:scale(1.06)}
+.benefit-overlay{
+  position:absolute;inset:0;z-index:1;
+  background:linear-gradient(to top,rgba(5,15,35,0.75) 0%,rgba(5,15,35,0.2) 60%,rgba(5,15,35,0.05) 100%);
+  pointer-events:none;
+  transition:all .3s ease
+}
+.benefit-item:hover .benefit-overlay{
+  background:linear-gradient(to top,rgba(5,15,35,0.8) 0%,rgba(5,15,35,0.25) 60%,rgba(5,15,35,0.08) 100%)
+}
+.benefit-text{
+  position:absolute;bottom:0;left:0;right:0;z-index:2;
+  padding:16px 12px 14px;
+  font-size:0.75rem;font-weight:700;color:#fff;
+  line-height:1.3;letter-spacing:0.01em;
+  text-shadow:0 1px 6px rgba(0,0,0,0.3)
+}
+
+/* ========== CONSULT BUTTON ========== */
+.consult-section{padding:0 16px;margin-top:20px;margin-bottom:40px;opacity:0;animation:slideUpFade .5s ease 1.15s forwards}
+.consult-btn{
+  width:100%;padding:18px 24px;border-radius:16px;border:none;
+  background:var(--accent-gradient);color:#fff;
+  font-size:1rem;font-weight:700;cursor:pointer;
+  transition:all .3s cubic-bezier(0.4,0,0.2,1);
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  box-shadow:0 6px 24px rgba(11,107,244,0.25);
+  position:relative;overflow:hidden
+}
+.consult-btn::after{
+  content:'';position:absolute;top:0;left:-75%;width:55%;height:100%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.12),transparent);
+  transform:skewX(-25deg);animation:btnShimmer 3.5s ease-in-out infinite
+}
+.consult-btn:hover{
+  transform:translateY(-2px);
+  box-shadow:0 8px 32px rgba(11,107,244,0.35)
+}
+.consult-btn:active{transform:scale(0.97)}
+.consult-btn svg{width:22px;height:22px;flex-shrink:0}
+
+/* ========== ANIMATIONS ========== */
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes tlPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.7;transform:scale(1.08)}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes dashFadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideUpFade{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes cardFloatIn{from{opacity:0;transform:translateY(30px) scale(0.95)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes barShimmer{0%{transform:translateX(-100%)}60%{transform:translateX(100%)}100%{transform:translateX(100%)}}
+@keyframes loadingSpin{to{transform:rotate(360deg)}}
+@keyframes logoFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+
+/* ========== LOADING SCREEN PREMIUM ========== */
+#loadingScreen{
+  display:none;position:fixed;inset:0;z-index:2000;
+  background:linear-gradient(160deg,#0a1e3d 0%,#14305a 45%,#1a3a6b 70%,#0f2a4f 100%);
+  align-items:center;justify-content:center;padding:24px;
+  animation:fadeIn .45s ease;overflow:hidden
+}
+#loadingScreen::before{
+  content:'';position:absolute;top:-50%;right:-20%;width:500px;height:500px;
+  border-radius:50%;background:radial-gradient(circle,rgba(76,200,164,0.08),transparent 60%);
+  pointer-events:none
+}
+#loadingScreen::after{
+  content:'';position:absolute;bottom:-40%;left:-15%;width:350px;height:350px;
+  border-radius:50%;background:radial-gradient(circle,rgba(59,130,246,0.06),transparent 60%);
+  pointer-events:none
+}
+.loading-content{text-align:center;position:relative;z-index:1}
+.loading-logo{margin-bottom:24px;animation:logoFloat 2.5s ease-in-out infinite}
+.loading-logo svg{width:56px;height:56px;filter:drop-shadow(0 4px 24px rgba(59,130,246,0.3));display:block;margin:0 auto}
+.loading-logo-text{font-family:var(--font-display);font-weight:800;font-size:1rem;color:#fff;margin-top:8px;letter-spacing:-0.02em;opacity:0.8}
+.loading-greeting{font-family:var(--font-display);font-size:1.35rem;font-weight:800;color:#fff;margin-bottom:8px;letter-spacing:-0.02em;opacity:0;animation:slideUpFade .55s ease .15s forwards}
+.loading-sub{font-size:0.9rem;font-weight:400;color:rgba(255,255,255,0.7);line-height:1.5;opacity:0;animation:slideUpFade .55s ease .35s forwards}
+.loading-sub--muted{font-size:0.78rem;color:rgba(255,255,255,0.4);margin-top:4px;animation-delay:.55s}
+.loading-spinner-wrap{margin-top:36px;opacity:0;animation:slideUpFade .5s ease .8s forwards}
+.loading-spinner{width:42px;height:42px;margin:0 auto;border-radius:50%;border:3px solid rgba(255,255,255,0.08);border-top-color:#4CC8A4;border-right-color:rgba(76,200,164,0.4);animation:loadingSpin .8s cubic-bezier(0.4,0,0.2,1) infinite}
+
+/* ========== RESPONSIVE ========== */
+/* ========== ACTION BUTTONS ========== */
+.actions-section{padding:0 16px;margin-top:20px;opacity:0;animation:slideUpFade .5s ease .5s forwards}
+.actions-grid{
+  display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px
+}
+.action-btn{
+  background:var(--surface);border-radius:var(--radius-md);
+  border:1px solid var(--border-light);box-shadow:var(--shadow-card);
+  padding:16px 8px;cursor:pointer;transition:all .25s cubic-bezier(0.4,0,0.2,1);
+  position:relative;overflow:hidden;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:8px;text-align:center;
+  font-family:var(--font);
+}
+.action-btn::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2.5px;
+  background:var(--accent-gradient);border-radius:var(--radius-md) var(--radius-md) 0 0;
+  opacity:0;transition:opacity .25s
+}
+.action-btn:hover{
+  transform:translateY(-4px);box-shadow:var(--shadow-card-hover);border-color:transparent
+}
+.action-btn:hover::before{opacity:1}
+.action-btn:active{transform:scale(0.95)}
+.action-icon{
+  width:40px;height:40px;border-radius:12px;
+  background:var(--primary-gradient);color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  transition:transform .3s ease;flex-shrink:0
+}
+.action-btn:hover .action-icon{transform:scale(1.1) rotate(-3deg)}
+.action-icon svg{width:20px;height:20px;display:block}
+.action-label{
+  font-size:0.65rem;font-weight:700;color:var(--text-secondary);
+  line-height:1.25;letter-spacing:0.01em
+}
+
+/* ========== PHARMACY CAROUSEL ========== */
+.pharmacy-section{padding:0 16px;margin-top:20px;margin-bottom:40px;opacity:0;animation:slideUpFade .5s ease 1.25s forwards}
+.pharmacy-card{
+  background:var(--surface);border-radius:var(--radius-lg);
+  box-shadow:var(--shadow-card);border:1px solid var(--border-light);
+  overflow:hidden;padding:0
+}
+.pharmacy-track-wrap{overflow:hidden;border-radius:var(--radius-lg)}
+.pharmacy-track-wrap:hover .pharmacy-track,
+.pharmacy-track-wrap:active .pharmacy-track{animation-play-state:paused}
+.pharmacy-track{display:flex;width:400%;animation:scrollFarmi 15s linear infinite;will-change:transform}
+.pharmacy-slide{flex-shrink:0;width:25%;height:100px;overflow:hidden}
+.pharmacy-img{width:100%;height:100%;object-fit:cover;display:block}
+
+@keyframes scrollFarmi{
+  0%,25%{transform:translateX(0)}
+  45%{transform:translateX(-25%)}
+  80%{transform:translateX(-25%)}
+  100%{transform:translateX(-50%)}
+}
+@media(min-width:431px){
+  .pharmacy-slide{height:120px}
+  .app-container{box-shadow:0 0 60px rgba(0,0,0,0.06);border-left:1px solid var(--border);border-right:1px solid var(--border);border-radius:0}
+}
+</style>
+</head>
+<body>
+<div class="app-container">
+  <!-- LOGIN -->
+  <div id="loginScreen">
+    <div class="login-card">
+      <div class="login-logo">
+        <img src="assets/logo-cliente.png?v=mrr6k1lt" alt="CredVale" id="logoImg">
+      </div>
+      <div class="login-title">Área do Cliente</div>
+      <div class="login-sub">Acompanhe seu cartão CredVale</div>
+      <div class="login-field">
+        <label>CPF</label>
+        <input id="loginCpf" type="text" inputmode="numeric" placeholder="000.000.000-00" autocomplete="off">
+      </div>
+      <div class="login-field">
+        <label>Credencial</label>
+        <input id="loginCredencial" type="password" placeholder="Sua senha de acesso" autocomplete="off">
+      </div>
+      <div id="loginError" class="login-error"></div>
+      <button id="btnLogin" class="login-btn">Entrar</button>
+      <div class="login-footer">CredVale &mdash; Sua saúde em primeiro lugar</div>
+    </div>
+  </div>
+
+  <!-- LOADING (PREMIUM) -->
+  <div id="loadingScreen">
+    <div class="loading-content">
+      <div class="loading-logo">
+        <svg width="56" height="56" viewBox="0 0 28 28" fill="none">
+          <rect width="28" height="28" rx="7" fill="url(#loadingLogoGrad)"/>
+          <path d="M7 14L12 19L21 10" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <div class="loading-logo-text">CredVale</div>
+      </div>
+      <div class="loading-greeting" id="loadingGreeting">Bem-vindo!</div>
+      <div class="loading-sub" id="loadingSub1">Estamos preparando o seu ambiente.</div>
+      <div class="loading-sub loading-sub--muted" id="loadingSub2">Carregando suas informações...</div>
+      <div class="loading-spinner-wrap">
+        <div class="loading-spinner"></div>
+      </div>
+    </div>
+    <svg style="display:none;">
+      <defs>
+        <linearGradient id="loadingLogoGrad" x1="0" y1="0" x2="28" y2="28">
+          <stop stop-color="#3B82F6"/><stop offset="1" stop-color="#4CC8A4"/>
+        </linearGradient>
+      </defs>
+    </svg>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="dashboardScreen">
+    <div class="dash-header">
+      <div class="dash-top">
+        <div class="dash-logo">
+          <img src="assets/icone-cliente.png?v=mrr6k1lt" alt="CredVale" class="dash-logo-img">
+          <span class="dash-logo-text">CredVale</span>
+        </div>
+        <button id="btnLogout" class="dash-logout">Sair</button>
+      </div>
+      <div class="dash-greeting" id="greeting">Olá!</div>
+      <div class="dash-greeting-sub">Aproveite seus benefícios CredVale.</div>
+    </div>
+
+    <div class="card-wrap">
+      <div class="virtual-card" id="virtualCard">
+        <svg viewBox="0 0 400 252" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+          <defs>
+            <!-- Card base gradient - premium dark blue with green accent -->
+            <linearGradient id="cardBg" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#0D2847"/>
+              <stop offset="35%" stop-color="#143868"/>
+              <stop offset="70%" stop-color="#0D2847"/>
+              <stop offset="100%" stop-color="#091E3A"/>
+            </linearGradient>
+            <!-- Glossy reflection overlay -->
+            <linearGradient id="cardGloss" x1="0" y1="0" x2="0.3" y2="1">
+              <stop offset="0%" stop-color="rgba(255,255,255,0.13)"/>
+              <stop offset="35%" stop-color="rgba(255,255,255,0.03)"/>
+              <stop offset="70%" stop-color="rgba(255,255,255,0.01)"/>
+              <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+            </linearGradient>
+            <!-- Second gloss highlight -->
+            <linearGradient id="cardGloss2" x1="1" y1="0" x2="0.7" y2="1">
+              <stop offset="0%" stop-color="rgba(76,200,164,0.06)"/>
+              <stop offset="50%" stop-color="rgba(76,200,164,0)"/>
+              <stop offset="100%" stop-color="rgba(76,200,164,0)"/>
+            </linearGradient>
+            <!-- Top accent line gradient -->
+            <linearGradient id="glowLine" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="rgba(76,200,164,0)"/>
+              <stop offset="25%" stop-color="rgba(76,200,164,0.25)"/>
+              <stop offset="50%" stop-color="rgba(59,130,246,0.35)"/>
+              <stop offset="75%" stop-color="rgba(76,200,164,0.25)"/>
+              <stop offset="100%" stop-color="rgba(76,200,164,0)"/>
+            </linearGradient>
+            <!-- CredVale brand gradient for text -->
+            <linearGradient id="brandTextGrad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#3B82F6"/>
+              <stop offset="100%" stop-color="#4CC8A4"/>
+            </linearGradient>
+            <filter id="cardShadow" x="-8%" y="-8%" width="116%" height="116%">
+              <feDropShadow dx="0" dy="3" stdDeviation="6" flood-color="#0a1e3d" flood-opacity="0.35"/>
+            </filter>
+            <filter id="chipEmboss">
+              <feDropShadow dx="0" dy="1" stdDeviation="2" flood-color="rgba(0,0,0,0.15)"/>
+            </filter>
+          </defs>
+
+          <!-- Card body with rounded corners -->
+          <rect x="0" y="0" width="400" height="252" rx="14" fill="url(#cardBg)" filter="url(#cardShadow)"/>
+
+          <!-- Glossy reflections -->
+          <rect x="0" y="0" width="400" height="252" rx="14" fill="url(#cardGloss)"/>
+          <rect x="0" y="0" width="400" height="252" rx="14" fill="url(#cardGloss2)"/>
+
+          <!-- Top glow line (premium accent) -->
+          <rect x="40" y="0" width="320" height="1.5" rx="0.75" fill="url(#glowLine)"/>
+
+          <!-- Subtle ambient circles -->
+          <circle cx="350" cy="50" r="140" fill="rgba(76,200,164,0.04)"/>
+          <circle cx="-40" cy="230" r="120" fill="rgba(59,130,246,0.04)"/>
+          <circle cx="200" cy="180" r="80" fill="rgba(255,255,255,0.02)"/>
+
+          <!-- Card chip (premium embossed look) -->
+          <g filter="url(#chipEmboss)">
+            <rect x="30" y="48" width="46" height="34" rx="5" fill="rgba(255,255,255,0.10)" stroke="rgba(255,255,255,0.06)" stroke-width="0.5"/>
+            <rect x="34" y="52" width="38" height="26" rx="3" fill="rgba(255,255,255,0.04)"/>
+            <!-- Chip lines -->
+            <line x1="53" y1="48" x2="53" y2="82" stroke="rgba(255,255,255,0.06)" stroke-width="0.5"/>
+            <line x1="30" y1="65" x2="76" y2="65" stroke="rgba(255,255,255,0.06)" stroke-width="0.5"/>
+          </g>
+
+          <!-- Contactless payment icon -->
+          <g transform="translate(88,55)" opacity="0.25">
+            <path d="M6 14C6 10 9 7 13 7M6 10C6 7.5 8 5.5 10.5 5.5M6 6C6 5 7 4 8 4" stroke="#fff" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+          </g>
+
+          <!-- Card number -->
+          <text x="30" y="128" font-family="'JetBrains Mono',monospace" font-size="14" font-weight="600" letter-spacing="3.5" fill="rgba(255,255,255,0.85)">
+            <tspan id="cardNumSvg1">••••</tspan>
+            <tspan dx="10" id="cardNumSvg2">••••</tspan>
+            <tspan dx="10" id="cardNumSvg3">••••</tspan>
+            <tspan dx="10" id="cardNumSvg4">••••</tspan>
+          </text>
+
+          <!-- Valid thru -->
+          <text x="30" y="150" font-family="'Inter',sans-serif" font-size="6" font-weight="500" letter-spacing="1" fill="rgba(255,255,255,0.3)">VALID THRU</text>
+          <text x="30" y="165" font-family="'JetBrains Mono',monospace" font-size="11" font-weight="500" fill="rgba(255,255,255,0.55)">12/28</text>
+
+          <!-- Cardholder name -->
+          <text x="30" y="200" font-family="'Inter',sans-serif" id="cardNameSvg" font-size="12" font-weight="600" letter-spacing="1.8" fill="rgba(255,255,255,0.7)" text-transform="uppercase">NOME DO TITULAR</text>
+
+          <!-- Mastercard circles -->
+          <g transform="translate(340,198)">
+            <circle cx="-10" cy="0" r="12" fill="#EB001B" opacity="0.85"/>
+            <circle cx="10" cy="0" r="12" fill="#F79E1B" opacity="0.85"/>
+            <rect x="-4" y="-8" width="8" height="16" fill="rgba(255,255,255,0.03)" rx="4"/>
+          </g>
+
+          <!-- Brand name with gradient -->
+          <text x="30" y="32" font-family="'Space Grotesk',sans-serif" font-size="16" font-weight="800" letter-spacing="-0.4" fill="url(#brandTextGrad)" opacity="0.95">CredVale</text>
+
+          <!-- Small star accent -->
+          <text x="118" y="31" font-family="'Inter',sans-serif" font-size="12" fill="#4CC8A4" opacity="0.5">&#9733;</text>
+
+          <!-- Ultra subtle shine streak diagonally -->
+          <line x1="0" y1="180" x2="180" y2="0" stroke="rgba(255,255,255,0.02)" stroke-width="80"/>
+
+          <!-- Bottom subtle glow -->
+          <rect x="80" y="250" width="240" height="2" rx="1" fill="rgba(76,200,164,0.08)"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- ========== QUICK ACTION BUTTONS ========== -->
+    <div class="actions-section">
+      <div class="actions-grid">
+        <button class="action-btn" id="btnVirtualCard" title="Gerar Cartão Virtual">
+          <div class="action-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="1" y="4" width="22" height="16" rx="2"/>
+              <line x1="1" y1="10" x2="23" y2="10"/>
+              <path d="M7 15h4"/>
+            </svg>
+          </div>
+          <span class="action-label">Gerar Cartão Virtual</span>
+        </button>
+        <button class="action-btn" id="btnBoleto" title="Fatura">
+          <div class="action-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="8" y1="12" x2="16" y2="12"/>
+              <line x1="8" y1="16" x2="14" y2="16"/>
+            </svg>
+          </div>
+          <span class="action-label">Fatura</span>
+        </button>
+        <button class="action-btn" id="btnPix" title="Pix com Cartão">
+          <div class="action-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"/>
+              <path d="M4 6v12c0 1.1.9 2 2 2h14v-4"/>
+              <path d="M18 12a2 2 0 0 0-2 2c0 1.1.9 2 2 2h4v-4h-4z"/>
+            </svg>
+          </div>
+          <span class="action-label">Pix com Cartão</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="limit-section">
+      <div class="limit-card">
+        <div class="limit-label">Limite disponível</div>
+        <div class="limit-value"><span class="currency">R$</span> <span id="limitValue">0,00</span></div>
+        <div class="limit-bar-wrap">
+          <div class="limit-bar"></div>
+        </div>
+        <div class="limit-bar-label">100% disponível</div>
+      </div>
+    </div>
+
+    <div class="timeline-section">
+      <div class="section-title">Status do Cartão</div>
+      <div class="timeline-card" id="timelineContainer"></div>
+    </div>
+
+    <div class="plan-section">
+      <div class="section-title">Plano</div>
+      <div class="plan-card" id="planContainer"></div>
+    </div>
+
+    <div class="benefits-section">
+      <div class="section-title">Benefícios do Plano</div>
+      <div class="benefits-card">
+        <div class="benefits-grid">
+          <div class="benefit-item" id="benefitDrugs">
+            <img src="assets/descontos.png?v=mrr6k1lt" alt="Descontos em medicamentos" class="benefit-img">
+            <div class="benefit-overlay"></div>
+            <div class="benefit-text">Descontos em medicamentos</div>
+          </div>
+          <div class="benefit-item" id="benefitNetwork">
+            <img src="assets/rede%20credenciada.png?v=mrr6k1lt" alt="Rede credenciada" class="benefit-img">
+            <div class="benefit-overlay"></div>
+            <div class="benefit-text">Rede credenciada</div>
+          </div>
+          <div class="benefit-item" id="benefitSupport" data-whatsapp>
+            <img src="assets/atendimento.png?v=mrr6k1lt" alt="Atendimento exclusivo" class="benefit-img">
+            <div class="benefit-overlay"></div>
+            <div class="benefit-text">Atendimento exclusivo</div>
+          </div>
+          <div class="benefit-item" id="benefitPerks">
+            <img src="assets/beneficios%20Credvale.png?v=mrr6k1lt" alt="Benefícios CredVale" class="benefit-img">
+            <div class="benefit-overlay"></div>
+            <div class="benefit-text">Benefícios CredVale</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="consult-section">
+      <button class="consult-btn" id="btnConsult">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        Consultar Descontos
+      </button>
+    </div>
+
+    <!-- ========== FARMÁCIAS CREDENCIADAS CARROSSEL ========== -->
+    <div class="pharmacy-section">
+      <div class="section-title">Farmácias Credenciadas</div>
+      <div class="pharmacy-card">
+        <div class="pharmacy-track-wrap">
+          <div class="pharmacy-track">
+            <div class="pharmacy-slide"><img src="assets/FARMI1.webp?v=mrr6k1lt" alt="" class="pharmacy-img"></div>
+            <div class="pharmacy-slide"><img src="assets/FARMI2.webp?v=mrr6k1lt" alt="" class="pharmacy-img"></div>
+            <div class="pharmacy-slide"><img src="assets/FARMI1.webp?v=mrr6k1lt" alt="" class="pharmacy-img"></div>
+            <div class="pharmacy-slide"><img src="assets/FARMI2.webp?v=mrr6k1lt" alt="" class="pharmacy-img"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  try {
+    var host = window.location.hostname;
+    var port = window.location.port;
+    var API_BASE;
+    if (port === '3000' || host === 'localhost' || host === '127.0.0.1') {
+      API_BASE = window.location.origin + '/api';
+    } else if (host.indexOf('edgeone') > -1 || host.indexOf('credvale') > -1) {
+      API_BASE = 'https://credevale-production.up.railway.app/api';
+    } else {
+      API_BASE = '/api';
+    }
+
+    var TK = 'cv_client_token';
+    var client = null;
+
+    function byId(id) { return document.getElementById(id); }
+
+    // CPF mask
+    var cpfEl = byId('loginCpf');
+    if (cpfEl) {
+      cpfEl.addEventListener('input', function(){
+        var v = this.value.replace(/\D/g,'').substring(0,11);
+        if (v.length > 3) v = v.substring(0,3) + '.' + v.substring(3);
+        if (v.length > 7) v = v.substring(0,7) + '.' + v.substring(7);
+        if (v.length > 11) v = v.substring(0,11) + '-' + v.substring(11);
+        this.value = v;
+      });
+    }
+
+    function api(method, path, body) {
+      var opts = { method: method, headers: { 'Content-Type': 'application/json' } };
+      if (body) opts.body = JSON.stringify(body);
+      var t = localStorage.getItem(TK);
+      if (t) opts.headers['Authorization'] = 'Bearer ' + t;
+      return fetch(API_BASE + path, opts).then(function(r){
+        if (!r.ok) return r.json().then(function(e){ throw new Error(e.error || 'Erro na requisicao'); });
+        return r.json();
+      });
+    }
+
+    function showLogin() {
+      var ls = byId('loadingScreen');
+      var l = byId('loginScreen');
+      var d = byId('dashboardScreen');
+      if (ls) ls.style.display = 'none';
+      if (l) l.style.display = 'flex';
+      if (d) d.style.display = 'none';
+    }
+
+    function showDashboard() {
+      var ls = byId('loadingScreen');
+      var l = byId('loginScreen');
+      var d = byId('dashboardScreen');
+      // Fade out loading screen
+      if (ls) {
+        ls.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+        ls.style.opacity = '0';
+        ls.style.transform = 'scale(0.97)';
+        setTimeout(function() {
+          ls.style.display = 'none';
+          ls.style.opacity = '1';
+          ls.style.transform = 'scale(1)';
+          ls.style.transition = '';
+        }, 450);
+      }
+      if (l) l.style.display = 'none';
+      // Fade in dashboard with slide up
+      if (d) {
+        d.style.display = 'block';
+        d.style.opacity = '0';
+        d.style.transform = 'translateY(16px)';
+        d.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+        setTimeout(function() {
+          d.style.opacity = '1';
+          d.style.transform = 'translateY(0)';
+        }, 80);
+      }
+      setTimeout(function(){ window.scrollTo(0,0); }, 200);
+    }
+
+    function showLoading(nome) {
+      var ls = byId('loadingScreen');
+      var l = byId('loginScreen');
+      var d = byId('dashboardScreen');
+      if (ls) ls.style.display = 'flex';
+      if (l) l.style.display = 'none';
+      if (d) { d.style.display = 'none'; d.style.opacity = ''; d.style.transform = ''; d.style.transition = ''; }
+      // Update greeting with name if provided
+      var greeting = byId('loadingGreeting');
+      if (greeting) {
+        var msg = nome ? 'Olá, ' + nome + '!' : 'Bem-vindo!';
+        if (greeting.textContent !== msg) {
+          greeting.textContent = msg;
+          // Re-trigger animation
+          greeting.style.animation = 'none';
+          greeting.offsetHeight;
+          greeting.style.animation = '';
+        }
+      }
+    }
+
+    function doLogin() {
+      var cpf = (cpfEl ? cpfEl.value : '').replace(/\D/g,'');
+      var cred = byId('loginCredencial');
+      var credVal = cred ? cred.value.trim() : '';
+      if (!cpf || cpf.length !== 11) { showLoginError('Informe um CPF valido'); return; }
+      if (!credVal) { showLoginError('Informe sua credencial'); return; }
+      var btn = byId('btnLogin');
+      if (btn) { btn.disabled = true; btn.textContent = 'Entrando...'; }
+      api('POST', '/client-area/login', { cpf: cpf, credencial: credVal }).then(function(data){
+        localStorage.setItem(TK, data.token);
+        client = data.client;
+        renderDashboard();
+        // Mostrar tela de carregamento premium com saudacao personalizada
+        showLoading(firstName(data.client.nome));
+        // Aguardar 4 segundos para experiencia premium
+        setTimeout(function() {
+          showDashboard();
+        }, 4000);
+        var err = byId('loginError');
+        if (err) err.style.display = 'none';
+      }).catch(function(err){
+        showLoginError(err.message || 'CPF ou credencial invalidos');
+        if (btn) { btn.disabled = false; btn.textContent = 'Entrar'; }
+      });
+    }
+
+    function showLoginError(msg) {
+      var el = byId('loginError');
+      if (el) { el.textContent = msg; el.style.display = 'block'; }
+    }
+
+    function logout() {
+      localStorage.removeItem(TK);
+      client = null;
+      showLogin();
+    }
+
+    // Event listeners
+    var btnLogin = byId('btnLogin');
+    if (btnLogin) btnLogin.addEventListener('click', doLogin);
+
+    var credEl = byId('loginCredencial');
+    if (credEl) credEl.addEventListener('keydown', function(e){ if (e.key === 'Enter') doLogin(); });
+    if (cpfEl) cpfEl.addEventListener('keydown', function(e){ if (e.key === 'Enter' && credEl) credEl.focus(); });
+
+    var btnLogout = byId('btnLogout');
+    if (btnLogout) btnLogout.addEventListener('click', logout);
+
+    // Format name: "Priscila Cristina dos Santos Dechen" -> "Priscila C. Dechen"
+    function formatName(fullName) {
+      if (!fullName) return 'NOME DO TITULAR';
+      var parts = fullName.trim().split(/\s+/);
+      if (parts.length <= 2) return fullName.toUpperCase();
+      var first = parts[0];
+      var last = parts[parts.length - 1];
+      var middle = [];
+      for (var i = 1; i < parts.length - 1; i++) {
+        var p = parts[i];
+        // Skip common short words like "de", "da", "dos", "das"
+        if (['de','da','das','do','dos','e'].indexOf(p.toLowerCase()) === -1) {
+          middle.push(p.charAt(0).toUpperCase() + '.');
+        } else {
+          // Include prepositions as-is
+          middle.push(p.toLowerCase());
+        }
+      }
+      return (first + ' ' + middle.join(' ') + ' ' + last).toUpperCase();
+    }
+
+    // Get first name only
+    function firstName(fullName) {
+      if (!fullName) return 'Cliente';
+      return fullName.trim().split(/\s+/)[0];
+    }
+
+    // Generate last 4 digits from senha_visivel or random
+    function lastFour(cardData) {
+      var s = cardData.senha_visivel || '';
+      if (s && s.length >= 4) return s.slice(-4);
+      // Generate random 4 digits
+      return String(Math.floor(1000 + Math.random() * 9000));
+    }
+
+    function renderDashboard() {
+      if (!client) return;
+      var c = client;
+      var greeting = byId('greeting');
+      if (greeting) greeting.textContent = 'Olá, ' + firstName(c.nome || 'Cliente') + '!';
+
+      // Card name (SVG)
+      var nameSvg = byId('cardNameSvg');
+      if (nameSvg) nameSvg.textContent = formatName(c.nome);
+
+      // Card number (SVG)
+      var last4 = lastFour(c);
+      var numSvg1 = byId('cardNumSvg1');
+      var numSvg2 = byId('cardNumSvg2');
+      var numSvg3 = byId('cardNumSvg3');
+      var numSvg4 = byId('cardNumSvg4');
+      if (numSvg1) numSvg1.textContent = '\u2022\u2022\u2022\u2022';
+      if (numSvg2) numSvg2.textContent = '\u2022\u2022\u2022\u2022';
+      if (numSvg3) numSvg3.textContent = '\u2022\u2022\u2022\u2022';
+      if (numSvg4) numSvg4.textContent = last4;
+
+      // Also update HTML fallback (kept for compatibility)
+      var cn = byId('cardName');
+      if (cn) cn.textContent = formatName(c.nome);
+
+      var num = byId('cardNumber');
+      if (num) num.textContent = '\u2022\u2022\u2022\u2022 \u2022\u2022\u2022\u2022 \u2022\u2022\u2022\u2022 ' + last4;
+
+      // Limit
+      var lim = parseFloat(c.limite_aprovado) || 0;
+      var lv = byId('limitValue');
+      if (lv) lv.textContent = lim.toFixed(2).replace('.',',');
+
+      renderTimeline(c.status);
+      renderPlan(c.plano_escolhido, c.status);
+      api('GET', '/admin/settings').then(function(s){
+        var link = s.settings && s.settings.client_area_link || '';
+        var btns = document.querySelectorAll('.plan-btn[data-link]');
+        for (var i = 0; i < btns.length; i++) {
+          if (link) { btns[i].href = link; btns[i].style.display = 'inline-block'; }
+          else { btns[i].style.display = 'none'; }
+        }
+        var payLink = s.settings && s.settings.payment_link || '';
+        var payBtns = document.querySelectorAll('.pay-btn[data-payment-link]');
+        for (var i = 0; i < payBtns.length; i++) {
+          if (payLink) { payBtns[i].href = payLink; payBtns[i].style.display = 'inline-block'; }
+          else { payBtns[i].style.display = 'none'; }
+        }
+      }).catch(function(){});
+    }
+
+    function renderTimeline(status) {
+      var steps = [
+        { label: 'Cadastro concluído', done: true },
+        { label: 'Aprovado', done: status === 'aprovado' || status === 'ativado' },
+        { label: 'Emissão', done: status === 'ativado', current: status === 'aprovado' },
+        { label: 'Enviado', done: false },
+        { label: 'Entregue', done: false }
+      ];
+      var html = '';
+      for (var i = 0; i < steps.length; i++) {
+        var s = steps[i];
+        var icon, cls, desc = '';
+        if (s.done) { icon = '✓'; cls = 'done'; }
+        else if (s.current) { icon = '⟳'; cls = 'current'; desc = '<strong>Emissão pendente</strong>'; }
+        else { icon = '○'; cls = ''; }
+        var stepCls = s.done ? ' completed' : '';
+        if (s.current) stepCls += ' active';
+        html += '<div class="timeline-step' + stepCls + '">' +
+          '<div class="timeline-icon ' + cls + '">' + icon + '</div>' +
+          '<div class="timeline-info"><div class="timeline-label">' + s.label + '</div>' +
+          (desc ? '<div class="timeline-desc">' + desc + '</div>' : '') + '</div></div>';
+      }
+      // Append address section if client has address data (nested under endereco)
+      var end = client && client.endereco;
+      if (end && end.rua) {
+        var addrParts = [end.rua];
+        if (end.numero) addrParts.push(', ' + end.numero);
+        var addrLine = addrParts.join('');
+        var cityParts = [];
+        if (end.cidade) cityParts.push(end.cidade);
+        if (end.uf) cityParts.push(' - ' + end.uf);
+        var cityLine = cityParts.join('');
+        // Avoid double separator if only UF is present
+        if (!end.cidade && end.uf) cityLine = end.uf;
+        if (cityLine) addrLine += ' \u2022 ' + cityLine;
+        html +=
+          '<div class="timeline-address">' +
+          '<div class="timeline-address-icon">\uD83D\uDCCD</div>' +
+          '<div class="timeline-address-info">' +
+          '<div class="timeline-address-title">Endere\u00e7o de entrega</div>' +
+          '<div class="timeline-address-text">' + addrLine + '</div>' +
+          '</div></div>';
+      }
+      var tc = byId('timelineContainer');
+      if (tc) tc.innerHTML = html;
+    }
+
+    function renderPlan(plano, status) {
+      var pc = byId('planContainer');
+      if (!pc) return;
+      var isPending = status !== 'ativado';
+      if (plano === 'plano_166') {
+        var statusText = isPending ? 'Pendente de ativação' : 'Ativo';
+        var statusCls = isPending ? '' : ' active';
+        pc.innerHTML =
+          '<div class="plan-info">' +
+          '<div class="plan-name">Plano CredVale</div>' +
+          '<div class="plan-price">R$ 1,66 <span>/mês</span></div>' +
+          '<div class="plan-status' + statusCls + '"><span class="dot"></span>' + statusText + '</div>' +
+          '</div>' +
+          '<div class="plan-actions">' +
+          '<a href="#" class="plan-btn" data-link="1" target="_blank" rel="noopener">' + (isPending ? 'Ativar Plano' : 'Gerenciar') + '</a>' +
+          '<a href="#" class="pay-btn pulse" data-payment-link="1" target="_blank" rel="noopener">Pagar Plano</a>' +
+          '</div>';
+      } else {
+        pc.innerHTML =
+          '<div class="plan-no-plan">' +
+          '<div class="plan-no-plan-icon">💳</div>' +
+          '<p>Você ainda não possui um plano ativo.</p>' +
+          '<a href="#" class="plan-btn" data-link="1" target="_blank" rel="noopener">Adquirir Plano</a></div>';
+      }
+    }
+
+    function init() {
+      var token = localStorage.getItem(TK);
+      if (token) {
+        showLoading();
+        var startTime = Date.now();
+        api('GET', '/client-area/me').then(function(data){
+          client = data.client;
+          renderDashboard();
+          // Atualizar saudacao com o nome do cliente
+          var nome = firstName(data.client.nome);
+          var greeting = byId('loadingGreeting');
+          if (greeting) {
+            greeting.textContent = 'Olá, ' + nome + '!';
+            // Re-trigger animation
+            greeting.style.animation = 'none';
+            greeting.offsetHeight;
+            greeting.style.animation = '';
+          }
+          // Garantir pelo menos 4s de tela de carregamento
+          var elapsed = Date.now() - startTime;
+          var remaining = Math.max(0, 4000 - elapsed);
+          setTimeout(function() {
+            showDashboard();
+          }, remaining);
+        }).catch(function(){
+          localStorage.removeItem(TK);
+          showLogin();
+        });
+      } else {
+        showLogin();
+      }
+    }
+
+    init();
+  } catch(e) {
+    var ls = document.getElementById('loadingScreen');
+    var l = document.getElementById('loginScreen');
+    var d = document.getElementById('dashboardScreen');
+    if (ls) ls.style.display = 'none';
+    if (l) l.style.display = 'flex';
+    if (d) d.style.display = 'none';
+    var errEl = document.getElementById('loginError');
+    if (errEl) { errEl.textContent = 'Erro ao carregar: ' + e.message; errEl.style.display = 'block'; }
+  }
+})();
+</script>
+</body>
+</html>

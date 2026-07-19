@@ -1,17 +1,34 @@
 {
   "name": "credvale",
   "private": true,
+  "type": "module",
   "scripts": {
-    "start": "node backend/server.js"
+    "start": "node backend/server.js",
+    "dev": "vite --port=3000 --host=0.0.0.0",
+    "build": "vite build",
+    "postbuild": "node -e \"const fs=require('fs'); const path=require('path'); const d='dist/'; const srcAssets='assets/'; const distAssets=d+'assets/'; if(!fs.existsSync(distAssets))fs.mkdirSync(distAssets,{recursive:true}); ['cadastro.html','cadastro.js','cadastro.css','cadastro-chat.css','app.html','admin.html','cliente.html','styles.css'].forEach(f=>{try{fs.cpSync(f,d+f,{force:true})}catch(e){}}); ['frontend','admin-panel'].forEach(dir=>{try{fs.cpSync(dir,d+dir,{recursive:true,force:true})}catch(e){}}); fs.readdirSync(srcAssets).forEach(f=>{try{fs.cpSync(srcAssets+f,distAssets+f,{recursive:true,force:true})}catch(e){}}); fs.readdirSync(distAssets).forEach(f=>{try{fs.cpSync(distAssets+f,srcAssets+f,{recursive:true,force:true})}catch(e){}}); let h=fs.readFileSync(d+'index.html','utf8'); h=h.replace(/\\/assets\\//g,'/assets/'); fs.writeFileSync(d+'index.html',h); console.log('Build copiado para raiz');\""
   },
   "dependencies": {
+    "@tailwindcss/vite": "^4.1.14",
+    "@vitejs/plugin-react": "^5.0.4",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
+    "lucide-react": "^0.546.0",
+    "motion": "^12.23.24",
     "multer": "^2.2.0",
+    "node-ssh": "^13.2.1",
+    "react": "^19.0.1",
+    "react-dom": "^19.0.1",
     "sql.js": "^1.10.3",
-    "uuid": "^9.0.0"
+    "uuid": "^9.0.0",
+    "vite": "^6.2.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "sharp": "^0.35.3",
+    "typescript": "~5.8.2"
   }
 }

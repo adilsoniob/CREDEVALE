@@ -1,14 +1,45 @@
+# Dependências
 node_modules/
+
+# Ambiente
 .env
+
+# Banco de dados
 backend/data/*.db
 backend/data/*.db-wal
 backend/data/*.db-shm
+
+# Logs
 *.log
+logs/
+
+# Build artifacts
+dist/
+assets/index-*.js
+assets/index-*.css
+*.min.js
+*.min.css
+
+# Runtime
+server.pid
+nul
+
+# Sistema
 .DS_Store
 Thumbs.db
 
-# Tencent Cloud EdgeOne
-.env
+# EdgeOne
 .edgeone/*
+assets/unused/
 .tef_dist/*
-  
+
+# Deploy (credenciais)
+scripts/deploy.config.json
+CREDENCIAIS.txt
+AUDITORIA_COMPLETA.md
+
+# Editor
+*.sublime-project
+*.sublime-workspace
+.vscode/
+.idea/

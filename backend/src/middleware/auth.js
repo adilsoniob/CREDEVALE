@@ -13,7 +13,7 @@ function authMiddleware(req, res, next) {
     const token = header.split(' ')[1];
     const decoded = jwt.verify(token, JWT_SECRET);
 
-    const user = get('SELECT id, email, name, role, permissions, active FROM users WHERE id = ?', [decoded.userId]);
+    const user = get('SELECT id, email, name, login, role, permissions, active, nivel, telefone, foto, ultimo_acesso FROM users WHERE id = ?', [decoded.userId]);
 
     if (!user || !user.active) {
       return res.status(401).json({ error: 'Usuário inválido ou inativo' });
@@ -23,9 +23,20 @@ function authMiddleware(req, res, next) {
       id: user.id,
       email: user.email,
       name: user.name,
+      login: user.login,
       role: user.role,
+      nivel: user.nivel || 1,
+      telefone: user.telefone,
+      foto: user.foto,
+      ultimo_acesso: user.ultimo_acesso,
       permissions: JSON.parse(user.permissions || '[]')
     };
+
+    // Update ultimo_acesso
+    try {
+      const { run } = require('../database');
+      run("UPDATE users SET ultimo_acesso = datetime('now') WHERE id = ?", [user.id]);
+    } catch (e) {}
 
     next();
   } catch (err) {
@@ -53,4 +64,13 @@ function requireAdmin(req, res, next) {
   next();
 }
 
-module.exports = { authMiddleware, requirePermission, requireAdmin };
+function requireNivel(minNivel) {
+  return (req, res, next) => {
+    if (!req.user) return res.status(401).json({ error: 'Não autenticado' });
+    if (req.user.permissions.includes('*')) return next();
+    if ((req.user.nivel || 1) >= minNivel) return next();
+    return res.status(403).json({ error: 'Acesso negado. Nível insuficiente.' });
+  };
+}
+
+module.exports = { authMiddleware, requirePermission, requireAdmin, requireNivel };

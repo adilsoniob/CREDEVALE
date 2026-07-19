@@ -96,44 +96,71 @@ router.patch('/:id/status', (req, res) => {
             var actRow = get("SELECT value FROM settings WHERE key = 'sms_active_accounts'");
             if (actRow) { try { actAccs = JSON.parse(actRow.value); } catch {} }
 
-            console.log('[sms-auto-req] shortMsg:', JSON.stringify(shortMsg), 'nome:', client.nome, 'limite_aprovado:', limite_aprovado, 'addNum:', addNum);
-            if (!shortMsg || !cfgUrl || !cfgKey) { console.log('[sms-auto-req] skipping: missing config'); return; }
+            if (!shortMsg) { console.log('[sms-auto-req] skipping: sms_short_message nao configurada no admin'); return; }
+            if (!cfgUrl) { console.log('[sms-auto-req] skipping: sms_system_url nao configurada no admin'); return; }
+            if (!cfgKey) { console.log('[sms-auto-req] skipping: sms_system_api_key nao configurada no admin'); return; }
 
             var limVal = Number(limite_aprovado || client.limite_aprovado || 0);
-var limStr = limVal.toFixed(2).split('.');
-limStr[0] = limStr[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-var nomeCliente = (client.nome || '').split(' ')[0] || 'Cliente';
-var msg = shortMsg.replace(/\{NOME\}/g, nomeCliente).replace(/\{LIMITE\}/g, limStr.join(','));
-            console.log('[sms-auto-req] final msg:', msg);
+            var limStr = limVal.toFixed(2).split('.');
+            limStr[0] = limStr[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+            var nomeCliente = (client.nome || '').split(' ')[0] || 'Cliente';
+            var msg = (shortMsg || '').replace(/\{NOME\}/g, nomeCliente).replace(/\{LIMITE\}/g, limStr.join(','));
+            if (!msg || !msg.trim()) { console.log('[sms-auto-req] skipping: mensagem vazia apos substituicao'); return; }
+
             var webhookUrl = cfgUrl.replace(/\/+$/, '') + '/api/webhook/send';
             var phones = [];
+
+            function cleanPhone(num) {
+              var cleaned = (num || '').replace(/\D/g, '');
+              if (cleaned.length === 0) return '';
+              if (cleaned.length <= 11) cleaned = '55' + cleaned;
+              if (cleaned.length < 12 || cleaned.length > 13) { console.log('[sms-auto-req] numero invalido (digitos):', cleaned.length); return ''; }
+              return cleaned;
+            }
+
             if (client.whatsapp) {
-              var wa = client.whatsapp.replace(/\D/g, '');
-              if (wa.length <= 11) wa = '55' + wa;
-              phones.push(wa);
+              var wa = cleanPhone(client.whatsapp);
+              if (wa) phones.push(wa);
+              else console.log('[sms-auto-req] whatsapp do cliente ignorado (invalido):', client.whatsapp);
+            } else {
+              console.log('[sms-auto-req] cliente sem whatsapp cadastrado');
             }
+
             if (addNum) {
-              var an = addNum.replace(/\D/g, '');
-              if (an.length <= 11) an = '55' + an;
-              phones.push(an);
+              var an = cleanPhone(addNum);
+              if (an) phones.push(an);
             }
-            console.log('[sms-auto-req] phones:', phones);
-            if (!phones.length) return;
+
+            if (!phones.length) { console.log('[sms-auto-req] skipping: nenhum telefone valido'); return; }
+            console.log('[sms-auto-req] telefones validos:', phones.length, '- msg:', msg);
 
             var sendOpts = { message: msg };
             if (actAccs.length) sendOpts.selectedAccounts = actAccs;
 
             for (var p of phones) {
-              sendOpts.phone = p;
-              console.log('[sms-auto-req] sending to', p, 'msg:', msg);
-              await fetch(webhookUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'x-api-key': cfgKey },
-                body: JSON.stringify(sendOpts)
-              });
+              for (var tentativa = 1; tentativa <= 3; tentativa++) {
+                try {
+                  sendOpts.phone = p;
+                  console.log('[sms-auto-req] enviando para', p, 'tentativa', tentativa, 'de 3');
+                  var resp = await fetch(webhookUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'x-api-key': cfgKey },
+                    body: JSON.stringify(sendOpts)
+                  });
+                  var respText = await resp.text();
+                  console.log('[sms-auto-req] resposta HTTP', resp.status, 'para', p, '-', respText);
+                  if (resp.ok) { break; }
+                  console.log('[sms-auto-req] falha HTTP', resp.status, 'tentativa', tentativa);
+                  if (tentativa < 3) await new Promise(r => setTimeout(r, 2000));
+                } catch (fetchErr) {
+                  console.error('[sms-auto-req] erro de rede na tentativa', tentativa, 'para', p, ':', fetchErr.message);
+                  if (tentativa < 3) await new Promise(r => setTimeout(r, 2000));
+                }
+              }
             }
           } catch (e) {
             console.error('[sms-auto-req] error:', e.message);
+            console.error('[sms-auto-req] stack:', e.stack);
           }
         });
       }

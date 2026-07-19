@@ -8,12 +8,12 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#0e171f">
   <title>Cadastro - CREDVALE</title>
-  <link rel="stylesheet" href="styles.css?v=3.2">
-  <link rel="stylesheet" href="cadastro.css?v=3.2">
-  <link rel="stylesheet" href="cadastro-chat.css?v=1.0">
+  <link rel="stylesheet" href="styles.css?v=mrr6k1lt">
+  <link rel="stylesheet" href="cadastro.css?v=mrr6k1lt">
+  <link rel="stylesheet" href="cadastro-chat.css?v=mrr6k1lt">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><rect width=%2232%22 height=%2232%22 rx=%228%22 fill=%22url(%23g)%22/><defs><linearGradient id=%22g%22 x1=%220%22 y1=%220%22 x2=%221%22 y2=%221%22><stop offset=%220%25%22 stop-color=%22%233B82F6%22/><stop offset=%22100%25%22 stop-color=%22%234CC8A4%22/></linearGradient></defs><text x=%2216%22 y=%2223%22 font-family=%22system-ui%22 font-size=%2218%22 fill=%22%23fff%22 text-anchor=%22middle%22 font-weight=%22800%22>V</text></svg>">
-  <script src="frontend/js/api.js?v=3.1"></script>
+  <script src="frontend/js/api.js?v=mrr6k1lt"></script>
   <style>
     body { background: #0e171f; }
     .header-custom {
@@ -150,6 +150,7 @@
       </div>
     </div>
   </div>
+
   <div id="modalReturning" class="modal" hidden>
     <div class="modal__overlay"></div>
     <div class="modal__content">
@@ -167,15 +168,17 @@
     </div>
   </div>
 
-  <a href="https://wa.me/5511999999999" target="_blank" rel="noopener" class="whatsapp-float__icon" style="position:fixed;bottom:20px;right:20px;z-index:99;" aria-label="Fale conosco pelo WhatsApp">
-    <img src="assets/WHATS.png" alt="WhatsApp" loading="lazy">
+  <a href="https://wa.me/5511999999999" target="_blank" rel="noopener" class="whatsapp-float__icon" id="waFloatBtn" style="position:fixed;bottom:20px;right:20px;z-index:99;" aria-label="Fale conosco pelo WhatsApp">
+    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="white"><path d="M12.031 1.5c-5.791 0-10.5 4.709-10.5 10.5 0 1.828.469 3.547 1.302 5.053L1.5 22.5l5.586-1.396c1.452.78 3.104 1.228 4.945 1.228 5.791 0 10.5-4.709 10.5-10.5S17.822 1.5 12.031 1.5zm0 19.5c-1.649 0-3.221-.478-4.541-1.317l-.327-.201-3.006.782.8-2.934-.212-.34C3.986 16.005 3.531 14.554 3.531 13c0-4.687 3.813-8.5 8.5-8.5s8.5 3.813 8.5 8.5-3.813 8.5-8.5 8.5zm4.214-5.353c-.234-.117-1.383-.683-1.596-.761s-.369-.117-.524.117c-.155.234-.602.761-.738.917s-.272.176-.506.059c-.234-.117-.989-.364-1.884-1.163-.696-.622-1.166-1.389-1.302-1.624s-.015-.361.107-.478c.11-.107.234-.279.352-.419.117-.14.156-.234.234-.391s.039-.293-.02-.419c-.058-.126-.524-1.263-.718-1.729-.189-.455-.381-.394-.524-.401-.136-.007-.291-.008-.447-.008-.155 0-.408.058-.622.293s-.816.798-.816 1.947c0 1.149.836 2.259.953 2.415.117.156 1.646 2.513 3.988 3.094.557.138.992.221 1.332.282.561.099 1.072.085 1.476.052.451-.037.684-.204.752-.385.068-.181.312-.742.382-1.001.07-.259.035-.481-.019-.556s-.293-.117-.527-.234z"/></svg>
   </a>
 
   <!-- CHAT CONVERSACIONAL -->
   <div id="chatModal" class="chat-modal" hidden>
     <div class="chat-modal__top">
       <div class="chat-modal__brand">
-        <div class="chat-modal__brand-icon" style="background:linear-gradient(135deg,#3b82f6,#10b981);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#fff;">V</div>
+        <div class="chat-modal__brand-icon" style="background:none;border-radius:0;display:flex;align-items:center;justify-content:center;overflow:hidden;">
+           <img src="assets/logo-app.png" alt="CredVale" style="height:32px;width:auto;display:block;" width="32" height="32">
+        </div>
         <span>CREDVALE</span>
       </div>
       <button class="chat-modal__close" id="chatClose" onclick="fecharChat()" title="Fechar">✕</button>
@@ -208,8 +211,33 @@
   </div>
 
   <script>
-    // Pre-fill from sessionStorage handled by cadastro.js
+    (function() {
+      var btn = document.getElementById('waFloatBtn');
+      if (!btn) return;
+      // Sempre busca da API primeiro para pegar o número mais recente
+      try {
+        var base = window.__API_BASE || '/api';
+        fetch(base + '/admin/settings').then(function(r) { return r.json(); }).then(function(d) {
+          if (d && d.settings && d.settings.whatsapp) {
+            var num = d.settings.whatsapp.replace(/\D/g,'');
+            sessionStorage.setItem('vs_support_wa', num);
+            btn.href = 'https://wa.me/' + num;
+          } else {
+            // API respondeu sem whatsapp — usa sessionStorage
+            var wa = sessionStorage.getItem('vs_support_wa');
+            if (wa) btn.href = 'https://wa.me/' + wa.replace(/\D/g,'');
+          }
+        }).catch(function(){
+          // Fallback: usa sessionStorage se API falhar
+          var wa = sessionStorage.getItem('vs_support_wa');
+          if (wa) btn.href = 'https://wa.me/' + wa.replace(/\D/g,'');
+        });
+      } catch(e) {
+        var wa = sessionStorage.getItem('vs_support_wa');
+        if (wa) btn.href = 'https://wa.me/' + wa.replace(/\D/g,'');
+      }
+    })();
   </script>
-  <script src="cadastro.js?v=mqzgzcak.3"></script>
+  <script src="cadastro.js?v=mrr6k1lt"></script>
 </body>
 </html>
