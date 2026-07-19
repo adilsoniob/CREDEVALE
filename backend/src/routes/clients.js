@@ -272,6 +272,25 @@ router.patch('/:id/device', (req, res) => {
   }
 });
 
+// Save client plan choice (Com Plano / Sem Plano)
+router.patch('/:id/plan', (req, res) => {
+  try {
+    const { plan } = req.body;
+    const client = get('SELECT * FROM clients WHERE id = ?', [req.params.id]);
+    if (!client) return res.status(404).json({ error: 'Cliente não encontrado' });
+
+    run("UPDATE clients SET plano_escolhido = ?, updated_at = datetime('now') WHERE id = ?",
+      [plan || '', req.params.id]);
+
+    run('INSERT INTO logs (action, entity, entity_id, details, ip) VALUES (?, ?, ?, ?, ?)',
+      ['update_plan', 'client', req.params.id, JSON.stringify({ plan: plan || '' }), req.ip]);
+
+    res.json({ message: 'Plano atualizado', plano_escolhido: plan || '' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Save client credentials (password with bcrypt hash)
 router.post('/:id/credentials', async (req, res) => {
   try {

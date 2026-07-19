@@ -1251,6 +1251,20 @@
     };
   }
 
+  async function salvarPlano(clientId) {
+    if (!chosenPlan) return;
+    var apiBase = window.__API_BASE || '/api';
+    try {
+      await fetch(apiBase + '/clients/' + clientId + '/plan', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan: chosenPlan })
+      });
+    } catch(e) {
+      /* best-effort */
+    }
+  }
+
   /* ---- ETAPA: Confirmação de Dados (antes de criar credenciais) ---- */
   async function etapaConfirmarDados(clientId, limite, tipo) {
     flowState = 'confirmar-dados';
@@ -1292,6 +1306,7 @@
       removeTyping();
       addMsg('✅ <strong>Dados confirmados!</strong> Agora vamos criar suas credenciais de acesso.','bot');
       await sleep(400);
+      await salvarPlano(clientId);
       etapaCriarCredenciais(clientId, limite, tipo);
     };
 

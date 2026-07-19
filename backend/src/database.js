@@ -263,6 +263,8 @@ async function initDatabase() {
   // App download tracking columns
   try { db.run(`ALTER TABLE clients ADD COLUMN app_download_clicked_at TEXT DEFAULT NULL`); } catch (e) {}
   try { db.run(`ALTER TABLE clients ADD COLUMN app_download_status TEXT DEFAULT NULL`); } catch (e) {}
+  // Plan escolhido column
+  try { db.run(`ALTER TABLE clients ADD COLUMN plano_escolhido TEXT DEFAULT ''`); } catch (e) {}
 
   db.run(`
     CREATE TABLE IF NOT EXISTS client_passwords (
@@ -314,6 +316,21 @@ async function initDatabase() {
       PRIMARY KEY (usuario_id, permissao_id),
       FOREIGN KEY (usuario_id) REFERENCES users(id),
       FOREIGN KEY (permissao_id) REFERENCES permissoes(id)
+    )
+  `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS app_downloads (
+      id TEXT PRIMARY KEY,
+      client_id TEXT,
+      client_cpf TEXT,
+      client_nome TEXT,
+      status TEXT DEFAULT 'iniciado',
+      apk_available INTEGER DEFAULT 1,
+      device_info TEXT,
+      ip TEXT,
+      user_agent TEXT,
+      created_at TEXT DEFAULT (datetime('now'))
     )
   `);
 

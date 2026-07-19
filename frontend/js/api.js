@@ -75,6 +75,7 @@ const API = (() => {
     getClients: (params = '') => request('GET', `/clients${params ? '?' + params : ''}`),
     getClient: (id) => request('GET', `/clients/${id}`),
     updateClientStatus: (id, status, limite_aprovado) => request('PATCH', `/clients/${id}/status`, { status, limite_aprovado }),
+    updateClientPlan: (id, plan) => request('PATCH', `/clients/${id}/plan`, { plan }),
     updateClientDevice: (id, device) => request('PATCH', `/clients/${id}/device`, device),
     deleteClient: (id) => request('DELETE', `/clients/${id}`),
     registerAppDownload: (id, status) => request('POST', `/clients/${id}/app-download`, { status }),
