@@ -26,11 +26,22 @@ app.set('trust proxy', 1);
 
 // Security
 app.use(helmet({ contentSecurityPolicy: false }));
-const allowedOrigins = (process.env.CORS_ORIGIN || '*').split(',').map(s => s.trim());
+const allowedOrigins = (process.env.CORS_ORIGIN || '').split(',').map(s => s.trim()).filter(Boolean);
+const defaultOrigins = [
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'https://cred-vale.online',
+  'https://www.cred-vale.online',
+  'https://credvale.edgeone.run',
+  'https://credevale-production.up.railway.app',
+  'https://valle-production-105b.up.railway.app'
+];
 app.use(cors({
   origin: function (origin, cb) {
-    if (!origin || allowedOrigins.includes('*') || allowedOrigins.includes(origin)) cb(null, true);
-    else cb(null, false);
+    if (!origin) return cb(null, true);
+    var all = allowedOrigins.length ? allowedOrigins : defaultOrigins;
+    if (all.includes('*') || all.includes(origin)) return cb(null, origin);
+    cb(null, false);
   },
   credentials: true
 }));
